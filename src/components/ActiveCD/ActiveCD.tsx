@@ -6,6 +6,7 @@ import type { Origin } from '../../hooks/useAlbumAnimation'
 import { CDCase } from '../CDCase/CDCase'
 import { AlbumDetails } from '../AlbumDetails/AlbumDetails'
 import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
+import { useObiAnimation } from '../../hooks/useObiAnimation'
 
 export function ActiveCD({
   album,
@@ -37,8 +38,15 @@ export function ActiveCD({
     isChangingView,
     selectView,
   } = useAlbumAnimation(origin, getCaseDepth(album), onReturned)
+  const {
+    paperRef,
+    mode: obiMode,
+    isMoving,
+    selectMode,
+    resetObi,
+  } = useObiAnimation(caseRef, getCaseDepth(album))
   const close = () => {
-    closeCase(resetTray)
+    closeCase((onFolded) => resetObi(() => resetTray(onFolded)))
   }
   const button = useRef<HTMLButtonElement>(null)
   const closeRef = useRef(close)
@@ -111,14 +119,18 @@ export function ActiveCD({
         trayRef={trayRef}
         ref={caseRef}
         view={view}
+        paperRef={paperRef}
+        obiMode={obiMode}
       />
       <AlbumDetails
         album={album}
         disc={disc}
         onSelectDisc={selectDisc}
-        isTurning={isTurning || isChangingView}
+        isTurning={isTurning || isChangingView || isMoving}
         view={view}
         onSelectView={selectView}
+        obiMode={obiMode}
+        onSelectObi={selectMode}
       />
     </div>
   )

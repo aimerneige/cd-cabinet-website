@@ -37,8 +37,21 @@
   gap: 25px;
 }
 .back-cover-upload {
+  min-width: 0;
+}
+.extra-artwork {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
   margin-top: 22px;
-  width: calc((100% - 25px) / 2);
+}
+.obi-preview img {
+  object-fit: contain;
+}
+.obi-upload-guidance {
+  font-size: 10px;
+  color: #868b7a;
+  line-height: 1.7;
 }
 .artwork-upload {
   display: block;

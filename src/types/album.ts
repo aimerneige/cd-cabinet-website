@@ -18,6 +18,7 @@ export interface Album {
   coverUrl: string
   backCoverUrl?: string
   spineUrl?: string
+  obiUrl?: string
   color: string
   ink: string
   shelfId: string

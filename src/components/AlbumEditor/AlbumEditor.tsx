@@ -30,6 +30,7 @@ export function AlbumEditor({
   const [cover, setCover] = useState(album?.coverUrl ?? '')
   const [spine, setSpine] = useState(album?.spineUrl ?? '')
   const [backCover, setBackCover] = useState(album?.backCoverUrl ?? '')
+  const [obi, setObi] = useState(album?.obiUrl ?? '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -54,7 +55,10 @@ export function AlbumEditor({
     }
   }, [])
 
-  async function upload(file: File | undefined, kind: 'cover' | 'spine' | 'back') {
+  async function upload(
+    file: File | undefined,
+    kind: 'cover' | 'spine' | 'back' | 'obi',
+  ) {
     if (!file) return
     imageLoads.current += 1
     setLoading(true)
@@ -63,7 +67,13 @@ export function AlbumEditor({
       const source = await readArtwork(file)
       if (alive.current) {
         const setArtwork =
-          kind === 'cover' ? setCover : kind === 'back' ? setBackCover : setSpine
+          kind === 'cover'
+            ? setCover
+            : kind === 'back'
+              ? setBackCover
+              : kind === 'obi'
+                ? setObi
+                : setSpine
         setArtwork(source)
       }
     } catch (cause) {
@@ -132,6 +142,7 @@ export function AlbumEditor({
             genre,
             coverUrl: cover,
             backCoverUrl: backCover || undefined,
+            obiUrl: obi || undefined,
             spineUrl: spine || undefined,
           },
           discCount,
@@ -238,42 +249,85 @@ export function AlbumEditor({
             </p>
           </div>
         </div>
-        <div className="back-cover-upload">
-          <label className="artwork-upload">
-            <span>
-              Back cover artwork <small>optional</small>
-            </span>
-            <div className="cover-preview">
-              {backCover ? (
-                <img src={backCover} alt="Back cover preview" />
-              ) : (
-                <span>
-                  ＋<small>Choose your back cover</small>
-                </span>
-              )}
-            </div>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              aria-label="Upload back cover artwork"
-              disabled={loading || saving}
-              onChange={(event) => {
-                void upload(event.target.files?.[0], 'back')
-                event.target.value = ''
-              }}
-            />
-            <small>Choose image</small>
-          </label>
-          {backCover && (
-            <button
-              type="button"
-              className="remove-spine"
-              disabled={loading || saving}
-              onClick={() => setBackCover('')}
-            >
-              Use generated back cover
-            </button>
-          )}
+        <div className="extra-artwork">
+          <div className="back-cover-upload">
+            <label className="artwork-upload">
+              <span>
+                Back cover artwork <small>optional</small>
+              </span>
+              <div className="cover-preview">
+                {backCover ? (
+                  <img src={backCover} alt="Back cover preview" />
+                ) : (
+                  <span>
+                    ＋<small>Choose your back cover</small>
+                  </span>
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-label="Upload back cover artwork"
+                disabled={loading || saving}
+                onChange={(event) => {
+                  void upload(event.target.files?.[0], 'back')
+                  event.target.value = ''
+                }}
+              />
+              <small>Choose image</small>
+            </label>
+            {backCover && (
+              <button
+                type="button"
+                className="remove-spine"
+                disabled={loading || saving}
+                onClick={() => setBackCover('')}
+              >
+                Use generated back cover
+              </button>
+            )}
+          </div>
+          <div className="back-cover-upload">
+            <label className="artwork-upload">
+              <span>
+                OBI paper strip <small>optional</small>
+              </span>
+              <div className="cover-preview obi-preview">
+                {obi ? (
+                  <img src={obi} alt="OBI preview" />
+                ) : (
+                  <span>
+                    ＋<small>Choose your paper strip</small>
+                  </span>
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-label="Upload OBI paper strip"
+                disabled={loading || saving}
+                onChange={(event) => {
+                  void upload(event.target.files?.[0], 'obi')
+                  event.target.value = ''
+                }}
+              />
+              <small>Choose image</small>
+            </label>
+            {obi && (
+              <button
+                type="button"
+                className="remove-spine"
+                disabled={loading || saving}
+                onClick={() => setObi('')}
+              >
+                Use generated OBI
+              </button>
+            )}
+            <p className="obi-upload-guidance">
+              Upload the entire unfolded strip, with the back flap, spine and
+              front flap from left to right.
+            </p>
+          </div>
         </div>
         <p className="upload-guidance">
           JPG, PNG or WebP · Up to 5 MB per image

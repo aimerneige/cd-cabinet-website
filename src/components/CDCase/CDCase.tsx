@@ -2,6 +2,8 @@ import { forwardRef, type RefObject } from 'react'
 import type { Album, AlbumDisc } from '../../types/album'
 import { getAlbumDiscs } from '../../lib/album'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
+import type { ObiMode } from '../../hooks/useObiAnimation'
+import { ObiStrip } from '../ObiStrip/ObiStrip'
 
 export const CDCase = forwardRef<
   HTMLDivElement,
@@ -12,12 +14,20 @@ export const CDCase = forwardRef<
     backDisc: AlbumDisc
     trayRef: RefObject<HTMLDivElement | null>
     view: CaseView
+    paperRef: RefObject<HTMLDivElement | null>
+    obiMode: ObiMode
   }
->(function CDCase({ album, disc, frontDisc, backDisc, trayRef, view }, ref) {
+>(function CDCase(
+  { album, disc, frontDisc, backDisc, trayRef, view, paperRef, obiMode },
+  ref,
+) {
   const discs = getAlbumDiscs(album)
   const selected = disc ?? discs[0]
   return (
-    <div className="cd-case" ref={ref}>
+    <div
+      className={`cd-case${obiMode === 'flat' ? ' has-flat-obi' : ''}`}
+      ref={ref}
+    >
       <div className="case-body">
         <div className="case-back" />
         <div
@@ -86,6 +96,11 @@ export const CDCase = forwardRef<
             <span>ORIGINAL RECORDINGS · {album.year}</span>
           </div>
         </div>
+        <ObiStrip
+          album={album}
+          paperRef={paperRef}
+          hidden={obiMode === 'hidden'}
+        />
       </div>
     </div>
   )

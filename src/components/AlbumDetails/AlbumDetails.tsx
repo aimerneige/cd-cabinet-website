@@ -1,6 +1,7 @@
 import type { Album, AlbumDisc } from '../../types/album'
 import { getAlbumDiscs } from '../../lib/album'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
+import type { ObiMode } from '../../hooks/useObiAnimation'
 
 export function AlbumDetails({
   album,
@@ -9,6 +10,8 @@ export function AlbumDetails({
   isTurning,
   view,
   onSelectView,
+  obiMode,
+  onSelectObi,
 }: {
   album: Album
   disc: AlbumDisc
@@ -16,6 +19,8 @@ export function AlbumDetails({
   isTurning: boolean
   view: CaseView
   onSelectView: (view: CaseView) => void
+  obiMode: ObiMode
+  onSelectObi: (mode: ObiMode) => void
 }) {
   const discs = getAlbumDiscs(album)
   return (
@@ -34,7 +39,7 @@ export function AlbumDetails({
               <button
                 key={item.id}
                 aria-pressed={disc.id === item.id}
-                disabled={isTurning || view !== 'inside'}
+                disabled={isTurning || view !== 'inside' || obiMode === 'flat'}
                 onClick={() => onSelectDisc(index)}
               >
                 Disc {index + 1}
@@ -51,7 +56,7 @@ export function AlbumDetails({
             <button
               key={item}
               aria-pressed={view === item}
-              disabled={isTurning}
+              disabled={isTurning || obiMode === 'flat'}
               onClick={() => onSelectView(item)}
             >
               {item === 'front'
@@ -61,6 +66,25 @@ export function AlbumDetails({
                   : 'Back'}
             </button>
           ))}
+        </div>
+        <div className="obi-controls">
+          <span>OBI · PAPER STRIP</span>
+          <div className="disc-selector" aria-label="OBI paper strip">
+            {(['attached', 'hidden', 'flat'] as const).map((item) => (
+              <button
+                key={item}
+                aria-pressed={obiMode === item}
+                disabled={isTurning}
+                onClick={() => onSelectObi(item)}
+              >
+                {item === 'attached'
+                  ? 'Attached'
+                  : item === 'hidden'
+                    ? 'Hidden'
+                    : 'Lay flat'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <ol className="track-list" aria-busy={isTurning}>

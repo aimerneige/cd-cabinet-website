@@ -78,6 +78,7 @@ export async function loadCollection(): Promise<Album[] | null> {
         ? restore(album.backCoverUrl)
         : undefined,
       spineUrl: album.spineUrl ? restore(album.spineUrl) : undefined,
+      obiUrl: album.obiUrl ? restore(album.obiUrl) : undefined,
     })) ?? null
   )
 }
@@ -99,6 +100,7 @@ export async function saveCollection(albums: Album[]): Promise<void> {
     spineUrl: album.spineUrl
       ? store(album.spineUrl, `${album.id}:spine`)
       : undefined,
+    obiUrl: album.obiUrl ? store(album.obiUrl, `${album.id}:obi`) : undefined,
   }))
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['collection', 'artwork'], 'readwrite')
