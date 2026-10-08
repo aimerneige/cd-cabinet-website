@@ -2,6 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { CSSProperties } from 'react'
 import type { Album } from '../../types/album'
+import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
 
 interface Props {
   album: Album
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
+  const discCount = getAlbumDiscs(album).length
   const {
     attributes,
     listeners,
@@ -24,11 +26,14 @@ export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
     <div
       ref={setNodeRef}
       className={`spine-slot ${isDragging ? 'is-dragging' : ''}`}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        zIndex: isDragging ? 2 : undefined,
-      }}
+      style={
+        {
+          transform: CSS.Transform.toString(transform),
+          transition,
+          zIndex: isDragging ? 2 : undefined,
+          '--spine-units': getCaseDepth(album) / 24,
+        } as CSSProperties
+      }
     >
       <button
         ref={setActivatorNodeRef}
@@ -52,15 +57,26 @@ export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
             : `Open ${album.title} by ${album.artist}`
         }
       >
-        <span className="spine-cap">
-          {String(album.order + 1).padStart(2, '0')}
-        </span>
-        <span className="spine-copy">
-          <span className="spine-artist">{album.artist}</span>
-          <span aria-hidden="true"> · </span>
-          <span className="spine-title">{album.title}</span>
-        </span>
-        <span className="spine-label">{album.year}</span>
+        {album.spineUrl ? (
+          <img className="spine-artwork" src={album.spineUrl} alt="" />
+        ) : (
+          <>
+            <span className="spine-cap">
+              {String(album.order + 1).padStart(2, '0')}
+            </span>
+            <span className="spine-copy">
+              <span className="spine-artist">{album.artist}</span>
+              <span aria-hidden="true"> · </span>
+              <span className="spine-title">{album.title}</span>
+            </span>
+            <span className="spine-label">{album.year}</span>
+          </>
+        )}
+        {discCount > 1 && (
+          <span className="spine-disc-count" aria-hidden="true">
+            {discCount}CD
+          </span>
+        )}
       </button>
     </div>
   )

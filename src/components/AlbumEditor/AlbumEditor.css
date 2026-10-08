@@ -1,0 +1,242 @@
+.album-editor {
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 30px;
+  border: 1px solid #b6bbac;
+  background: #eeece5;
+  color: #384033;
+  box-shadow: 0 18px 70px #1b231b33;
+}
+.album-editor::backdrop {
+  background: #302e2755;
+  backdrop-filter: blur(4px);
+}
+.editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.editor-heading h2 {
+  font:
+    38px/1.1 'Libre Caslon Display',
+    Georgia,
+    serif;
+  margin: 10px 0 0;
+}
+.editor-heading button {
+  border: 0;
+  background: transparent;
+  font-size: 26px;
+  color: #66745c;
+}
+.editor-artwork {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+.artwork-upload {
+  display: block;
+  position: relative;
+  cursor: pointer;
+  font-size: 11px;
+}
+.artwork-upload > span {
+  display: block;
+  margin-bottom: 10px;
+}
+.artwork-upload > small {
+  display: block;
+  color: #66745c;
+  margin-top: 10px;
+  text-decoration: underline;
+}
+.artwork-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.artwork-upload:focus-within {
+  outline: 2px solid #668064;
+  outline-offset: 5px;
+}
+.cover-preview {
+  aspect-ratio: 1;
+  background: #dedfd4;
+  display: grid;
+  place-items: center;
+}
+.cover-preview > span {
+  text-align: center;
+  font-size: 35px;
+  color: #78836b;
+}
+.cover-preview small {
+  display: block;
+  font-size: 11px;
+  margin-top: 10px;
+}
+.cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.spine-preview {
+  height: 150px;
+  width: 20px;
+  background: #77816c;
+  margin: 0 auto;
+  color: #eee9d9;
+}
+.spine-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.spine-preview > span {
+  writing-mode: vertical-rl;
+  padding-top: 10px;
+  font-size: 8px;
+  margin-left: 5px;
+}
+.spine-upload > p {
+  color: #868b7a;
+  font-size: 10px;
+  line-height: 1.7;
+  margin-top: 15px;
+}
+.spine-upload small {
+  color: #909581;
+}
+.remove-spine {
+  border: 0;
+  border-bottom: 1px solid #aab19c;
+  padding: 4px 0;
+  margin-top: 10px;
+  background: transparent;
+  font-size: 10px;
+  color: #68765b;
+}
+.upload-guidance {
+  color: #8a8f7f;
+  font-size: 10px;
+  margin: 20px 0;
+}
+.album-editor fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.editor-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.editor-fields label {
+  font-size: 11px;
+}
+.editor-fields input,
+.editor-fields select {
+  width: 100%;
+  display: block;
+  padding: 10px;
+  margin-top: 7px;
+  border: 1px solid #bec3b1;
+  background: #f5f3ec;
+  color: #3c4931;
+  border-radius: 0;
+}
+.editor-error {
+  color: #96533f;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.editor-footer {
+  border-top: 1px solid #d2d5c6;
+  margin-top: 25px;
+  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.editor-footer > span {
+  font-size: 10px;
+  color: #858d78;
+}
+.editor-footer > div {
+  display: flex;
+  gap: 8px;
+}
+.editor-footer button {
+  border: 1px solid #aab49b;
+  background: transparent;
+  padding: 10px 13px;
+  font-size: 11px;
+  color: #58664a;
+}
+.editor-footer .save-recording {
+  background: #66745c;
+  color: white;
+}
+.collection-storage-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 12px;
+  font-size: 10px;
+  color: #7e886f;
+}
+.collection-storage-note button {
+  color: #58664a;
+  border: 1px solid #aab49b;
+  background: transparent;
+  padding: 6px 10px;
+}
+.viewer-actions {
+  display: flex;
+  gap: 10px;
+}
+.recording-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 12px;
+}
+.add-recording {
+  border: 1px solid #bdbeb0;
+  background: transparent;
+  padding: 8px 12px;
+  color: #59634e;
+  font-size: 10px;
+}
+.track-list .empty-tracks {
+  display: block;
+  color: #858d78;
+  font-size: 11px;
+  border-bottom: 0;
+  line-height: 1.7;
+}
+@media (max-width: 700px) {
+  .album-editor {
+    padding: 22px;
+  }
+  .editor-artwork {
+    gap: 18px;
+  }
+  .editor-heading h2 {
+    font-size: 32px;
+  }
+  .editor-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .viewer-controls button {
+    font-size: 10px;
+  }
+  .viewer-actions {
+    gap: 6px;
+  }
+}

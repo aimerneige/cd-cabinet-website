@@ -95,3 +95,25 @@ export const albums: Album[] = records.map(
     })),
   }),
 )
+
+for (const [index, count] of [
+  [2, 2],
+  [7, 2],
+  [17, 3],
+] as const) {
+  const album = albums[index]
+  const tracksPerDisc = Math.ceil(album.tracks.length / count)
+  album.discs = Array.from({ length: count }, (_, discIndex) => ({
+    id: `${album.id}-disc-${discIndex + 1}`,
+    title:
+      discIndex === 0
+        ? 'Original album'
+        : discIndex === 1
+          ? 'Live sessions'
+          : 'Studio outtakes',
+    tracks: album.tracks.slice(
+      discIndex * tracksPerDisc,
+      (discIndex + 1) * tracksPerDisc,
+    ),
+  }))
+}

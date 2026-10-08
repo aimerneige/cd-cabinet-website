@@ -3,7 +3,7 @@
   perspective: none;
 }
 .cd-case {
-  --case-depth: 14px;
+  --case-depth: 24px;
   perspective: 1600px;
 }
 .case-back {
@@ -29,4 +29,55 @@
 }
 .case-lid {
   transform: translateZ(calc(var(--case-depth) / 2));
+}
+
+.spine-artwork {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.spine-disc-count {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  font-size: 6px;
+  letter-spacing: 0.3px;
+}
+.tray-disc-label {
+  position: absolute;
+  bottom: 3px;
+  right: 8px;
+  font-size: 7px;
+  color: #d1d4c4;
+  letter-spacing: 1px;
+}
+.disc-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 16px 0 10px;
+}
+.disc-selector button {
+  border: 1px solid #a9af9d;
+  background: transparent;
+  padding: 6px 10px;
+  color: #626d56;
+  font-size: 10px;
+}
+.disc-selector button[aria-pressed='true'] {
+  background: #66745c;
+  color: #fff;
+}
+.album-heading .disc-title {
+  font-size: 10px;
+  color: #737c67;
+  margin: 8px 0;
+}
+@media (max-width: 700px) {
+  .disc-selector {
+    justify-content: center;
+  }
 }

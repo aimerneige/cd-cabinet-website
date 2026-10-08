@@ -8,7 +8,11 @@ export interface Origin {
   height: number
 }
 
-export function useAlbumAnimation(origin: Origin, onReturned: () => void) {
+export function useAlbumAnimation(
+  origin: Origin,
+  caseDepth: number,
+  onReturned: () => void,
+) {
   const layer = useRef<HTMLDivElement>(null)
   const caseRef = useRef<HTMLDivElement>(null)
   const timeline = useRef<gsap.core.Timeline | null>(null)
@@ -55,7 +59,7 @@ export function useAlbumAnimation(origin: Origin, onReturned: () => void) {
         rotationY: 0,
         opacity: 0,
         transformOrigin: 'top left',
-        '--case-depth': '14px',
+        '--case-depth': `${caseDepth}px`,
       })
       gsap.set(lid, { rotationY: -165 })
       tl.to(overlay, { opacity: 1, duration: 0.15 }, 0)
@@ -86,7 +90,7 @@ export function useAlbumAnimation(origin: Origin, onReturned: () => void) {
           {
             rotationY: 0,
             scale: size / 300,
-            '--case-depth': '14px',
+            '--case-depth': `${caseDepth}px`,
             duration: 0.65,
             ease: 'power3.inOut',
           },
@@ -101,7 +105,7 @@ export function useAlbumAnimation(origin: Origin, onReturned: () => void) {
       tl.kill()
       timeline.current = null
     }
-  }, [origin])
+  }, [origin, caseDepth])
 
   const close = () => {
     if (closeRequested.current) return

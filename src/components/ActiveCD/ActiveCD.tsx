@@ -1,20 +1,30 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Album } from '../../types/album'
 import { useAlbumAnimation } from '../../hooks/useAlbumAnimation'
 import type { Origin } from '../../hooks/useAlbumAnimation'
 import { CDCase } from '../CDCase/CDCase'
 import { AlbumDetails } from '../AlbumDetails/AlbumDetails'
+import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
 
 export function ActiveCD({
   album,
   origin,
   onReturned,
+  onEdit,
 }: {
   album: Album
   origin: Origin
   onReturned: () => void
+  onEdit: (id: string) => void
 }) {
-  const { layer, caseRef, close } = useAlbumAnimation(origin, onReturned)
+  const [discIndex, setDiscIndex] = useState(0)
+  const discs = getAlbumDiscs(album)
+  const disc = discs[discIndex] ?? discs[0]
+  const { layer, caseRef, close } = useAlbumAnimation(
+    origin,
+    getCaseDepth(album),
+    onReturned,
+  )
   const button = useRef<HTMLButtonElement>(null)
   const closeRef = useRef(close)
   closeRef.current = close
@@ -28,8 +38,22 @@ export function ActiveCD({
     const keydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') closeRef.current()
       if (event.key === 'Tab') {
-        event.preventDefault()
-        button.current?.focus()
+        const controls = [
+          ...layer.current!.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href]',
+          ),
+        ].filter(
+          (element) => element.getClientRects().length && !element.hidden,
+        )
+        const first = controls[0]
+        const last = controls[controls.length - 1]
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last?.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first?.focus()
+        }
       }
     }
     window.addEventListener('keydown', keydown)
@@ -50,12 +74,22 @@ export function ActiveCD({
       <div className="collection-overlay" onClick={close} />
       <div className="viewer-controls">
         <span>TAKE A CLOSER LOOK</span>
-        <button ref={button} onClick={close} aria-label="Close album">
-          Close <span>×</span>
-        </button>
+        <div className="viewer-actions">
+          <button
+            onClick={() => {
+              onEdit(album.id)
+              close()
+            }}
+          >
+            Edit recording
+          </button>
+          <button ref={button} onClick={close} aria-label="Close album">
+            Close <span>×</span>
+          </button>
+        </div>
       </div>
-      <CDCase album={album} ref={caseRef} />
-      <AlbumDetails album={album} />
+      <CDCase album={album} disc={disc} ref={caseRef} />
+      <AlbumDetails album={album} disc={disc} onSelectDisc={setDiscIndex} />
     </div>
   )
 }

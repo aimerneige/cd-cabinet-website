@@ -328,7 +328,7 @@ h1 em {
   position: relative;
 }
 .spine-slot {
-  flex: 0 0 16px;
+  flex: 0 0 calc(16px * var(--spine-units, 1));
   height: 196px;
   position: relative;
 }
@@ -833,7 +833,7 @@ footer i {
     max-width: 1400px;
   }
   .spine-slot {
-    flex-basis: 18px;
+    flex-basis: calc(18px * var(--spine-units, 1));
   }
   .shelf-cavity {
     height: 252px;
@@ -966,7 +966,7 @@ footer i {
   }
   .spine-slot {
     height: 175px;
-    flex-basis: 18px;
+    flex-basis: calc(18px * var(--spine-units, 1));
   }
   .bookend {
     display: none;

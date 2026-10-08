@@ -3,6 +3,12 @@ export interface Track {
   title: string
   duration?: string
 }
+export interface AlbumDisc {
+  id: string
+  title?: string
+  labelUrl?: string
+  tracks: Track[]
+}
 export interface Album {
   id: string
   title: string
@@ -17,4 +23,5 @@ export interface Album {
   shelfId: string
   order: number
   tracks: Track[]
+  discs?: AlbumDisc[]
 }

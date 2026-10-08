@@ -1,13 +1,31 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useCollection } from './store/collectionStore'
 import { Shelf } from './components/Shelf/Shelf'
 import { ActiveCD } from './components/ActiveCD/ActiveCD'
 import type { Origin } from './hooks/useAlbumAnimation'
 import type { Album } from './types/album'
+import { AlbumEditor } from './components/AlbumEditor/AlbumEditor'
 
 export default function App() {
-  const { albums, activeAlbumId, editMode, openAlbum, closeAlbum, toggleEdit } =
-    useCollection()
+  const {
+    albums,
+    activeAlbumId,
+    editMode,
+    openAlbum,
+    closeAlbum,
+    toggleEdit,
+    ready,
+    saving,
+    storageError,
+    loadFailed,
+    initialize,
+    retrySave,
+  } = useCollection()
+  const [editor, setEditor] = useState<string | null>(null)
+  const pendingEditor = useRef<string | null>(null)
+  useEffect(() => {
+    void initialize()
+  }, [initialize])
   const [query, setQuery] = useState('')
   const [genre, setGenre] = useState('All recordings')
   const [sort, setSort] = useState('shelf')
@@ -139,6 +157,15 @@ export default function App() {
             </button>
           </div>
         </div>
+        <div className="recording-actions">
+          <button
+            className="add-recording"
+            disabled={!ready || loadFailed}
+            onClick={() => setEditor('new')}
+          >
+            ＋ Add recording
+          </button>
+        </div>
         <div className="shelf-caption">
           <span>
             <i />
@@ -150,15 +177,41 @@ export default function App() {
               : 'Hover to explore · click to open'}
           </span>
         </div>
-        <Shelf albums={shown} onOpen={handleOpen} />
+        {ready ? (
+          <Shelf albums={shown} onOpen={handleOpen} />
+        ) : (
+          <div className="cabinet empty-state" role="status">
+            Loading your collection…
+          </div>
+        )}
         <div className="below-shelf">
           <span>
             <span className="tiny-disc">◎</span> A little less scrolling. A
             little more listening.
           </span>
           <span>
-            {shown.length} of {albums.length} recordings <b>·</b> 2 shelves
+            {shown.length} of {albums.length} recordings <b>·</b>{' '}
+            {new Set(albums.map((album) => album.shelfId)).size} shelves
           </span>
+        </div>
+        <div
+          className="collection-storage-note"
+          role={storageError ? 'alert' : 'status'}
+        >
+          <span>
+            {storageError ??
+              (saving ? 'Saving your collection…' : 'Saved in this browser.')}
+          </span>
+          {storageError && (
+            <button
+              disabled={saving}
+              onClick={() => {
+                void retrySave().catch(() => undefined)
+              }}
+            >
+              Retry
+            </button>
+          )}
         </div>
         <footer>
           <span>For the love of physical music.</span>
@@ -172,9 +225,31 @@ export default function App() {
           key={active.id}
           album={active}
           origin={origin}
+          onEdit={(id) => {
+            pendingEditor.current = id
+          }}
           onReturned={() => {
             closeAlbum()
             setOrigin(null)
+            if (pendingEditor.current) {
+              setEditor(pendingEditor.current)
+              pendingEditor.current = null
+            }
+          }}
+        />
+      )}
+      {editor && (
+        <AlbumEditor
+          key={editor}
+          album={
+            editor === 'new'
+              ? undefined
+              : albums.find((album) => album.id === editor)
+          }
+          onClose={() => {
+            setEditor(null)
+            setQuery('')
+            setGenre('All recordings')
           }}
         />
       )}

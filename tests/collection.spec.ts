@@ -77,6 +77,286 @@ test('search, filtering and keyboard sorting work', async ({ page }) => {
   )
   await page.getByRole('button', { name: 'Done arranging' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(
+    page.getByText('Saved in this browser.', { exact: true }),
+  ).toBeVisible()
+  await page.reload()
+  await expect(page.locator('.shelf-cd').nth(1)).toHaveAttribute(
+    'data-album-id',
+    'album-1',
+  )
+})
+
+test('multi-disc cases are thicker and each disc has its own track list', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const single = page.locator('[data-album-id="album-1"]')
+  const double = page.locator('[data-album-id="album-3"]')
+  await expect(double).toBeVisible()
+  expect((await double.locator('..').boundingBox())!.width).toBeGreaterThan(
+    (await single.locator('..').boundingBox())!.width * 1.4,
+  )
+  await double.click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await expect(page.locator('.album-meta')).toContainText('2 CDs')
+  await expect(page.locator('.track-list')).toContainText('An Introduction')
+  await page.getByRole('button', { name: 'Close album' }).focus()
+  await page.keyboard.press('Tab')
+  await expect(
+    page.getByRole('button', { name: 'Disc 1', exact: true }),
+  ).toBeFocused()
+  await page.getByRole('button', { name: 'Disc 2', exact: true }).click()
+  await expect(page.locator('.track-list')).toContainText('The Space Between')
+  await expect(page.locator('.track-list')).not.toContainText('An Introduction')
+  await expect(page.locator('.tray-disc-label')).toHaveText('DISC 2 / 2')
+  await page.getByRole('button', { name: 'Close album' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('uploaded artwork, multi-disc additions and edits survive a reload', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await expect(page.locator('.shelf-cd')).toHaveCount(24)
+  const image = await page.screenshot()
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page
+    .getByRole('textbox', { name: 'Album title', exact: true })
+    .fill('Uploaded Session')
+  await page
+    .getByRole('textbox', { name: 'Artist', exact: true })
+    .fill('Local Artist')
+  await page
+    .getByRole('combobox', { name: 'Number of discs' })
+    .selectOption('2')
+  await page
+    .getByLabel('Upload cover artwork')
+    .setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: image })
+  await expect(
+    page.getByRole('img', { name: 'Cover preview' }),
+  ).toHaveAttribute('src', /^data:image\/png/)
+  await page
+    .getByLabel('Upload spine artwork')
+    .setInputFiles({ name: 'spine.png', mimeType: 'image/png', buffer: image })
+  await expect(
+    page.getByRole('img', { name: 'Spine preview' }),
+  ).toHaveAttribute('src', /^data:image\/png/)
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.locator('.shelf-cd')).toHaveCount(25)
+  await page.reload()
+  const added = page.getByRole('button', {
+    name: 'Open Uploaded Session by Local Artist',
+    exact: true,
+  })
+  await expect(added).toBeVisible()
+  await expect(added.locator('img')).toHaveAttribute('src', /^data:image\/png/)
+  await added.click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await expect(
+    page.getByRole('img', { name: 'Uploaded Session cover artwork' }),
+  ).toHaveAttribute('src', /^data:image\/png/)
+  await expect(page.locator('.case-spine img')).toHaveAttribute(
+    'src',
+    /^data:image\/png/,
+  )
+  await page.getByRole('button', { name: 'Disc 2', exact: true }).click()
+  await expect(page.locator('.empty-tracks')).toBeVisible()
+  await page
+    .getByRole('button', { name: 'Edit recording', exact: true })
+    .click()
+  await expect(
+    page.getByRole('dialog', { name: 'Edit recording', exact: true }),
+  ).toBeVisible()
+  await page
+    .getByRole('textbox', { name: 'Album title', exact: true })
+    .fill('Updated Session')
+  await page
+    .getByRole('combobox', { name: 'Number of discs' })
+    .selectOption('3')
+  await page.getByRole('button', { name: 'Use generated spine' }).click()
+  await page.getByRole('button', { name: 'Save changes' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.reload()
+  const updated = page.getByRole('button', {
+    name: 'Open Updated Session by Local Artist',
+    exact: true,
+  })
+  await expect(updated).toBeVisible()
+  await expect(updated.locator('img')).toHaveCount(0)
+  await updated.click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await expect(page.locator('.album-meta')).toContainText('3 CDs')
+  await page.screenshot({ path: 'test-results/multi-disc-uploaded.png' })
+})
+
+test('invalid uploads explain the problem without adding a recording', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  const input = page.getByLabel('Upload cover artwork')
+  await input.setInputFiles({
+    name: 'notes.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('not an image'),
+  })
+  await expect(page.getByRole('alert')).toHaveText(
+    'Choose a JPG, PNG or WebP image.',
+  )
+  await input.setInputFiles({
+    name: 'large.png',
+    mimeType: 'image/png',
+    buffer: Buffer.alloc(5 * 1024 * 1024 + 1),
+  })
+  await expect(page.getByRole('alert')).toHaveText(
+    'Choose an image smaller than 5 MB.',
+  )
+  await input.setInputFiles({
+    name: 'corrupt.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('not a real PNG'),
+  })
+  await expect(page.getByRole('alert')).toHaveText(
+    'This file could not be opened as an image.',
+  )
+  await page
+    .getByRole('textbox', { name: 'Album title', exact: true })
+    .fill('Missing artwork')
+  await page
+    .getByRole('textbox', { name: 'Artist', exact: true })
+    .fill('Local Artist')
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.getByRole('alert')).toHaveText(
+    'Upload a cover image to add this recording.',
+  )
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await expect(page.locator('.shelf-cd')).toHaveCount(24)
+})
+
+test('a storage read failure can be retried without overwriting the saved collection', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const open = indexedDB.open.bind(indexedDB)
+    indexedDB.open = (name, version) => {
+      if (sessionStorage.getItem('test-block-storage') === 'true')
+        throw new DOMException('Storage blocked', 'SecurityError')
+      return open(name, version)
+    }
+  })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Edit shelf', exact: true }).click()
+  const source = page.locator('[data-album-id="album-1"]')
+  const position = (await source.locator('..').boundingBox())!
+  await source.focus()
+  await page.keyboard.press('Space')
+  await expect(source.locator('..')).toHaveClass(/is-dragging/)
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  )
+  await page.keyboard.press('ArrowRight')
+  await expect
+    .poll(async () => (await source.locator('..').boundingBox())!.x)
+    .toBeGreaterThan(position.x + position.width / 2)
+  await page.keyboard.press('Space')
+  await expect(page.locator('.shelf-cd').first()).toHaveAttribute(
+    'data-album-id',
+    'album-2',
+  )
+  await expect(
+    page.getByText('Saved in this browser.', { exact: true }),
+  ).toBeVisible()
+  await page.evaluate(() =>
+    sessionStorage.setItem('test-block-storage', 'true'),
+  )
+  await page.reload()
+  await expect(page.getByRole('alert')).toContainText('could not be loaded')
+  await expect(
+    page.getByRole('button', { name: 'Add recording' }),
+  ).toBeDisabled()
+  await page.evaluate(() => sessionStorage.removeItem('test-block-storage'))
+  await page.getByRole('button', { name: 'Retry', exact: true }).click()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.locator('.shelf-cd').first()).toHaveAttribute(
+    'data-album-id',
+    'album-2',
+  )
+  await expect(
+    page.getByRole('button', { name: 'Add recording' }),
+  ).toBeEnabled()
+})
+
+test('a failed save reports the error and rolls back uploaded artwork', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await page.goto('/')
+  await expect(page.locator('.shelf-cd')).toHaveCount(24)
+  const image = await page.screenshot()
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Unsaved recording')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
+  await page.getByLabel('Upload cover artwork').setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: image })
+  await expect(page.getByRole('img', { name: 'Cover preview' })).toBeVisible()
+  await page.evaluate(() => {
+    const put = IDBObjectStore.prototype.put
+    IDBObjectStore.prototype.put = function (value, key) {
+      if (this.name === 'collection') throw new DOMException('Storage full', 'QuotaExceededError')
+      return put.call(this, value, key)
+    }
+  })
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.editor-error')).toContainText('could not be saved')
+  await expect(page.locator('.collection-storage-note')).toContainText('could not be saved')
+  await expect(page.locator('.shelf-cd')).toHaveCount(24)
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await page.reload()
+  await expect(page.locator('.shelf-cd')).toHaveCount(24)
+  expect(await page.evaluate(() => new Promise<number>((resolve, reject) => {
+    const request = indexedDB.open('cd-cabinet')
+    request.onerror = () => reject(request.error)
+    request.onsuccess = () => {
+      const database = request.result
+      const transaction = database.transaction('artwork', 'readonly')
+      const count = transaction.objectStore('artwork').count()
+      transaction.oncomplete = () => { database.close(); resolve(count.result) }
+      transaction.onerror = () => { database.close(); reject(transaction.error) }
+    }
+  }))).toBe(0)
+  expect(errors).toEqual([])
+})
+
+test('the artwork editor fits a phone and restores focus on cancel', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  const source = page.locator('[data-album-id="album-1"]')
+  await source.click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await page
+    .getByRole('button', { name: 'Edit recording', exact: true })
+    .click()
+  const editor = page.getByRole('dialog', {
+    name: 'Edit recording',
+    exact: true,
+  })
+  await expect(editor).toBeVisible()
+  expect((await editor.boundingBox())!.width).toBeLessThanOrEqual(390)
+  await expect(
+    page.getByRole('textbox', { name: 'Album title', exact: true }),
+  ).toHaveValue('Blue Hours')
+  await page.screenshot({ path: 'test-results/editor-mobile.png' })
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.screenshot({ path: 'test-results/editor-desktop.png' })
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(source).toBeFocused()
+  await expect(page.locator('.shelf-cd')).toHaveCount(24)
 })
 
 test('pointer dragging moves a recording into the target slot', async ({ page }) => {
