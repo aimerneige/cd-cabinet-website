@@ -20,6 +20,10 @@ export function useDiscAnimation(discs: AlbumDisc[]) {
 
   const selectDisc = (index: number) => {
     if (closing.current || animation.current || index === discIndex) return
+    if (discs.length === 3 && discIndex > 0 && index > 0) {
+      setDiscIndex(index)
+      return
+    }
     const tray = trayRef.current
     if (!tray) return
     const target = discs.length === 3 ? (index === 0 ? 0 : 1) : index % 2
@@ -45,12 +49,7 @@ export function useDiscAnimation(discs: AlbumDisc[]) {
     setIsTurning(true)
     const tl = gsap.timeline({ onComplete: finish })
     animation.current = tl
-    if (discs.length === 3 && position.current === target) {
-      tl.to(tray, { rotationY: -130, duration: 0.22, ease: 'power2.out' }).to(
-        tray,
-        { rotationY: -150, duration: 0.3, ease: 'power2.inOut' },
-      )
-    } else if (position.current === target) {
+    if (position.current === target) {
       // 同一面的跨页切换先翻开托盘，在隐藏面换页后再翻回。
       tl.to(tray, {
         rotationY: (1 - target) * -150,
