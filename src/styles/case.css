@@ -6,6 +6,59 @@
   --case-depth: 24px;
   perspective: 1600px;
 }
+.case-body {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.case-rear {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg) translateZ(calc(var(--case-depth) / 2 + 1px));
+  backface-visibility: hidden;
+  border: 5px solid #d4d7ccbb;
+  overflow: hidden;
+}
+.case-rear > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.generated-back-cover {
+  height: 100%;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+.generated-back-cover > span,
+.generated-back-cover footer {
+  font-size: 7px;
+  letter-spacing: 1px;
+}
+.generated-back-cover h3 {
+  font: 28px/1.1 'Libre Caslon Display', Georgia, serif;
+  margin: 12px 0 5px;
+}
+.generated-back-cover p {
+  font-size: 9px;
+  margin: 0 0 12px;
+}
+.generated-back-cover ol {
+  padding-left: 15px;
+  margin: 0;
+  font-size: 8px;
+}
+.generated-back-cover li {
+  padding: 3px 0;
+}
+.generated-back-cover li small {
+  float: right;
+  font-size: 7px;
+}
+.generated-back-cover footer {
+  margin-top: auto;
+  padding-top: 10px;
+}
 .case-back {
   transform: translateZ(calc(var(--case-depth) / -2));
 }
@@ -48,6 +101,7 @@
   transform: rotateY(180deg) translateZ(2px);
 }
 .selected-disc-label {
+  backface-visibility: hidden;
   position: absolute;
   right: 8px;
   bottom: -18px;

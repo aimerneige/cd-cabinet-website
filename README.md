@@ -28,11 +28,13 @@ Use Node.js 22.12 or later.
 
 Hover or focus a spine, then click or press Enter to pull out the album. Its jewel case opens to reveal the artwork and disc. Close, Escape, or the background returns it to its original slot using the same timeline in reverse. Reduced motion uses a short fade.
 
+Choose **Front**, **Inside** or **Back** to inspect the case. Back flips the entire case while preserving the current lid and tray angles: an open case stays open, and a closed case stays closed. Back covers can be uploaded independently and persist after reload; without an upload, the case generates a back cover from the album details and tracks.
+
 Search by album or artist, filter by genre, and sort by shelf order, artist or year. **Edit shelf** restores the unfiltered shelf order. Drag within each shelf, or focus a CD and use Space, arrow keys and Space again to reorder. Track lists are informational; playback is intentionally absent.
 
 Multi-disc albums use hinged, double-sided trays: **Disc 1** / **Disc 2** flips the tray around its spine, and three-disc sets reveal a third disc underneath. Switching between the already visible **Disc 2** and **Disc 3** updates the selection and tracks immediately without moving the tray. Other track details update after the turn; reduced motion switches immediately. One to three discs default to standard-width jewel cases, while four to six use a thicker multi-disc case. These are representative packaging defaults; actual editions also use digipaks and box sets. The mock collection includes two-disc and three-disc sets.
 
-**Add recording** creates an album with a title, artist, year, genre, 1–6 discs and an uploaded cover. Open an existing album and choose **Edit recording** to update these details or its images. Cover and optional spine artwork accept JPG, PNG and WebP up to 5 MB each. Uploaded side artwork appears on both the shelf and case; without it the text spine is generated. Adding discs preserves existing tracks; reducing the count merges removed discs' tracks into the last remaining disc.
+**Add recording** creates an album with a title, artist, year, genre, 1–6 discs and an uploaded cover. Open an existing album and choose **Edit recording** to update these details or its images. Cover, optional back cover and spine artwork accept JPG, PNG and WebP up to 5 MB each. Uploaded side artwork appears on both the shelf and case; without it the text spine is generated. Adding discs preserves existing tracks; reducing the count merges removed discs' tracks into the last remaining disc.
 
 Albums, artwork and shelf order are saved in IndexedDB in the current browser and survive refresh. Artwork is stored separately so reordering only writes album metadata, not all uploaded image data. Clearing site data or switching browsers removes or separates this local collection. Storage failures are shown with a retry action. There is no cloud upload or synchronization.
 

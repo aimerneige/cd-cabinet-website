@@ -33,9 +33,12 @@ export function ActiveCD({
     layer,
     caseRef,
     close: closeCase,
+    view,
+    isChangingView,
+    selectView,
   } = useAlbumAnimation(origin, getCaseDepth(album), onReturned)
   const close = () => {
-    resetTray(closeCase)
+    closeCase(resetTray)
   }
   const button = useRef<HTMLButtonElement>(null)
   const closeRef = useRef(close)
@@ -107,12 +110,15 @@ export function ActiveCD({
         backDisc={backDisc}
         trayRef={trayRef}
         ref={caseRef}
+        view={view}
       />
       <AlbumDetails
         album={album}
         disc={disc}
         onSelectDisc={selectDisc}
-        isTurning={isTurning}
+        isTurning={isTurning || isChangingView}
+        view={view}
+        onSelectView={selectView}
       />
     </div>
   )

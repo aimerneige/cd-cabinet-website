@@ -74,6 +74,9 @@ export async function loadCollection(): Promise<Album[] | null> {
     saved.albums?.map((album) => ({
       ...album,
       coverUrl: restore(album.coverUrl),
+      backCoverUrl: album.backCoverUrl
+        ? restore(album.backCoverUrl)
+        : undefined,
       spineUrl: album.spineUrl ? restore(album.spineUrl) : undefined,
     })) ?? null
   )
@@ -90,6 +93,9 @@ export async function saveCollection(albums: Album[]): Promise<void> {
   const metadata = albums.map((album) => ({
     ...album,
     coverUrl: store(album.coverUrl, `${album.id}:cover`),
+    backCoverUrl: album.backCoverUrl
+      ? store(album.backCoverUrl, `${album.id}:back`)
+      : undefined,
     spineUrl: album.spineUrl
       ? store(album.spineUrl, `${album.id}:spine`)
       : undefined,

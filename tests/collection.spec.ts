@@ -200,6 +200,8 @@ test('uploaded artwork, multi-disc additions and edits survive a reload', async 
   await expect(
     page.getByRole('img', { name: 'Spine preview' }),
   ).toHaveAttribute('src', /^data:image\/png/)
+  await page.getByLabel('Upload back cover artwork').setInputFiles({ name: 'back.png', mimeType: 'image/png', buffer: image })
+  await expect(page.getByRole('img', { name: 'Back cover preview' })).toHaveAttribute('src', /^data:image\/png/)
   await page.getByRole('button', { name: 'Add recording', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.locator('.shelf-cd')).toHaveCount(25)
@@ -219,6 +221,11 @@ test('uploaded artwork, multi-disc additions and edits survive a reload', async 
     'src',
     /^data:image\/png/,
   )
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('img', { name: 'Uploaded Session back cover artwork' })).toHaveAttribute('src', /^data:image\/png/)
+  await page.getByRole('button', { name: 'Inside', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Inside', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: 'Disc 2', exact: true }).click()
   await expect(page.locator('.empty-tracks')).toBeVisible()
   await page
@@ -234,6 +241,7 @@ test('uploaded artwork, multi-disc additions and edits survive a reload', async 
     .getByRole('combobox', { name: 'Number of discs' })
     .selectOption('3')
   await page.getByRole('button', { name: 'Use generated spine' }).click()
+  await page.getByRole('button', { name: 'Use generated back cover' }).click()
   await page.getByRole('button', { name: 'Save changes' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.reload()
@@ -246,7 +254,79 @@ test('uploaded artwork, multi-disc additions and edits survive a reload', async 
   await updated.click()
   await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
   await expect(page.locator('.album-meta')).toContainText('3 CDs')
+  await expect(page.locator('.case-rear img')).toHaveCount(0)
+  await expect(page.locator('.generated-back-cover')).toContainText('Updated Session')
   await page.screenshot({ path: 'test-results/multi-disc-uploaded.png' })
+})
+
+test('back view flips the whole case while preserving the lid and disc tray', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => document.fonts.ready)
+  const source = page.locator('[data-album-id="album-18"]')
+  await source.scrollIntoViewIfNeeded()
+  const origin = (await source.locator('..').boundingBox())!
+  await source.click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await page.getByRole('button', { name: 'Disc 2', exact: true }).click()
+  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 2 / 3')
+  const lid = await page.locator('.case-lid').evaluate((el) => getComputedStyle(el).transform)
+  const tray = await page.locator('.tray-leaf').evaluate((el) => getComputedStyle(el).transform)
+  const motion = page.evaluate(async () => {
+    const angles: string[] = []
+    while (document.querySelector('.case-view-selector button:last-child')?.getAttribute('aria-pressed') !== 'true') {
+      angles.push(getComputedStyle(document.querySelector('.case-lid')!).transform)
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+    }
+    return angles
+  })
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  expect((await motion).every((angle) => angle === lid)).toBe(true)
+  await expect(page.locator('.case-lid')).toHaveCSS('transform', lid)
+  await expect(page.locator('.tray-leaf')).toHaveCSS('transform', tray)
+  await expect(page.locator('.case-body')).toHaveCSS('transform', /matrix3d/)
+  await page.screenshot({ path: 'test-results/case-back-open.png' })
+  await page.getByRole('button', { name: 'Inside', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Inside', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.tray-leaf')).toHaveCSS('transform', tray)
+  await page.getByRole('button', { name: 'Front', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Front', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  const closedLid = await page.locator('.case-lid').evaluate((el) => getComputedStyle(el).transform)
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.case-lid')).toHaveCSS('transform', closedLid)
+  await page.screenshot({ path: 'test-results/case-back-closed.png' })
+  await page.getByRole('button', { name: 'Close album' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(source).toBeFocused()
+  const returned = (await source.locator('..').boundingBox())!
+  expect(returned.x).toBeCloseTo(origin.x, 0)
+  expect(returned.y).toBeCloseTo(origin.y, 0)
+})
+
+test('back view fits a phone, supports reduced motion and closes during a flip', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await page.locator('[data-album-id="album-1"]').click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  const lid = await page.locator('.case-lid').evaluate((el) => getComputedStyle(el).transform)
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.locator('.case-lid')).toHaveCSS('transform', lid)
+  for (const surface of ['.case-rear', '.lid-front']) {
+    const box = (await page.locator(surface).boundingBox())!
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(390)
+  }
+  await page.screenshot({ path: 'test-results/case-back-mobile.png' })
+  await page.getByRole('button', { name: 'Inside', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Inside', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.locator('[data-album-id="album-1"]')).toBeFocused()
 })
 
 test('invalid uploads explain the problem without adding a recording', async ({

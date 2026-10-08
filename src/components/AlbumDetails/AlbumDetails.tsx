@@ -1,16 +1,21 @@
 import type { Album, AlbumDisc } from '../../types/album'
 import { getAlbumDiscs } from '../../lib/album'
+import type { CaseView } from '../../hooks/useAlbumAnimation'
 
 export function AlbumDetails({
   album,
   disc,
   onSelectDisc,
   isTurning,
+  view,
+  onSelectView,
 }: {
   album: Album
   disc: AlbumDisc
   onSelectDisc: (index: number) => void
   isTurning: boolean
+  view: CaseView
+  onSelectView: (view: CaseView) => void
 }) {
   const discs = getAlbumDiscs(album)
   return (
@@ -29,7 +34,7 @@ export function AlbumDetails({
               <button
                 key={item.id}
                 aria-pressed={disc.id === item.id}
-                disabled={isTurning}
+                disabled={isTurning || view !== 'inside'}
                 onClick={() => onSelectDisc(index)}
               >
                 Disc {index + 1}
@@ -38,6 +43,25 @@ export function AlbumDetails({
           </div>
         )}
         {disc.title && <p className="disc-title">{disc.title}</p>}
+        <div
+          className="disc-selector case-view-selector"
+          aria-label="View the case"
+        >
+          {(['front', 'inside', 'back'] as const).map((item) => (
+            <button
+              key={item}
+              aria-pressed={view === item}
+              disabled={isTurning}
+              onClick={() => onSelectView(item)}
+            >
+              {item === 'front'
+                ? 'Front'
+                : item === 'inside'
+                  ? 'Inside'
+                  : 'Back'}
+            </button>
+          ))}
+        </div>
       </div>
       <ol className="track-list" aria-busy={isTurning}>
         {!disc.tracks.length && (

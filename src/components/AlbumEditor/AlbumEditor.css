@@ -36,6 +36,10 @@
   grid-template-columns: 1fr 1fr;
   gap: 25px;
 }
+.back-cover-upload {
+  margin-top: 22px;
+  width: calc((100% - 25px) / 2);
+}
 .artwork-upload {
   display: block;
   position: relative;
