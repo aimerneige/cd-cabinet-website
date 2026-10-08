@@ -337,8 +337,12 @@ test('OBI paper folds detach, flatten, hide and attach on both sides of the case
   const spine = page.locator('.obi-spine-fold')
   const back = page.locator('.obi-back-fold')
   const folded = await spine.evaluate((el) => getComputedStyle(el).transform)
+  await expect(paper).toHaveCSS('visibility', 'hidden')
+  await expect(page.getByRole('button', { name: 'Attached', exact: true })).toBeDisabled()
   await page.getByRole('button', { name: 'Front', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Front', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: 'Attached', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Attached', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.screenshot({ path: 'test-results/obi-attached-front.png' })
   await page.getByRole('button', { name: 'Lay flat', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Attached', exact: true })).toBeDisabled()
@@ -358,6 +362,27 @@ test('OBI paper folds detach, flatten, hide and attach on both sides of the case
   await page.getByRole('button', { name: 'Back', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.screenshot({ path: 'test-results/obi-attached-back.png' })
+  const openingMotion = page.evaluate(async () => {
+    const hiddenWhileOpen: boolean[] = []
+    while (document.querySelector('.case-view-selector button:nth-child(2)')?.getAttribute('aria-pressed') !== 'true') {
+      const lid = new DOMMatrix(getComputedStyle(document.querySelector('.case-lid')!).transform)
+      if (lid.m11 < 0.999) hiddenWhileOpen.push(getComputedStyle(document.querySelector('.obi-strip')!).visibility === 'hidden')
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+    }
+    return hiddenWhileOpen
+  })
+  await page.getByRole('button', { name: 'Inside', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Inside', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  const hiddenWhileOpen = await openingMotion
+  expect(hiddenWhileOpen.length).toBeGreaterThan(0)
+  expect(hiddenWhileOpen.every(Boolean)).toBe(true)
+  await expect(paper).toHaveCSS('visibility', 'hidden')
+  await expect(paper).toHaveAttribute('aria-hidden', 'true')
+  await expect(page.getByRole('button', { name: 'Hidden', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Attached', exact: true })).toBeDisabled()
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'Attached', exact: true })).toBeDisabled()
   await page.getByRole('button', { name: 'Lay flat', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Lay flat', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.screenshot({ path: 'test-results/obi-flat-from-back.png' })
@@ -372,6 +397,7 @@ test('OBI inspection fits a phone, respects reduced motion and closes during unf
   await page.goto('/')
   await page.locator('[data-album-id="album-1"]').click()
   await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await expect(page.locator('.obi-strip')).toHaveCSS('visibility', 'hidden')
   await page.getByRole('button', { name: 'Lay flat', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Lay flat', exact: true })).toHaveAttribute('aria-pressed', 'true')
   for (const panel of ['.obi-front', '.obi-spine-fold', '.obi-back-fold']) {
@@ -382,6 +408,8 @@ test('OBI inspection fits a phone, respects reduced motion and closes during unf
   await page.screenshot({ path: 'test-results/obi-mobile.png' })
   await page.getByRole('button', { name: 'Hidden', exact: true }).click()
   await expect(page.locator('.obi-strip')).toHaveCSS('visibility', 'hidden')
+  await page.getByRole('button', { name: 'Front', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Front', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.getByRole('button', { name: 'Attached', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Attached', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await page.emulateMedia({ reducedMotion: 'no-preference' })

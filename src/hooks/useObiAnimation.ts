@@ -10,7 +10,7 @@ export function useObiAnimation(
   const paperRef = useRef<HTMLDivElement>(null)
   const animation = useRef<gsap.core.Timeline | null>(null)
   const closing = useRef(false)
-  const [mode, setMode] = useState<ObiMode>('attached')
+  const [mode, setMode] = useState<ObiMode>('hidden')
   const [isMoving, setIsMoving] = useState(false)
   useEffect(
     () => () => {
@@ -19,8 +19,12 @@ export function useObiAnimation(
     [],
   )
 
-  const selectMode = (next: ObiMode) => {
-    if (closing.current || animation.current || next === mode) return
+  const selectMode = (next: ObiMode, onComplete?: () => void) => {
+    if (closing.current || animation.current) return
+    if (next === mode) {
+      onComplete?.()
+      return
+    }
     const paper = paperRef.current!
     const folds = paper.querySelectorAll('.obi-spine-fold, .obi-back-fold')
     const body = caseRef.current!.querySelector('.case-body')!
@@ -48,6 +52,7 @@ export function useObiAnimation(
         setMode(next)
         setIsMoving(false)
         animation.current = null
+        onComplete?.()
       },
     })
     animation.current = tl

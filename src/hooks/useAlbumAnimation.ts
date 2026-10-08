@@ -30,6 +30,7 @@ export function useAlbumAnimation(
     const root = layer.current!
     const jewel = caseRef.current!
     const lid = jewel.querySelector('.case-lid')!
+    const paper = jewel.querySelector('.obi-strip')!
     const details = root.querySelector('.album-details')!
     const overlay = root.querySelector('.collection-overlay')!
     const controls = root.querySelector('.viewer-controls')!
@@ -69,6 +70,7 @@ export function useAlbumAnimation(
         '--case-depth': `${caseDepth}px`,
       })
       gsap.set(lid, { rotationY: -165 })
+      gsap.set(paper, { autoAlpha: 0 })
       tl.to(overlay, { opacity: 1, duration: 0.15 }, 0)
         .to(jewel, { opacity: 1, duration: 0.2 }, 0)
         .to([details, controls], { opacity: 1, duration: 0.15 }, 0.1)
@@ -103,6 +105,7 @@ export function useAlbumAnimation(
           },
           0.38,
         )
+        .to(paper, { autoAlpha: 0, duration: 0.22 }, 0.9)
         .to(lid, { rotationY: -165, duration: 0.6, ease: 'power2.inOut' }, 1.12)
         .to([details, controls], { opacity: 1, duration: 0.3 }, 1.4)
     }
@@ -221,5 +224,13 @@ export function useAlbumAnimation(
       timeline.current?.reverse()
     })
   }
-  return { layer, caseRef, close, view, isChangingView, selectView }
+  return {
+    layer,
+    caseRef,
+    close,
+    view,
+    isOpen: opened.current,
+    isChangingView,
+    selectView,
+  }
 }

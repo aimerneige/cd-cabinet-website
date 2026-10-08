@@ -12,6 +12,7 @@ export function AlbumDetails({
   onSelectView,
   obiMode,
   onSelectObi,
+  isOpen,
 }: {
   album: Album
   disc: AlbumDisc
@@ -21,6 +22,7 @@ export function AlbumDetails({
   onSelectView: (view: CaseView) => void
   obiMode: ObiMode
   onSelectObi: (mode: ObiMode) => void
+  isOpen: boolean
 }) {
   const discs = getAlbumDiscs(album)
   return (
@@ -74,7 +76,7 @@ export function AlbumDetails({
               <button
                 key={item}
                 aria-pressed={obiMode === item}
-                disabled={isTurning}
+                disabled={isTurning || (item === 'attached' && isOpen)}
                 onClick={() => onSelectObi(item)}
               >
                 {item === 'attached'

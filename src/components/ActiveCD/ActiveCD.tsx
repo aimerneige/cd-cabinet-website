@@ -35,6 +35,7 @@ export function ActiveCD({
     caseRef,
     close: closeCase,
     view,
+    isOpen,
     isChangingView,
     selectView,
   } = useAlbumAnimation(origin, getCaseDepth(album), onReturned)
@@ -128,7 +129,11 @@ export function ActiveCD({
         onSelectDisc={selectDisc}
         isTurning={isTurning || isChangingView || isMoving}
         view={view}
-        onSelectView={selectView}
+        onSelectView={(next) => {
+          if (next === 'inside') selectMode('hidden', () => selectView(next))
+          else selectView(next)
+        }}
+        isOpen={isOpen}
         obiMode={obiMode}
         onSelectObi={selectMode}
       />
