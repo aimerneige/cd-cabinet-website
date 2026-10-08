@@ -3,10 +3,13 @@ import { albums } from '../data/albums'
 import { getAlbumDiscs, getCaseDepth, withDiscCount } from './album'
 
 describe('multi-disc albums', () => {
-  it('keeps legacy single-disc albums usable and makes multi-disc cases thicker', () => {
+  it('uses standard flip cases for up to three discs and fatboxes for larger sets', () => {
     expect(getAlbumDiscs(albums[0])[0].tracks).toEqual(albums[0].tracks)
     expect(getAlbumDiscs(albums[2])).toHaveLength(2)
-    expect(getCaseDepth(albums[2])).toBeGreaterThan(getCaseDepth(albums[0]))
+    expect(getCaseDepth(albums[2])).toBe(getCaseDepth(albums[0]))
+    expect(getCaseDepth(withDiscCount(albums[0], 3))).toBe(24)
+    expect(getCaseDepth(withDiscCount(albums[0], 4))).toBe(58)
+    expect(getCaseDepth(withDiscCount(albums[0], 6))).toBe(58)
   })
 
   it('adds empty discs without moving existing tracks', () => {

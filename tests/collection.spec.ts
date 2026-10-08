@@ -87,15 +87,15 @@ test('search, filtering and keyboard sorting work', async ({ page }) => {
   )
 })
 
-test('multi-disc cases are thicker and each disc has its own track list', async ({
+test('standard double cases flip their tray and each disc has its own track list', async ({
   page,
 }) => {
   await page.goto('/')
   const single = page.locator('[data-album-id="album-1"]')
   const double = page.locator('[data-album-id="album-3"]')
   await expect(double).toBeVisible()
-  expect((await double.locator('..').boundingBox())!.width).toBeGreaterThan(
-    (await single.locator('..').boundingBox())!.width * 1.4,
+  expect((await double.locator('..').boundingBox())!.width).toBeCloseTo(
+    (await single.locator('..').boundingBox())!.width,
   )
   await double.click()
   await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
@@ -107,11 +107,60 @@ test('multi-disc cases are thicker and each disc has its own track list', async 
     page.getByRole('button', { name: 'Disc 1', exact: true }),
   ).toBeFocused()
   await page.getByRole('button', { name: 'Disc 2', exact: true }).click()
+  await expect(page.locator('.track-list')).toHaveAttribute('aria-busy', 'true')
+  await expect(page.locator('.track-list')).toContainText('An Introduction')
   await expect(page.locator('.track-list')).toContainText('The Space Between')
   await expect(page.locator('.track-list')).not.toContainText('An Introduction')
-  await expect(page.locator('.tray-disc-label')).toHaveText('DISC 2 / 2')
+  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 2 / 2')
+  await expect(page.locator('.tray-leaf')).toHaveCSS('transform', /matrix3d/)
+  await page.screenshot({ path: 'test-results/disc-tray-flipped.png' })
+  await page.getByRole('button', { name: 'Disc 1', exact: true }).click()
+  await expect(page.locator('.track-list')).toContainText('An Introduction')
   await page.getByRole('button', { name: 'Close album' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('three-disc trays reveal the base disc and can close during a turn', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.locator('[data-album-id="album-18"]').click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await expect(page.locator('.tray-base .tray-disc-label')).toHaveText('DISC 3 / 3')
+  await page.getByRole('button', { name: 'Disc 3', exact: true }).click()
+  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 3 / 3')
+  await expect(page.getByRole('button', { name: 'Disc 3', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.screenshot({ path: 'test-results/triple-disc-mobile.png' })
+  const tray = (await page.locator('.tray-back').boundingBox())!
+  expect(tray.x).toBeGreaterThanOrEqual(0)
+  expect(tray.x + tray.width).toBeLessThanOrEqual(390)
+  await page.getByRole('button', { name: 'Disc 2', exact: true }).click()
+  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 2 / 3')
+  await page.getByRole('button', { name: 'Disc 1', exact: true }).click()
+  await expect(page.locator('.track-list')).toHaveAttribute('aria-busy', 'true')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.locator('[data-album-id="album-18"]')).toBeFocused()
+})
+
+test('six-disc sets support page jumps and reduced motion switches without a turn', async ({ page }) => {
+  await page.goto('/')
+  await page.locator('[data-album-id="album-1"]').click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toBeVisible()
+  await page.getByLabel('Number of discs').selectOption('6')
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.locator('[data-album-id="album-1"]').click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await page.getByRole('button', { name: 'Disc 5', exact: true }).click()
+  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 5 / 6')
+  await expect(page.locator('.tray-front .tray-disc-label')).toHaveText('DISC 5 / 6')
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.getByRole('button', { name: 'Disc 6', exact: true }).click()
+  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 6 / 6')
+  await expect(page.locator('.track-list')).toHaveAttribute('aria-busy', 'false')
+  await expect(page.locator('.tray-back .tray-disc-label')).toHaveText('DISC 6 / 6')
 })
 
 test('uploaded artwork, multi-disc additions and edits survive a reload', async ({

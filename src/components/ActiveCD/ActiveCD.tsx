@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { useDiscAnimation } from '../../hooks/useDiscAnimation'
 import type { Album } from '../../types/album'
 import { useAlbumAnimation } from '../../hooks/useAlbumAnimation'
 import type { Origin } from '../../hooks/useAlbumAnimation'
@@ -17,14 +18,25 @@ export function ActiveCD({
   onReturned: () => void
   onEdit: (id: string) => void
 }) {
-  const [discIndex, setDiscIndex] = useState(0)
   const discs = getAlbumDiscs(album)
+  const {
+    trayRef,
+    frontDisc,
+    backDisc,
+    discIndex,
+    isTurning,
+    selectDisc,
+    resetTray,
+  } = useDiscAnimation(discs)
   const disc = discs[discIndex] ?? discs[0]
-  const { layer, caseRef, close } = useAlbumAnimation(
-    origin,
-    getCaseDepth(album),
-    onReturned,
-  )
+  const {
+    layer,
+    caseRef,
+    close: closeCase,
+  } = useAlbumAnimation(origin, getCaseDepth(album), onReturned)
+  const close = () => {
+    resetTray(closeCase)
+  }
   const button = useRef<HTMLButtonElement>(null)
   const closeRef = useRef(close)
   closeRef.current = close
@@ -88,8 +100,20 @@ export function ActiveCD({
           </button>
         </div>
       </div>
-      <CDCase album={album} disc={disc} ref={caseRef} />
-      <AlbumDetails album={album} disc={disc} onSelectDisc={setDiscIndex} />
+      <CDCase
+        album={album}
+        disc={disc}
+        frontDisc={frontDisc}
+        backDisc={backDisc}
+        trayRef={trayRef}
+        ref={caseRef}
+      />
+      <AlbumDetails
+        album={album}
+        disc={disc}
+        onSelectDisc={selectDisc}
+        isTurning={isTurning}
+      />
     </div>
   )
 }

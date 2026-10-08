@@ -5,10 +5,12 @@ export function AlbumDetails({
   album,
   disc,
   onSelectDisc,
+  isTurning,
 }: {
   album: Album
   disc: AlbumDisc
   onSelectDisc: (index: number) => void
+  isTurning: boolean
 }) {
   const discs = getAlbumDiscs(album)
   return (
@@ -27,6 +29,7 @@ export function AlbumDetails({
               <button
                 key={item.id}
                 aria-pressed={disc.id === item.id}
+                disabled={isTurning}
                 onClick={() => onSelectDisc(index)}
               >
                 Disc {index + 1}
@@ -36,7 +39,7 @@ export function AlbumDetails({
         )}
         {disc.title && <p className="disc-title">{disc.title}</p>}
       </div>
-      <ol className="track-list">
+      <ol className="track-list" aria-busy={isTurning}>
         {!disc.tracks.length && (
           <li className="empty-tracks">
             No track information for this disc yet.

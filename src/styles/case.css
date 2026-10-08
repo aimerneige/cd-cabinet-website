@@ -30,6 +30,35 @@
 .case-lid {
   transform: translateZ(calc(var(--case-depth) / 2));
 }
+.tray-leaf {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transform: translateZ(3px);
+}
+.tray-front,
+.tray-back {
+  backface-visibility: hidden;
+}
+.tray-front {
+  transform: translateZ(2px);
+}
+.tray-back {
+  transform: rotateY(180deg) translateZ(2px);
+}
+.selected-disc-label {
+  position: absolute;
+  right: 8px;
+  bottom: -18px;
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: #626d56;
+}
+.disc-selector button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
 
 .spine-artwork {
   position: absolute;

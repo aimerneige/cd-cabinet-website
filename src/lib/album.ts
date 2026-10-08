@@ -7,7 +7,7 @@ export function getAlbumDiscs(album: Album): AlbumDisc[] {
 }
 
 export function getCaseDepth(album: Album): number {
-  return 24 + Math.min(getAlbumDiscs(album).length - 1, 3) * 12
+  return getAlbumDiscs(album).length <= 3 ? 24 : 58
 }
 
 export function withDiscCount(album: Album, count: number): Album {
