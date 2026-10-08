@@ -1,0 +1,32 @@
+/* 侧封在动画起点匹配实测宽度，转至正面时再收回标准盒厚。 */
+.active-layer {
+  perspective: none;
+}
+.cd-case {
+  --case-depth: 14px;
+  perspective: 1600px;
+}
+.case-back {
+  transform: translateZ(calc(var(--case-depth) / -2));
+}
+.edge-top,
+.edge-bottom {
+  height: var(--case-depth);
+}
+.edge-top {
+  top: calc(var(--case-depth) / -2);
+}
+.edge-bottom {
+  bottom: calc(var(--case-depth) / -2);
+}
+.edge-right {
+  width: var(--case-depth);
+  right: calc(var(--case-depth) / -2);
+}
+.case-spine {
+  left: calc(var(--case-depth) / -2);
+  width: var(--case-depth);
+}
+.case-lid {
+  transform: translateZ(calc(var(--case-depth) / 2));
+}
