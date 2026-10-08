@@ -55,11 +55,12 @@ export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
         <span className="spine-cap">
           {String(album.order + 1).padStart(2, '0')}
         </span>
-        <span className="spine-artist">{album.artist}</span>
-        <span className="spine-title">{album.title}</span>
-        <span className="spine-label">
-          {album.year} <i>◉</i>
+        <span className="spine-copy">
+          <span className="spine-artist">{album.artist}</span>
+          <span aria-hidden="true"> · </span>
+          <span className="spine-title">{album.title}</span>
         </span>
+        <span className="spine-label">{album.year}</span>
       </button>
     </div>
   )

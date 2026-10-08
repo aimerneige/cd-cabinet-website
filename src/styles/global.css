@@ -328,7 +328,7 @@ h1 em {
   position: relative;
 }
 .spine-slot {
-  flex: 0 0 clamp(30px, 3.8vw, 45px);
+  flex: 0 0 16px;
   height: 196px;
   position: relative;
 }
@@ -378,29 +378,26 @@ h1 em {
   letter-spacing: 1px;
   opacity: 0.7;
 }
-.spine-artist {
+.spine-copy {
   position: absolute;
   writing-mode: vertical-rl;
-  top: 28px;
-  left: 5px;
-  font-size: 8px;
-  font-weight: 500;
-  letter-spacing: 0.9px;
-  max-height: 133px;
+  top: 25px;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  letter-spacing: 0.3px;
+  text-align: start;
   overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
+.spine-artist {
+  font-weight: 500;
+}
 .spine-title {
-  position: absolute;
-  writing-mode: vertical-rl;
-  left: 22px;
-  top: 28px;
   font-family: Georgia, serif;
-  font-size: 11px;
-  letter-spacing: 0.3px;
-  max-height: 135px;
-  overflow: hidden;
-  white-space: nowrap;
+  font-size: 8px;
 }
 .spine-label {
   position: absolute;
@@ -413,10 +410,6 @@ h1 em {
   gap: 3px;
   font-size: 6px;
   letter-spacing: 0.4px;
-}
-.spine-label i {
-  font-size: 9px;
-  font-style: normal;
 }
 .bookend {
   height: 132px;
@@ -840,25 +833,13 @@ footer i {
     max-width: 1400px;
   }
   .spine-slot {
-    flex-basis: 49px;
+    flex-basis: 18px;
   }
   .shelf-cavity {
     height: 252px;
   }
   .spine-slot {
     height: 218px;
-  }
-  .spine-title {
-    font-size: 12px;
-    left: 25px;
-  }
-  .spine-artist {
-    font-size: 9px;
-    left: 7px;
-    max-height: 150px;
-  }
-  .spine-title {
-    max-height: 160px;
   }
 }
 @media (max-width: 1150px) {
@@ -883,10 +864,6 @@ footer i {
   }
   .shelf-inner {
     justify-content: center;
-  }
-  .spine-slot {
-    flex: 1;
-    max-width: 49px;
   }
   .shelf-cavity {
     padding: 26px 24px 0;
@@ -978,7 +955,7 @@ footer i {
   }
   .shelf-cavity {
     height: auto;
-    min-height: 390px;
+    min-height: 210px;
     padding: 20px 12px 0;
   }
   .shelf-inner {
@@ -989,18 +966,7 @@ footer i {
   }
   .spine-slot {
     height: 175px;
-    flex: 0 0 calc((100% - 10px) / 6);
-    max-width: none;
-  }
-  .spine-title {
-    left: 50%;
-    font-size: 10px;
-    max-height: 119px;
-  }
-  .spine-artist {
-    left: 7px;
-    font-size: 7px;
-    max-height: 118px;
+    flex-basis: 18px;
   }
   .bookend {
     display: none;

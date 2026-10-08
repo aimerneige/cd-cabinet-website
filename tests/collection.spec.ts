@@ -61,10 +61,15 @@ test('search, filtering and keyboard sorting work', async ({ page }) => {
   const initialPosition = await first.locator('..').boundingBox()
   await page.keyboard.press('Space')
   await expect(first.locator('..')).toHaveClass(/is-dragging/)
+  await page.evaluate(
+    () => new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    }),
+  )
   await page.keyboard.press('ArrowRight')
   await expect
     .poll(async () => (await first.locator('..').boundingBox())!.x)
-    .toBeGreaterThan(initialPosition!.x + 20)
+    .toBeGreaterThan(initialPosition!.x + initialPosition!.width / 2)
   await page.keyboard.press('Space')
   await expect(page.locator('.shelf-cd').nth(1)).toHaveAttribute(
     'data-album-id',
