@@ -1,15 +1,24 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import type { AlbumDisc } from '../types/album'
 
-export function useDiscAnimation(discs: AlbumDisc[]) {
+export function useDiscAnimation(discs: AlbumDisc[], initialIndex = 0) {
   const trayRef = useRef<HTMLDivElement>(null)
   const animation = useRef<gsap.core.Timeline | null>(null)
-  const position = useRef(0)
+  const initialSide = discs.length === 3 ? Math.min(initialIndex, 1) : initialIndex % 2
+  const position = useRef(initialSide)
   const closing = useRef(false)
-  const [discIndex, setDiscIndex] = useState(0)
-  const [faces, setFaces] = useState([0, Math.min(1, discs.length - 1)])
+  const [discIndex, setDiscIndex] = useState(initialIndex)
+  const [faces, setFaces] = useState(() => {
+    const initialFaces = [0, Math.min(1, discs.length - 1)]
+    if (discs.length !== 3 || initialIndex !== 2) initialFaces[initialSide] = initialIndex
+    return initialFaces
+  })
   const [isTurning, setIsTurning] = useState(false)
+
+  useLayoutEffect(() => {
+    gsap.set(trayRef.current, { rotationY: position.current * -150 })
+  }, [])
 
   useEffect(
     () => () => {

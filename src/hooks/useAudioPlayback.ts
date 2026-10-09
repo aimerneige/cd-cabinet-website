@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { AlbumDisc } from '../types/album'
+import type { Album, AlbumDisc } from '../types/album'
 import { useTranslation } from '../i18n'
 
 export function useAudioPlayback() {
@@ -7,6 +7,7 @@ export function useAudioPlayback() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const source = useRef('')
   const request = useRef(0)
+  const [album, setAlbum] = useState<Album | null>(null)
   const [disc, setDisc] = useState<AlbumDisc | null>(null)
   const [trackIndex, setTrackIndex] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -42,7 +43,7 @@ export function useAudioPlayback() {
     })
   }
 
-  function loadTrack(nextDisc: AlbumDisc, index: number) {
+  function loadTrack(nextDisc: AlbumDisc, index: number, autoplay = true) {
     const audio = audioRef.current!
     request.current += 1
     audio.pause()
@@ -54,6 +55,7 @@ export function useAudioPlayback() {
     setCurrentTime(0)
     setDuration(0)
     setPlaying(false)
+    setError('')
     const track = nextDisc.tracks[index]
     if (!track?.audio) {
       audio.load()
@@ -63,8 +65,12 @@ export function useAudioPlayback() {
     source.current = URL.createObjectURL(track.audio)
     audio.src = source.current
     audio.load()
-    // 在点击事件内启动音频，保留移动浏览器的用户播放授权。
-    play()
+    if (autoplay) play()
+  }
+
+  function loadDisc(nextAlbum: Album, nextDisc: AlbumDisc, index: number) {
+    setAlbum(nextAlbum)
+    loadTrack(nextDisc, index, false)
   }
 
   function stop() {
@@ -87,6 +93,19 @@ export function useAudioPlayback() {
     } else play()
   }
 
+  function eject() {
+    stop()
+    const audio = audioRef.current!
+    audio.removeAttribute('src')
+    audio.load()
+    if (source.current) URL.revokeObjectURL(source.current)
+    source.current = ''
+    setAlbum(null)
+    setDisc(null)
+    setDuration(0)
+    setError('')
+  }
+
   function selectTrack(index: number) {
     if (disc && index >= 0 && index < disc.tracks.length) loadTrack(disc, index)
   }
@@ -104,8 +123,8 @@ export function useAudioPlayback() {
   }
 
   return {
-    audioRef, disc, trackIndex, playing, currentTime, duration, volume, error,
-    loadTrack, selectTrack, playPause, stop, seek, setVolume,
+    audioRef, album, disc, trackIndex, playing, currentTime, duration, volume, error,
+    loadDisc, selectTrack, play, playPause, stop, eject, seek, setVolume,
     audioEvents: {
       onTimeUpdate: () => setCurrentTime(audioRef.current!.currentTime),
       onLoadedMetadata: updateDuration,
@@ -125,3 +144,5 @@ export function useAudioPlayback() {
     },
   }
 }
+
+export type AudioPlayback = ReturnType<typeof useAudioPlayback>

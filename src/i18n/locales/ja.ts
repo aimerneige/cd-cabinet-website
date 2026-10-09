@@ -174,6 +174,7 @@ export const ja: Record<keyof typeof en, string> = {
   'player.playFailed': '再生できませんでした。再生ボタンを押すか、対応する音声を追加してください。',
   'player.playDisc': 'ディスク {number} を最初から再生',
   'player.playTrack': '「{title}」を再生',
+  'player.collapse': 'しまう',
   'editor.audioHeading': '音楽と曲目',
   'editor.audioFile': '音声',
   'editor.removeTrackAction': '曲を削除',

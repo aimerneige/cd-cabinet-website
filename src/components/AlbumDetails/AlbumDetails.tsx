@@ -51,7 +51,7 @@ export function AlbumDetails({
               <button
                 key={item.id}
                 aria-pressed={disc.id === item.id}
-                disabled={isTurning || isPlayingDisc || view !== 'inside' || obiMode === 'flat'}
+                disabled={isTurning || view !== 'inside' || obiMode === 'flat'}
                 onClick={() => onSelectDisc(index)}
               >
                 {t('viewer.discButton', { number: index + 1 })}

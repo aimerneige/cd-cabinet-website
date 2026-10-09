@@ -7,6 +7,8 @@ import type { Album } from './types/album'
 import { AlbumEditor } from './components/AlbumEditor/AlbumEditor'
 import { useTranslation } from './i18n'
 import { LanguageSwitcher } from './components/LanguageSwitcher/LanguageSwitcher'
+import { useAudioPlayback } from './hooks/useAudioPlayback'
+import { CompactPlayer } from './components/CDPlayer/CDPlayer'
 
 const GENRE_LIST = [
   { key: 'All recordings', labelKey: 'genres.all' as const },
@@ -18,6 +20,7 @@ const GENRE_LIST = [
 
 export default function App() {
   const { t } = useTranslation()
+  const playback = useAudioPlayback()
   const {
     albums,
     activeAlbumId,
@@ -85,6 +88,7 @@ export default function App() {
 
   return (
     <>
+      <audio ref={playback.audioRef} {...playback.audioEvents} preload="metadata" />
       <header className="site-header">
         <a className="brand" href="./">
           <span className="brand-icon">◉</span> {t('header.brand')}
@@ -242,6 +246,7 @@ export default function App() {
           key={active.id}
           album={active}
           origin={origin}
+          playback={playback}
           onEdit={(id) => {
             pendingEditor.current = id
           }}
@@ -255,6 +260,7 @@ export default function App() {
           }}
         />
       )}
+      {!active && !editor && playback.disc && <CompactPlayer playback={playback} />}
       {editor && (
         <AlbumEditor
           key={editor}
