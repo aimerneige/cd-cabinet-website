@@ -13,9 +13,15 @@ export function getCaseDepth(album: Album): number {
 export function withDiscCount(album: Album, count: number): Album {
   const previous = getAlbumDiscs(album)
   if (previous.length === count) return album
+  const discs = resizeDiscs(previous, album.id, count)
+  return { ...album, discs, tracks: discs.flatMap((disc) => disc.tracks) }
+}
+
+export function resizeDiscs(previous: AlbumDisc[], albumId: string, count: number): AlbumDisc[] {
+  if (previous.length === count) return previous
   const discs = Array.from({ length: count }, (_, index) => ({
     ...previous[index],
-    id: previous[index]?.id ?? `${album.id}-disc-${index + 1}`,
+    id: previous[index]?.id ?? `${albumId}-disc-${index + 1}`,
     tracks: previous[index]?.tracks ?? [],
   }))
   if (count < previous.length) {
@@ -27,5 +33,5 @@ export function withDiscCount(album: Album, count: number): Album {
       ],
     }
   }
-  return { ...album, discs, tracks: discs.flatMap((disc) => disc.tracks) }
+  return discs
 }

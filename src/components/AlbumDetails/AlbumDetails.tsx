@@ -14,6 +14,9 @@ export function AlbumDetails({
   obiMode,
   onSelectObi,
   isOpen,
+  onPlayTrack,
+  currentTrackId,
+  isPlayingDisc,
 }: {
   album: Album
   disc: AlbumDisc
@@ -24,6 +27,9 @@ export function AlbumDetails({
   obiMode: ObiMode
   onSelectObi: (mode: ObiMode) => void
   isOpen: boolean
+  onPlayTrack: (index: number) => void
+  currentTrackId?: string
+  isPlayingDisc: boolean
 }) {
   const { t } = useTranslation()
   const discs = getAlbumDiscs(album)
@@ -45,7 +51,7 @@ export function AlbumDetails({
               <button
                 key={item.id}
                 aria-pressed={disc.id === item.id}
-                disabled={isTurning || view !== 'inside' || obiMode === 'flat'}
+                disabled={isTurning || isPlayingDisc || view !== 'inside' || obiMode === 'flat'}
                 onClick={() => onSelectDisc(index)}
               >
                 {t('viewer.discButton', { number: index + 1 })}
@@ -62,7 +68,7 @@ export function AlbumDetails({
             <button
               key={item}
               aria-pressed={view === item}
-              disabled={isTurning || obiMode === 'flat'}
+              disabled={isTurning || isPlayingDisc || obiMode === 'flat'}
               onClick={() => onSelectView(item)}
             >
               {item === 'front'
@@ -80,7 +86,7 @@ export function AlbumDetails({
               <button
                 key={item}
                 aria-pressed={obiMode === item}
-                disabled={isTurning || (item === 'attached' && isOpen)}
+                disabled={isTurning || isPlayingDisc || (item === 'attached' && isOpen)}
                 onClick={() => onSelectObi(item)}
               >
                 {item === 'attached'
@@ -100,11 +106,17 @@ export function AlbumDetails({
           </li>
         )}
         {disc.tracks.map((track, i) => (
-          <li key={track.id}>
+          <li key={track.id} className={currentTrackId === track.id ? 'current-track' : ''}>
             <span className="track-number">
               {String(i + 1).padStart(2, '0')}
             </span>
-            <span>{track.title}</span>
+            <button
+              className="track-title"
+              disabled={isTurning}
+              aria-label={t('player.playTrack', { title: track.title })}
+              aria-current={currentTrackId === track.id ? 'true' : undefined}
+              onClick={() => onPlayTrack(i)}
+            >{track.title}</button>
             <time>{track.duration}</time>
           </li>
         ))}

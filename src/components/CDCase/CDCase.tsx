@@ -17,9 +17,12 @@ export const CDCase = forwardRef<
     view: CaseView
     paperRef: RefObject<HTMLDivElement | null>
     obiMode: ObiMode
+    onPlayDisc: () => void
+    canPlayDisc: boolean
+    ejectedDiscId?: string
   }
 >(function CDCase(
-  { album, disc, frontDisc, backDisc, trayRef, view, paperRef, obiMode },
+  { album, disc, frontDisc, backDisc, trayRef, view, paperRef, obiMode, onPlayDisc, canPlayDisc, ejectedDiscId },
   ref,
 ) {
   const { t } = useTranslation()
@@ -77,11 +80,11 @@ export const CDCase = forwardRef<
           )}
         </div>
         <div className="case-edge edge-right" />
-        {discs.length === 3 && <DiscTray album={album} disc={discs[2]} />}
+        {discs.length === 3 && <DiscTray album={album} disc={discs[2]} onPlay={discs[2].id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === discs[2].id} />}
         <div className="tray-leaf" ref={trayRef}>
-          <DiscTray album={album} disc={frontDisc} side="front" />
+          <DiscTray album={album} disc={frontDisc} side="front" onPlay={frontDisc.id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === frontDisc.id} />
           {discs.length > 1 && (
-            <DiscTray album={album} disc={backDisc} side="back" />
+            <DiscTray album={album} disc={backDisc} side="back" onPlay={backDisc.id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === backDisc.id} />
           )}
         </div>
         <span className="selected-disc-label" aria-live="polite">
@@ -115,17 +118,33 @@ function DiscTray({
   album,
   disc,
   side = 'base',
+  onPlay,
+  ejected,
 }: {
   album: Album
   disc: AlbumDisc
   side?: string
+  onPlay?: () => void
+  ejected?: boolean
 }) {
+  const { t } = useTranslation()
   const discs = getAlbumDiscs(album)
   return (
     <div className={`disc-tray tray-${side}`}>
       <div className="tray-ring" />
       <div
-        className="disc"
+        className={`disc${ejected ? ' is-ejected' : ''}`}
+        data-disc-id={disc.id}
+        role={onPlay ? 'button' : undefined}
+        tabIndex={onPlay ? 0 : undefined}
+        aria-label={onPlay ? t('player.playDisc', { number: discs.findIndex((item) => item.id === disc.id) + 1 }) : undefined}
+        onClick={onPlay}
+        onKeyDown={onPlay ? (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            onPlay()
+          }
+        } : undefined}
         style={{
           backgroundImage: `url(${disc.labelUrl ?? album.coverUrl})`,
         }}

@@ -104,6 +104,10 @@ test('standard double cases flip their tray and each disc has its own track list
   await page.getByRole('button', { name: 'Close album' }).focus()
   await page.keyboard.press('Tab')
   await expect(
+    page.getByRole('button', { name: 'Play disc 1 from the beginning' }),
+  ).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(
     page.getByRole('button', { name: 'Disc 1', exact: true }),
   ).toBeFocused()
   await page.getByRole('button', { name: 'Disc 2', exact: true }).click()

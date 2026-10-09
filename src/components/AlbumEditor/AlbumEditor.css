@@ -170,6 +170,24 @@
   font-size: 11px;
   line-height: 1.7;
 }
+.album-editor .editor-audio { margin-top: 26px; padding-top: 18px; border-top: 1px solid #d2d5c6; }
+.editor-audio legend { padding: 0 10px 0 0; font-size: 13px; }
+.audio-upload { position: relative; display: inline-block; padding: 9px 12px; border: 1px solid #aab49b; color: #58664a; font-size: 11px; cursor: pointer; }
+.audio-upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.audio-upload:focus-within { outline: 2px solid #668064; outline-offset: 3px; }
+fieldset:disabled .audio-upload { opacity: .5; cursor: default; }
+.audio-guidance { font-size: 10px; color: #7b8470; line-height: 1.7; }
+.editor-track-list { padding: 0; margin: 18px 0 0; list-style: none; }
+.editor-track-list li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #d2d5c6; }
+.editor-track-info { flex: 1; min-width: 0; }
+.editor-track-info input { width: 100%; padding: 6px 8px; border: 1px solid #bec3b1; background: #f5f3ec; color: #3c4931; font-size: 11px; }
+.editor-track-info small { display: flex; justify-content: space-between; gap: 8px; margin-top: 5px; font-size: 9px; color: #7b8470; }
+.editor-track-info small span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.editor-track-info time { white-space: nowrap; }
+.editor-track-actions { display: flex; align-items: center; gap: 7px; }
+.track-audio-upload { padding: 6px 8px; font-size: 10px; }
+.editor-track-actions button { background: transparent; border: 0; color: #8c5948; font-size: 9px; padding: 5px 0; }
+.editor-track-actions .remove-audio { font-size: 17px; color: #737d68; }
 .editor-footer {
   border-top: 1px solid #d2d5c6;
   margin-top: 25px;
@@ -237,6 +255,8 @@
   line-height: 1.7;
 }
 @media (max-width: 700px) {
+  .editor-track-list li { gap: 8px; flex-wrap: wrap; }
+  .editor-track-actions { margin-left: 25px; width: 100%; justify-content: flex-end; }
   .album-editor {
     padding: 22px;
   }

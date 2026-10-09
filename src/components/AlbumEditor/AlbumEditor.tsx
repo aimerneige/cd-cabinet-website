@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import type { Album } from '../../types/album'
-import { getAlbumDiscs, getCaseDepth, withDiscCount } from '../../lib/album'
+import type { Album, AlbumDisc, Track } from '../../types/album'
+import { getAlbumDiscs, getCaseDepth, resizeDiscs } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
+import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
 import { useTranslation } from '../../i18n'
 import './AlbumEditor.css'
@@ -26,17 +27,20 @@ export function AlbumEditor({
     String(album?.year ?? new Date().getFullYear()),
   )
   const [genre, setGenre] = useState(album?.genre ?? 'Alternative')
-  const [discCount, setDiscCount] = useState(
-    album ? getAlbumDiscs(album).length : 1,
+  const [discs, setDiscs] = useState<AlbumDisc[]>(
+    () => album ? getAlbumDiscs(album) : [{ id: `${draftId}-disc-1`, tracks: [] }],
   )
+  const discCount = discs.length
+  const [editingDisc, setEditingDisc] = useState(0)
   const [cover, setCover] = useState(album?.coverUrl ?? '')
   const [spine, setSpine] = useState(album?.spineUrl ?? '')
   const [backCover, setBackCover] = useState(album?.backCoverUrl ?? '')
   const [obi, setObi] = useState(album?.obiUrl ?? '')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [readingAudio, setReadingAudio] = useState(false)
   const [saving, setSaving] = useState(false)
-  const imageLoads = useRef(0)
+  const pendingUploads = useRef(0)
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
 
@@ -62,7 +66,7 @@ export function AlbumEditor({
     kind: 'cover' | 'spine' | 'back' | 'obi',
   ) {
     if (!file) return
-    imageLoads.current += 1
+    pendingUploads.current += 1
     setLoading(true)
     setError('')
     try {
@@ -86,9 +90,55 @@ export function AlbumEditor({
             : t('artworkErrors.readFailed'),
         )
     } finally {
-      imageLoads.current -= 1
-      if (alive.current) setLoading(imageLoads.current > 0)
+      pendingUploads.current -= 1
+      if (alive.current) setLoading(pendingUploads.current > 0)
     }
+  }
+
+  async function uploadAudio(files: File[], trackId?: string) {
+    if (!files.length || loading || saving) return
+    const discId = discs[editingDisc].id
+    pendingUploads.current += 1
+    setLoading(true)
+    setReadingAudio(true)
+    setError('')
+    let fileName = ''
+    try {
+      const tracks: Track[] = []
+      // 顺序校验限制解码资源占用；整批成功后才更新草稿。
+      for (const file of files) {
+        fileName = file.name
+        const result = await readAudio(file)
+        if (!alive.current) return
+        tracks.push({
+          id: crypto.randomUUID?.() ?? `track-${crypto.getRandomValues(new Uint32Array(2)).join('-')}`,
+          title: file.name.replace(/\.[^.]+$/, ''),
+          ...result,
+        })
+      }
+      setDiscs((previous) => previous.map((disc) => disc.id === discId ? {
+        ...disc,
+        tracks: trackId
+          ? disc.tracks.map((track) => track.id === trackId ? {
+            ...track, audio: tracks[0].audio, audioName: tracks[0].audioName, duration: tracks[0].duration,
+          } : track)
+          : [...disc.tracks, ...tracks],
+      } : disc))
+    } catch (cause) {
+      if (alive.current) setError(`${fileName}: ${cause instanceof Error ? cause.message : t('audioErrors.decodeFailed')}`)
+    } finally {
+      pendingUploads.current -= 1
+      if (alive.current) {
+        setLoading(pendingUploads.current > 0)
+        setReadingAudio(false)
+      }
+    }
+  }
+
+  function updateTrack(id: string, changes: Partial<Track>) {
+    setDiscs((previous) => previous.map((disc, index) => index === editingDisc ? {
+      ...disc, tracks: disc.tracks.map((track) => track.id === id ? { ...track, ...changes } : track),
+    } : disc))
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -100,6 +150,10 @@ export function AlbumEditor({
     }
     if (!title.trim() || !artist.trim()) {
       setError(t('editor.errorMissingFields'))
+      return
+    }
+    if (discs.some((disc) => disc.tracks.some((track) => !track.title.trim()))) {
+      setError(t('editor.errorMissingTrackTitle'))
       return
     }
     setSaving(true)
@@ -134,22 +188,22 @@ export function AlbumEditor({
       tracks: [],
     }
     try {
-      await saveAlbum(
-        withDiscCount(
-          {
-            ...base,
-            title: title.trim(),
-            artist: artist.trim(),
-            year: Number(year),
-            genre,
-            coverUrl: cover,
-            backCoverUrl: backCover || undefined,
-            obiUrl: obi || undefined,
-            spineUrl: spine || undefined,
-          },
-          discCount,
-        ),
-      )
+      const savedDiscs = discs.map((disc) => ({
+        ...disc, tracks: disc.tracks.map((track) => ({ ...track, title: track.title.trim() })),
+      }))
+      await saveAlbum({
+        ...base,
+        title: title.trim(),
+        artist: artist.trim(),
+        year: Number(year),
+        genre,
+        coverUrl: cover,
+        backCoverUrl: backCover || undefined,
+        obiUrl: obi || undefined,
+        spineUrl: spine || undefined,
+        discs: savedDiscs,
+        tracks: savedDiscs.flatMap((disc) => disc.tracks),
+      })
       onClose()
     } catch {
       setError(t('editor.errorSaveFailed'))
@@ -324,7 +378,7 @@ export function AlbumEditor({
           </div>
         </div>
         <p className="upload-guidance">{t('editor.uploadGuidance')}</p>
-        <fieldset disabled={saving}>
+        <fieldset disabled={saving || loading}>
           <div className="editor-fields">
             <label>
               {t('editor.albumTitle')}
@@ -378,7 +432,11 @@ export function AlbumEditor({
               {t('editor.numberOfDiscs')}
               <select
                 value={discCount}
-                onChange={(event) => setDiscCount(Number(event.target.value))}
+                onChange={(event) => {
+                  const count = Number(event.target.value)
+                  setDiscs((previous) => resizeDiscs(previous, draftId, count))
+                  setEditingDisc((previous) => Math.min(previous, count - 1))
+                }}
               >
                 {[1, 2, 3, 4, 5, 6].map((count) => (
                   <option key={count} value={count}>
@@ -389,13 +447,72 @@ export function AlbumEditor({
             </label>
           </div>
         </fieldset>
+        <fieldset className="editor-audio" disabled={loading || saving}>
+          <legend>{t('editor.audioHeading')}</legend>
+          {discs.length > 1 && (
+            <div className="disc-selector" aria-label={t('viewer.chooseDiscAria')}>
+              {discs.map((disc, index) => (
+                <button key={disc.id} type="button" aria-pressed={editingDisc === index} onClick={() => setEditingDisc(index)}>
+                  {t('viewer.discButton', { number: index + 1 })}
+                </button>
+              ))}
+            </div>
+          )}
+          <label className="audio-upload">
+            <span>＋ {t('editor.uploadAudio')}</span>
+            <input
+              type="file" accept={AUDIO_ACCEPT} multiple aria-label={t('editor.uploadAudio')}
+              onChange={(event) => {
+                void uploadAudio([...event.target.files ?? []])
+                event.target.value = ''
+              }}
+            />
+          </label>
+          <p className="audio-guidance">{t('editor.audioGuidance')}</p>
+          <ol className="editor-track-list">
+            {discs[editingDisc].tracks.map((track, index) => (
+              <li key={track.id}>
+                <span className="track-number">{String(index + 1).padStart(2, '0')}</span>
+                <div className="editor-track-info">
+                  <input
+                    required maxLength={100} value={track.title}
+                    aria-label={t('editor.trackTitle', { number: index + 1 })}
+                    onChange={(event) => updateTrack(track.id, { title: event.target.value })}
+                  />
+                  <small><span>{track.audioName ?? t('editor.noAudio')}</span><time>{track.duration}</time></small>
+                </div>
+                <div className="editor-track-actions">
+                  <label className="audio-upload track-audio-upload" title={t('editor.replaceAudio', { title: track.title })}>
+                    <span>↑ {t('editor.audioFile')}</span>
+                    <input
+                      type="file" accept={AUDIO_ACCEPT} aria-label={t('editor.replaceAudio', { title: track.title })}
+                      onChange={(event) => {
+                        void uploadAudio([...event.target.files ?? []], track.id)
+                        event.target.value = ''
+                      }}
+                    />
+                  </label>
+                  {track.audio && (
+                    <button type="button" className="remove-audio" aria-label={t('editor.removeAudio', { title: track.title })} onClick={() => updateTrack(track.id, { audio: undefined, audioName: undefined })}>×</button>
+                  )}
+                  <button
+                    type="button" className="remove-track" aria-label={t('editor.removeTrack', { title: track.title })}
+                    onClick={() => setDiscs((previous) => previous.map((disc, discIndex) => discIndex === editingDisc ? {
+                      ...disc, tracks: disc.tracks.filter((item) => item.id !== track.id),
+                    } : disc))}
+                  >{t('editor.removeTrackAction')}</button>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </fieldset>
         {error && (
           <p className="editor-error" role="alert">
             {error}
           </p>
         )}
         <div className="editor-footer">
-          <span>{loading ? t('editor.readingArtwork') : t('editor.savedNotice')}</span>
+          <span>{readingAudio ? t('editor.readingAudio') : loading ? t('editor.readingArtwork') : t('editor.savedNotice')}</span>
           <div>
             <button type="button" onClick={onClose} disabled={saving}>
               {t('editor.cancel')}

@@ -2,6 +2,8 @@ export interface Track {
   id: string
   title: string
   duration?: string
+  audio?: Blob
+  audioName?: string
 }
 export interface AlbumDisc {
   id: string
