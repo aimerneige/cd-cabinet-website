@@ -706,3 +706,46 @@ test('background dismissal and early close finish the return animation', async (
     .click({ position: { x: 20, y: 150 } })
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
+
+test('i18n allows switching between English, Chinese and Japanese and persists', async ({
+  page,
+}) => {
+  await page.goto('/')
+  // Default is English
+  await expect(
+    page.getByRole('button', { name: 'Edit shelf', exact: true }),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Add recording' })).toBeVisible()
+
+  // Switch to Chinese
+  const langSelect = page.getByRole('combobox', { name: 'Select language' })
+  await langSelect.selectOption('zh')
+  await expect(
+    page.getByRole('button', { name: '整理唱片架', exact: true }),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: '添加唱片' })).toBeVisible()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh')
+
+  // Switch to Japanese
+  await page.getByRole('combobox', { name: '选择语言' }).selectOption('ja')
+  await expect(
+    page.getByRole('button', { name: '棚を整理', exact: true }),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'アルバムを追加' })).toBeVisible()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
+
+  // Reload and verify persistence
+  await page.reload()
+  await expect(
+    page.getByRole('button', { name: '棚を整理', exact: true }),
+  ).toBeVisible()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
+
+  // Switch back to English
+  await page.getByRole('combobox', { name: '言語を選択' }).selectOption('en')
+  await expect(
+    page.getByRole('button', { name: 'Edit shelf', exact: true }),
+  ).toBeVisible()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+})
+

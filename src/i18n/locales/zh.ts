@@ -1,0 +1,156 @@
+import type { en } from './en'
+
+export const zh: Record<keyof typeof en, string> = {
+  // Meta
+  'meta.title': 'CD 唱片柜 — 给音乐一个安放之处',
+  'meta.description':
+    '实体音乐的静谧港湾。浏览、打开并整理你的虚拟 CD 收藏。',
+
+  // Header
+  'header.brand': 'cd cabinet',
+  'header.note': '给音乐一个安放之处',
+  'header.est': '始于 2025',
+
+  // Hero / Heading
+  'hero.eyebrow': '私人音乐典藏',
+  'hero.titleLine1': '好音乐。',
+  'hero.titleLine2': '珍藏身旁。',
+  'hero.subtitleLine1': '收录声音、故事与那些百听不厌的旧日挚爱。',
+  'hero.subtitleLine2': '抽出一张，静静聆听。',
+  'hero.countLabel': '架上唱片',
+  'hero.countQuote': '每张唱片，都有属于它的故事。',
+
+  // Genres
+  'genres.all': '全部唱片',
+  'genres.indieFolk': '独立民谣',
+  'genres.alternative': '另类音乐',
+  'genres.ambient': '氛围音乐',
+  'genres.jazz': '爵士',
+  'genres.other': '其他',
+
+  // Toolbar
+  'toolbar.filterByGenre': '按流派筛选',
+  'toolbar.searchPlaceholder': '搜索唱片',
+  'toolbar.searchAria': '搜索专辑与音乐人',
+  'toolbar.sortLabel': '排序',
+  'toolbar.sortAria': '唱片排序方式',
+  'toolbar.sortShelf': '默认架序',
+  'toolbar.sortArtist': '音乐人 A–Z',
+  'toolbar.sortYear': '按年份（最新在前）',
+  'toolbar.editShelf': '整理唱片架',
+  'toolbar.doneArranging': '完成整理',
+  'toolbar.addRecording': '＋ 添加唱片',
+
+  // Shelf Caption & States
+  'shelf.arrangingTitle': '正在调整唱片架',
+  'shelf.collectionTitle': '你的唱片收藏',
+  'shelf.arrangingHelp': '拖拽重新排序 · 也可使用空格和方向键',
+  'shelf.viewingHelp': '悬浮探索 · 点击展开',
+  'shelf.loading': '正在载入唱片收藏…',
+  'shelf.belowSummary': '少一分屏幕滑动，多一刻沉浸聆听。',
+  'shelf.recordingsCount': '共 {total} 张唱片中的 {shown} 张',
+  'shelf.shelvesCount': '{count} 层唱片架',
+  'shelf.reorderAria': '重新排序 {artist} 的《{title}》',
+  'shelf.openAria': '打开 {artist} 的《{title}》',
+
+  // Storage
+  'storage.saving': '正在保存唱片收藏…',
+  'storage.saved': '已保存在此浏览器。',
+  'storage.retry': '重试',
+  'storage.saveFailed':
+    '修改无法保存在当前浏览器中，请清理存储空间后重试。',
+  'storage.loadFailed':
+    '无法加载保存的唱片收藏，浏览器存储可能不可用。',
+  'storage.loadBeforeEdit': '在进行更改前请先加载已保存的唱片收藏。',
+
+  // Footer
+  'footer.tagline': '献给实体音乐的热爱。',
+  'footer.corner': '你的音乐，你专属的心灵角落。',
+
+  // Viewer / Active CD
+  'viewer.dialogAria': '{artist}《{title}》',
+  'viewer.closerLook': '细细鉴赏',
+  'viewer.editRecording': '编辑唱片',
+  'viewer.close': '关闭',
+  'viewer.closeAlbumAria': '合上专辑',
+  'viewer.fromCollection': '来自你的收藏',
+  'viewer.singleDisc': '单碟 CD',
+  'viewer.multipleDiscs': '{count} 张 CD',
+  'viewer.chooseDiscAria': '选择光盘',
+  'viewer.discButton': '光盘 {number}',
+  'viewer.viewCaseAria': '查看唱片盒',
+  'viewer.viewFront': '正面',
+  'viewer.viewInside': '盒内',
+  'viewer.viewBack': '背面',
+  'viewer.obiStripHeading': '侧封 · 侧标（OBI）',
+  'viewer.obiStripAria': '侧标纸带',
+  'viewer.obiAttached': '装附',
+  'viewer.obiHidden': '隐藏',
+  'viewer.obiFlat': '展平',
+  'viewer.emptyTracks': '此光盘暂无曲目信息。',
+  'viewer.coverArtworkAlt': '《{title}》封面图案',
+  'viewer.backCoverArtworkAlt': '《{title}》封底图案',
+  'viewer.obiStripAlt': '《{title}》侧标纸带',
+
+  // Editor
+  'editor.eyebrow': '打造专属唱片',
+  'editor.addTitle': '添加唱片',
+  'editor.editTitle': '编辑唱片',
+  'editor.closeAria': '关闭唱片编辑器',
+  'editor.coverArtwork': '唱片封面',
+  'editor.chooseCover': '选择封面图片',
+  'editor.uploadCoverAria': '上传唱片封面',
+  'editor.coverPreviewAlt': '封面预览',
+  'editor.chooseImage': '选择图片',
+  'editor.spineArtwork': '侧脊图案',
+  'editor.optional': '可选',
+  'editor.spinePlaceholder': '音乐人 · 专辑名称',
+  'editor.uploadSpineAria': '上传侧脊图案',
+  'editor.spinePreviewAlt': '侧脊预览',
+  'editor.useGeneratedSpine': '使用自动生成的侧脊',
+  'editor.spineGuidance':
+    '请使用细长竖图。如未上传，系统将根据专辑信息自动生成侧标签。',
+  'editor.backCoverArtwork': '唱片封底',
+  'editor.chooseBackCover': '选择封底图片',
+  'editor.uploadBackCoverAria': '上传唱片封底',
+  'editor.backCoverPreviewAlt': '封底预览',
+  'editor.useGeneratedBackCover': '使用自动生成的封底',
+  'editor.obiPaperStrip': '侧标纸带（OBI）',
+  'editor.chooseObi': '选择侧标图片',
+  'editor.uploadObiAria': '上传侧标纸带',
+  'editor.obiPreviewAlt': '侧标预览',
+  'editor.useGeneratedObi': '使用自动生成的侧标',
+  'editor.obiUploadGuidance':
+    '请上传完整展开的侧标，从左到右依次为后折页、书脊和前折页。',
+  'editor.uploadGuidance': 'JPG、PNG 或 WebP · 每张图片不超过 5 MB',
+  'editor.albumTitle': '专辑名称',
+  'editor.artist': '音乐人',
+  'editor.year': '年份',
+  'editor.genre': '流派',
+  'editor.numberOfDiscs': '光盘数量',
+  'editor.discSingle': '张唱片',
+  'editor.discPlural': '张唱片',
+  'editor.readingArtwork': '正在读取封面图片…',
+  'editor.savedNotice': '已保存在此浏览器。',
+  'editor.cancel': '取消',
+  'editor.saving': '正在保存…',
+  'editor.saveChanges': '保存修改',
+  'editor.addRecording': '添加唱片',
+  'editor.errorMissingCover': '请上传封面图片以添加唱片。',
+  'editor.errorMissingFields': '请输入专辑名称与音乐人。',
+  'editor.errorSaveFailed':
+    '无法保存唱片，请检查浏览器存储空间并重试。',
+
+  // Artwork Errors
+  'artworkErrors.invalidType': '请选择 JPG、PNG 或 WebP 格式的图片。',
+  'artworkErrors.tooLarge': '请选择小于 5 MB 的图片。',
+  'artworkErrors.readFailed': '无法读取图片，请重试。',
+  'artworkErrors.interrupted': '图片加载被中断。',
+  'artworkErrors.decodeFailed': '无法将此文件作为图片打开。',
+
+  // Language Selector
+  'language.selectAria': '选择语言',
+  'language.en': 'English',
+  'language.zh': '中文',
+  'language.ja': '日本語',
+}

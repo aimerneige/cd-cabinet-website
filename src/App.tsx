@@ -5,8 +5,19 @@ import { ActiveCD } from './components/ActiveCD/ActiveCD'
 import type { Origin } from './hooks/useAlbumAnimation'
 import type { Album } from './types/album'
 import { AlbumEditor } from './components/AlbumEditor/AlbumEditor'
+import { useTranslation } from './i18n'
+import { LanguageSwitcher } from './components/LanguageSwitcher/LanguageSwitcher'
+
+const GENRE_LIST = [
+  { key: 'All recordings', labelKey: 'genres.all' as const },
+  { key: 'Indie Folk', labelKey: 'genres.indieFolk' as const },
+  { key: 'Alternative', labelKey: 'genres.alternative' as const },
+  { key: 'Ambient', labelKey: 'genres.ambient' as const },
+  { key: 'Jazz', labelKey: 'genres.jazz' as const },
+]
 
 export default function App() {
+  const { t } = useTranslation()
   const {
     albums,
     activeAlbumId,
@@ -26,6 +37,9 @@ export default function App() {
   useEffect(() => {
     void initialize()
   }, [initialize])
+  useEffect(() => {
+    document.title = t('meta.title')
+  }, [t])
   const [query, setQuery] = useState('')
   const [genre, setGenre] = useState('All recordings')
   const [sort, setSort] = useState('shelf')
@@ -62,56 +76,60 @@ export default function App() {
     setSort('shelf')
     toggleEdit()
   }
+  const storageErrorMessage = useMemo(() => {
+    if (!storageError) return null
+    if (storageError.includes('could not be saved')) return t('storage.saveFailed')
+    if (storageError.includes('could not be loaded')) return t('storage.loadFailed')
+    return storageError
+  }, [storageError, t])
+
   return (
     <>
       <header className="site-header">
         <a className="brand" href="./">
-          <span className="brand-icon">◉</span> cd cabinet
+          <span className="brand-icon">◉</span> {t('header.brand')}
           <span className="brand-dot">®</span>
         </a>
-        <span className="header-note">A HOME FOR YOUR MUSIC</span>
-        <span className="header-right">
-          EST. 2025 <span className="tiny-disc">◎</span>
-        </span>
+        <span className="header-note">{t('header.note')}</span>
+        <div className="header-right">
+          <LanguageSwitcher />
+          <span>
+            {t('header.est')} <span className="tiny-disc">◎</span>
+          </span>
+        </div>
       </header>
       <main>
         <section className="collection-heading">
           <div>
-            <span className="eyebrow">THE PERSONAL ARCHIVE</span>
+            <span className="eyebrow">{t('hero.eyebrow')}</span>
             <h1>
-              Good music.
+              {t('hero.titleLine1')}
               <br />
-              <em>Kept close.</em>
+              <em>{t('hero.titleLine2')}</em>
             </h1>
             <p>
-              A collection of sounds, stories, and a few old favourites.
+              {t('hero.subtitleLine1')}
               <br />
-              Pull one out. Stay a while.
+              {t('hero.subtitleLine2')}
             </p>
           </div>
           <div className="collection-count">
             <strong>{String(albums.length).padStart(2, '0')}</strong>
-            <span>ALBUMS ON THE SHELF</span>
-            <i>Every record has a story.</i>
+            <span>{t('hero.countLabel')}</span>
+            <i>{t('hero.countQuote')}</i>
           </div>
         </section>
         <div className="collection-toolbar">
-          <div className="genre-tabs" aria-label="Filter by genre">
-            {[
-              'All recordings',
-              'Indie Folk',
-              'Alternative',
-              'Ambient',
-              'Jazz',
-            ].map((item) => (
+          <div className="genre-tabs" aria-label={t('toolbar.filterByGenre')}>
+            {GENRE_LIST.map((item) => (
               <button
                 disabled={editMode}
-                key={item}
-                className={genre === item ? 'selected' : ''}
-                onClick={() => setGenre(item)}
+                key={item.key}
+                className={genre === item.key ? 'selected' : ''}
+                onClick={() => setGenre(item.key)}
               >
-                {item}
-                {item === 'All recordings' && <sup>{albums.length}</sup>}
+                {t(item.labelKey)}
+                {item.key === 'All recordings' && <sup>{albums.length}</sup>}
               </button>
             ))}
           </div>
@@ -131,21 +149,21 @@ export default function App() {
                 disabled={editMode}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Find a recording"
-                aria-label="Search albums and artists"
+                placeholder={t('toolbar.searchPlaceholder')}
+                aria-label={t('toolbar.searchAria')}
               />
             </label>
             <label className="sort-control">
-              <span>Sort</span>
+              <span>{t('toolbar.sortLabel')}</span>
               <select
                 disabled={editMode}
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                aria-label="Sort recordings"
+                aria-label={t('toolbar.sortAria')}
               >
-                <option value="shelf">Shelf order</option>
-                <option value="artist">Artist A–Z</option>
-                <option value="year">Newest first</option>
+                <option value="shelf">{t('toolbar.sortShelf')}</option>
+                <option value="artist">{t('toolbar.sortArtist')}</option>
+                <option value="year">{t('toolbar.sortYear')}</option>
               </select>
             </label>
             <button
@@ -153,7 +171,7 @@ export default function App() {
               onClick={handleEdit}
             >
               <span aria-hidden="true">{editMode ? '✓' : '↔'}</span>
-              {editMode ? 'Done arranging' : 'Edit shelf'}
+              {editMode ? t('toolbar.doneArranging') : t('toolbar.editShelf')}
             </button>
           </div>
         </div>
@@ -163,35 +181,34 @@ export default function App() {
             disabled={!ready || loadFailed}
             onClick={() => setEditor('new')}
           >
-            ＋ Add recording
+            {t('toolbar.addRecording')}
           </button>
         </div>
         <div className="shelf-caption">
           <span>
             <i />
-            {editMode ? 'ARRANGING YOUR COLLECTION' : 'YOUR COLLECTION'}
+            {editMode ? t('shelf.arrangingTitle') : t('shelf.collectionTitle')}
           </span>
           <span>
             {editMode
-              ? 'Drag to reorder · use Space and arrow keys with a keyboard'
-              : 'Hover to explore · click to open'}
+              ? t('shelf.arrangingHelp')
+              : t('shelf.viewingHelp')}
           </span>
         </div>
         {ready ? (
           <Shelf albums={shown} onOpen={handleOpen} />
         ) : (
           <div className="cabinet empty-state" role="status">
-            Loading your collection…
+            {t('shelf.loading')}
           </div>
         )}
         <div className="below-shelf">
           <span>
-            <span className="tiny-disc">◎</span> A little less scrolling. A
-            little more listening.
+            <span className="tiny-disc">◎</span> {t('shelf.belowSummary')}
           </span>
           <span>
-            {shown.length} of {albums.length} recordings <b>·</b>{' '}
-            {new Set(albums.map((album) => album.shelfId)).size} shelves
+            {t('shelf.recordingsCount', { shown: shown.length, total: albums.length })} <b>·</b>{' '}
+            {t('shelf.shelvesCount', { count: new Set(albums.map((album) => album.shelfId)).size })}
           </span>
         </div>
         <div
@@ -199,8 +216,8 @@ export default function App() {
           role={storageError ? 'alert' : 'status'}
         >
           <span>
-            {storageError ??
-              (saving ? 'Saving your collection…' : 'Saved in this browser.')}
+            {storageErrorMessage ??
+              (saving ? t('storage.saving') : t('storage.saved'))}
           </span>
           {storageError && (
             <button
@@ -209,14 +226,14 @@ export default function App() {
                 void retrySave().catch(() => undefined)
               }}
             >
-              Retry
+              {t('storage.retry')}
             </button>
           )}
         </div>
         <footer>
-          <span>For the love of physical music.</span>
+          <span>{t('footer.tagline')}</span>
           <span>
-            YOUR MUSIC. YOUR LITTLE CORNER OF THE WORLD. <i>↗</i>
+            {t('footer.corner')} <i>↗</i>
           </span>
         </footer>
       </main>

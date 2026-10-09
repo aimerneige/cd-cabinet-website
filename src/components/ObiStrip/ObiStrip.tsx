@@ -1,6 +1,7 @@
 import type { CSSProperties, RefObject } from 'react'
 import type { Album } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
+import { useTranslation } from '../../i18n'
 
 export function ObiStrip({
   album,
@@ -11,6 +12,7 @@ export function ObiStrip({
   paperRef: RefObject<HTMLDivElement | null>
   hidden: boolean
 }) {
+  const { t } = useTranslation()
   const depth = getCaseDepth(album) + 8
   const style = {
     '--obi-depth': `${depth}px`,
@@ -42,7 +44,7 @@ export function ObiStrip({
       ref={paperRef}
       style={style}
       role="img"
-      aria-label={`${album.title} OBI paper strip`}
+      aria-label={t('viewer.obiStripAlt', { title: album.title })}
       aria-hidden={hidden}
     >
       <div className="obi-front">{print('front')}</div>

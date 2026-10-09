@@ -2,6 +2,7 @@ import type { Album, AlbumDisc } from '../../types/album'
 import { getAlbumDiscs } from '../../lib/album'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
 import type { ObiMode } from '../../hooks/useObiAnimation'
+import { useTranslation } from '../../i18n'
 
 export function AlbumDetails({
   album,
@@ -24,19 +25,22 @@ export function AlbumDetails({
   onSelectObi: (mode: ObiMode) => void
   isOpen: boolean
 }) {
+  const { t } = useTranslation()
   const discs = getAlbumDiscs(album)
   return (
     <div className="album-details">
       <div className="album-heading">
-        <span className="eyebrow">FROM YOUR COLLECTION</span>
+        <span className="eyebrow">{t('viewer.fromCollection')}</span>
         <h2>{album.title}</h2>
         <p>{album.artist}</p>
         <span className="album-meta">
           {album.year} <b>·</b> {album.genre} <b>·</b>{' '}
-          {discs.length > 1 ? `${discs.length} CDs` : 'Compact disc'}
+          {discs.length > 1
+            ? t('viewer.multipleDiscs', { count: discs.length })
+            : t('viewer.singleDisc')}
         </span>
         {discs.length > 1 && (
-          <div className="disc-selector" aria-label="Choose a disc">
+          <div className="disc-selector" aria-label={t('viewer.chooseDiscAria')}>
             {discs.map((item, index) => (
               <button
                 key={item.id}
@@ -44,7 +48,7 @@ export function AlbumDetails({
                 disabled={isTurning || view !== 'inside' || obiMode === 'flat'}
                 onClick={() => onSelectDisc(index)}
               >
-                Disc {index + 1}
+                {t('viewer.discButton', { number: index + 1 })}
               </button>
             ))}
           </div>
@@ -52,7 +56,7 @@ export function AlbumDetails({
         {disc.title && <p className="disc-title">{disc.title}</p>}
         <div
           className="disc-selector case-view-selector"
-          aria-label="View the case"
+          aria-label={t('viewer.viewCaseAria')}
         >
           {(['front', 'inside', 'back'] as const).map((item) => (
             <button
@@ -62,16 +66,16 @@ export function AlbumDetails({
               onClick={() => onSelectView(item)}
             >
               {item === 'front'
-                ? 'Front'
+                ? t('viewer.viewFront')
                 : item === 'inside'
-                  ? 'Inside'
-                  : 'Back'}
+                  ? t('viewer.viewInside')
+                  : t('viewer.viewBack')}
             </button>
           ))}
         </div>
         <div className="obi-controls">
-          <span>OBI · PAPER STRIP</span>
-          <div className="disc-selector" aria-label="OBI paper strip">
+          <span>{t('viewer.obiStripHeading')}</span>
+          <div className="disc-selector" aria-label={t('viewer.obiStripAria')}>
             {(['attached', 'hidden', 'flat'] as const).map((item) => (
               <button
                 key={item}
@@ -80,10 +84,10 @@ export function AlbumDetails({
                 onClick={() => onSelectObi(item)}
               >
                 {item === 'attached'
-                  ? 'Attached'
+                  ? t('viewer.obiAttached')
                   : item === 'hidden'
-                    ? 'Hidden'
-                    : 'Lay flat'}
+                    ? t('viewer.obiHidden')
+                    : t('viewer.obiFlat')}
               </button>
             ))}
           </div>
@@ -92,7 +96,7 @@ export function AlbumDetails({
       <ol className="track-list" aria-busy={isTurning}>
         {!disc.tracks.length && (
           <li className="empty-tracks">
-            No track information for this disc yet.
+            {t('viewer.emptyTracks')}
           </li>
         )}
         {disc.tracks.map((track, i) => (

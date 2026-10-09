@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { CSSProperties } from 'react'
 import type { Album } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
+import { useTranslation } from '../../i18n'
 
 interface Props {
   album: Album
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
+  const { t } = useTranslation()
   const discCount = getAlbumDiscs(album).length
   const {
     attributes,
@@ -53,8 +55,14 @@ export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
         }}
         aria-label={
           edit
-            ? `Reorder ${album.title} by ${album.artist}`
-            : `Open ${album.title} by ${album.artist}`
+            ? t('shelf.reorderAria', {
+                title: album.title,
+                artist: album.artist,
+              })
+            : t('shelf.openAria', {
+                title: album.title,
+                artist: album.artist,
+              })
         }
       >
         {album.spineUrl ? (

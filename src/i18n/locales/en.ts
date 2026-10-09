@@ -1,0 +1,156 @@
+export const en = {
+  // Meta
+  'meta.title': 'CD Cabinet — A home for your music',
+  'meta.description':
+    'A quiet home for physical music. Browse, open and arrange your virtual CD collection.',
+
+  // Header
+  'header.brand': 'cd cabinet',
+  'header.note': 'A HOME FOR YOUR MUSIC',
+  'header.est': 'EST. 2025',
+
+  // Hero / Heading
+  'hero.eyebrow': 'THE PERSONAL ARCHIVE',
+  'hero.titleLine1': 'Good music.',
+  'hero.titleLine2': 'Kept close.',
+  'hero.subtitleLine1':
+    'A collection of sounds, stories, and a few old favourites.',
+  'hero.subtitleLine2': 'Pull one out. Stay a while.',
+  'hero.countLabel': 'ALBUMS ON THE SHELF',
+  'hero.countQuote': 'Every record has a story.',
+
+  // Genres
+  'genres.all': 'All recordings',
+  'genres.indieFolk': 'Indie Folk',
+  'genres.alternative': 'Alternative',
+  'genres.ambient': 'Ambient',
+  'genres.jazz': 'Jazz',
+  'genres.other': 'Other',
+
+  // Toolbar
+  'toolbar.filterByGenre': 'Filter by genre',
+  'toolbar.searchPlaceholder': 'Find a recording',
+  'toolbar.searchAria': 'Search albums and artists',
+  'toolbar.sortLabel': 'Sort',
+  'toolbar.sortAria': 'Sort recordings',
+  'toolbar.sortShelf': 'Shelf order',
+  'toolbar.sortArtist': 'Artist A–Z',
+  'toolbar.sortYear': 'Newest first',
+  'toolbar.editShelf': 'Edit shelf',
+  'toolbar.doneArranging': 'Done arranging',
+  'toolbar.addRecording': '＋ Add recording',
+
+  // Shelf Caption & States
+  'shelf.arrangingTitle': 'ARRANGING YOUR COLLECTION',
+  'shelf.collectionTitle': 'YOUR COLLECTION',
+  'shelf.arrangingHelp':
+    'Drag to reorder · use Space and arrow keys with a keyboard',
+  'shelf.viewingHelp': 'Hover to explore · click to open',
+  'shelf.loading': 'Loading your collection…',
+  'shelf.belowSummary': 'A little less scrolling. A little more listening.',
+  'shelf.recordingsCount': '{shown} of {total} recordings',
+  'shelf.shelvesCount': '{count} shelves',
+  'shelf.reorderAria': 'Reorder {title} by {artist}',
+  'shelf.openAria': 'Open {title} by {artist}',
+
+  // Storage
+  'storage.saving': 'Saving your collection…',
+  'storage.saved': 'Saved in this browser.',
+  'storage.retry': 'Retry',
+  'storage.saveFailed':
+    'Your changes could not be saved in this browser. Free up storage and retry.',
+  'storage.loadFailed':
+    'Your saved collection could not be loaded. Browser storage may be unavailable.',
+  'storage.loadBeforeEdit': 'Load your saved collection before making changes.',
+
+  // Footer
+  'footer.tagline': 'For the love of physical music.',
+  'footer.corner': 'YOUR MUSIC. YOUR LITTLE CORNER OF THE WORLD.',
+
+  // Viewer / Active CD
+  'viewer.dialogAria': '{title} by {artist}',
+  'viewer.closerLook': 'TAKE A CLOSER LOOK',
+  'viewer.editRecording': 'Edit recording',
+  'viewer.close': 'Close',
+  'viewer.closeAlbumAria': 'Close album',
+  'viewer.fromCollection': 'FROM YOUR COLLECTION',
+  'viewer.singleDisc': 'Compact disc',
+  'viewer.multipleDiscs': '{count} CDs',
+  'viewer.chooseDiscAria': 'Choose a disc',
+  'viewer.discButton': 'Disc {number}',
+  'viewer.viewCaseAria': 'View the case',
+  'viewer.viewFront': 'Front',
+  'viewer.viewInside': 'Inside',
+  'viewer.viewBack': 'Back',
+  'viewer.obiStripHeading': 'OBI · PAPER STRIP',
+  'viewer.obiStripAria': 'OBI paper strip',
+  'viewer.obiAttached': 'Attached',
+  'viewer.obiHidden': 'Hidden',
+  'viewer.obiFlat': 'Lay flat',
+  'viewer.emptyTracks': 'No track information for this disc yet.',
+  'viewer.coverArtworkAlt': '{title} cover artwork',
+  'viewer.backCoverArtworkAlt': '{title} back cover artwork',
+  'viewer.obiStripAlt': '{title} OBI paper strip',
+
+  // Editor
+  'editor.eyebrow': 'MAKE IT YOUR OWN',
+  'editor.addTitle': 'Add a recording',
+  'editor.editTitle': 'Edit recording',
+  'editor.closeAria': 'Close recording editor',
+  'editor.coverArtwork': 'Cover artwork',
+  'editor.chooseCover': 'Choose your cover',
+  'editor.uploadCoverAria': 'Upload cover artwork',
+  'editor.coverPreviewAlt': 'Cover preview',
+  'editor.chooseImage': 'Choose image',
+  'editor.spineArtwork': 'Spine artwork',
+  'editor.optional': 'optional',
+  'editor.spinePlaceholder': 'Artist · Album',
+  'editor.uploadSpineAria': 'Upload spine artwork',
+  'editor.spinePreviewAlt': 'Spine preview',
+  'editor.useGeneratedSpine': 'Use generated spine',
+  'editor.spineGuidance':
+    'Use a tall, narrow image. Without one, we create the side label from your album details.',
+  'editor.backCoverArtwork': 'Back cover artwork',
+  'editor.chooseBackCover': 'Choose your back cover',
+  'editor.uploadBackCoverAria': 'Upload back cover artwork',
+  'editor.backCoverPreviewAlt': 'Back cover preview',
+  'editor.useGeneratedBackCover': 'Use generated back cover',
+  'editor.obiPaperStrip': 'OBI paper strip',
+  'editor.chooseObi': 'Choose your paper strip',
+  'editor.uploadObiAria': 'Upload OBI paper strip',
+  'editor.obiPreviewAlt': 'OBI preview',
+  'editor.useGeneratedObi': 'Use generated OBI',
+  'editor.obiUploadGuidance':
+    'Upload the entire unfolded strip, with the back flap, spine and front flap from left to right.',
+  'editor.uploadGuidance': 'JPG, PNG or WebP · Up to 5 MB per image',
+  'editor.albumTitle': 'Album title',
+  'editor.artist': 'Artist',
+  'editor.year': 'Year',
+  'editor.genre': 'Genre',
+  'editor.numberOfDiscs': 'Number of discs',
+  'editor.discSingle': 'disc',
+  'editor.discPlural': 'discs',
+  'editor.readingArtwork': 'Reading artwork…',
+  'editor.savedNotice': 'Saved on this browser.',
+  'editor.cancel': 'Cancel',
+  'editor.saving': 'Saving…',
+  'editor.saveChanges': 'Save changes',
+  'editor.addRecording': 'Add recording',
+  'editor.errorMissingCover': 'Upload a cover image to add this recording.',
+  'editor.errorMissingFields': 'Enter an album title and artist.',
+  'editor.errorSaveFailed':
+    'The recording could not be saved. Please check browser storage and try again.',
+
+  // Artwork Errors
+  'artworkErrors.invalidType': 'Choose a JPG, PNG or WebP image.',
+  'artworkErrors.tooLarge': 'Choose an image smaller than 5 MB.',
+  'artworkErrors.readFailed': 'The image could not be read. Please try again.',
+  'artworkErrors.interrupted': 'Image loading was interrupted.',
+  'artworkErrors.decodeFailed': 'This file could not be opened as an image.',
+
+  // Language Selector
+  'language.selectAria': 'Select language',
+  'language.en': 'English',
+  'language.zh': '中文',
+  'language.ja': '日本語',
+} as const

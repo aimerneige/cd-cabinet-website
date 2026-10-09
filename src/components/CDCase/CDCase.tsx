@@ -4,6 +4,7 @@ import { getAlbumDiscs } from '../../lib/album'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
 import type { ObiMode } from '../../hooks/useObiAnimation'
 import { ObiStrip } from '../ObiStrip/ObiStrip'
+import { useTranslation } from '../../i18n'
 
 export const CDCase = forwardRef<
   HTMLDivElement,
@@ -21,6 +22,7 @@ export const CDCase = forwardRef<
   { album, disc, frontDisc, backDisc, trayRef, view, paperRef, obiMode },
   ref,
 ) {
+  const { t } = useTranslation()
   const discs = getAlbumDiscs(album)
   const selected = disc ?? discs[0]
   return (
@@ -38,7 +40,7 @@ export const CDCase = forwardRef<
           {album.backCoverUrl ? (
             <img
               src={album.backCoverUrl}
-              alt={`${album.title} back cover artwork`}
+              alt={t('viewer.backCoverArtworkAlt', { title: album.title })}
             />
           ) : (
             <div className="generated-back-cover">
@@ -89,7 +91,10 @@ export const CDCase = forwardRef<
         </span>
         <div className="case-lid">
           <div className="lid-front">
-            <img src={album.coverUrl} alt={`${album.title} cover artwork`} />
+            <img
+              src={album.coverUrl}
+              alt={t('viewer.coverArtworkAlt', { title: album.title })}
+            />
           </div>
           <div className="lid-inside">
             <img src={album.coverUrl} alt="" />

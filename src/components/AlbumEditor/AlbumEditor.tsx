@@ -4,6 +4,7 @@ import type { Album } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, withDiscCount } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
 import { useCollection } from '../../store/collectionStore'
+import { useTranslation } from '../../i18n'
 import './AlbumEditor.css'
 
 export function AlbumEditor({
@@ -13,6 +14,7 @@ export function AlbumEditor({
   album?: Album
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const dialog = useRef<HTMLDialogElement>(null)
   const [draftId] = useState(
     () => album?.id ?? crypto.randomUUID?.() ??
@@ -81,7 +83,7 @@ export function AlbumEditor({
         setError(
           cause instanceof Error
             ? cause.message
-            : 'The image could not be loaded.',
+            : t('artworkErrors.readFailed'),
         )
     } finally {
       imageLoads.current -= 1
@@ -93,11 +95,11 @@ export function AlbumEditor({
     event.preventDefault()
     if (saving || loading) return
     if (!cover) {
-      setError('Upload a cover image to add this recording.')
+      setError(t('editor.errorMissingCover'))
       return
     }
     if (!title.trim() || !artist.trim()) {
-      setError('Enter an album title and artist.')
+      setError(t('editor.errorMissingFields'))
       return
     }
     setSaving(true)
@@ -150,9 +152,7 @@ export function AlbumEditor({
       )
       onClose()
     } catch {
-      setError(
-        'The recording could not be saved. Please check browser storage and try again.',
-      )
+      setError(t('editor.errorSaveFailed'))
       setSaving(false)
     }
   }
@@ -171,67 +171,67 @@ export function AlbumEditor({
       <form onSubmit={submit}>
         <div className="editor-heading">
           <div>
-            <span className="eyebrow">MAKE IT YOUR OWN</span>
+            <span className="eyebrow">{t('editor.eyebrow')}</span>
             <h2 id="editor-title">
-              {album ? 'Edit recording' : 'Add a recording'}
+              {album ? t('editor.editTitle') : t('editor.addTitle')}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            aria-label="Close recording editor"
+            aria-label={t('editor.closeAria')}
           >
             ×
           </button>
         </div>
         <div className="editor-artwork">
           <label className="artwork-upload">
-            <span>Cover artwork</span>
+            <span>{t('editor.coverArtwork')}</span>
             <div className="cover-preview">
               {cover ? (
-                <img src={cover} alt="Cover preview" />
+                <img src={cover} alt={t('editor.coverPreviewAlt')} />
               ) : (
                 <span>
-                  ＋<small>Choose your cover</small>
+                  ＋<small>{t('editor.chooseCover')}</small>
                 </span>
               )}
             </div>
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              aria-label="Upload cover artwork"
+              aria-label={t('editor.uploadCoverAria')}
               disabled={loading || saving}
               onChange={(event) => {
                 void upload(event.target.files?.[0], 'cover')
                 event.target.value = ''
               }}
             />
-            <small>Choose image</small>
+            <small>{t('editor.chooseImage')}</small>
           </label>
           <div className="spine-upload">
             <label className="artwork-upload">
               <span>
-                Spine artwork <small>optional</small>
+                {t('editor.spineArtwork')} <small>{t('editor.optional')}</small>
               </span>
               <div className="spine-preview">
                 {spine ? (
-                  <img src={spine} alt="Spine preview" />
+                  <img src={spine} alt={t('editor.spinePreviewAlt')} />
                 ) : (
-                  <span>Artist · Album</span>
+                  <span>{t('editor.spinePlaceholder')}</span>
                 )}
               </div>
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                aria-label="Upload spine artwork"
+                aria-label={t('editor.uploadSpineAria')}
                 disabled={loading || saving}
                 onChange={(event) => {
                   void upload(event.target.files?.[0], 'spine')
                   event.target.value = ''
                 }}
               />
-              <small>Choose image</small>
+              <small>{t('editor.chooseImage')}</small>
             </label>
             {spine && (
               <button
@@ -240,41 +240,38 @@ export function AlbumEditor({
                 disabled={loading || saving}
                 onClick={() => setSpine('')}
               >
-                Use generated spine
+                {t('editor.useGeneratedSpine')}
               </button>
             )}
-            <p>
-              Use a tall, narrow image. Without one, we create the side label
-              from your album details.
-            </p>
+            <p>{t('editor.spineGuidance')}</p>
           </div>
         </div>
         <div className="extra-artwork">
           <div className="back-cover-upload">
             <label className="artwork-upload">
               <span>
-                Back cover artwork <small>optional</small>
+                {t('editor.backCoverArtwork')} <small>{t('editor.optional')}</small>
               </span>
               <div className="cover-preview">
                 {backCover ? (
-                  <img src={backCover} alt="Back cover preview" />
+                  <img src={backCover} alt={t('editor.backCoverPreviewAlt')} />
                 ) : (
                   <span>
-                    ＋<small>Choose your back cover</small>
+                    ＋<small>{t('editor.chooseBackCover')}</small>
                   </span>
                 )}
               </div>
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                aria-label="Upload back cover artwork"
+                aria-label={t('editor.uploadBackCoverAria')}
                 disabled={loading || saving}
                 onChange={(event) => {
                   void upload(event.target.files?.[0], 'back')
                   event.target.value = ''
                 }}
               />
-              <small>Choose image</small>
+              <small>{t('editor.chooseImage')}</small>
             </label>
             {backCover && (
               <button
@@ -283,35 +280,35 @@ export function AlbumEditor({
                 disabled={loading || saving}
                 onClick={() => setBackCover('')}
               >
-                Use generated back cover
+                {t('editor.useGeneratedBackCover')}
               </button>
             )}
           </div>
           <div className="back-cover-upload">
             <label className="artwork-upload">
               <span>
-                OBI paper strip <small>optional</small>
+                {t('editor.obiPaperStrip')} <small>{t('editor.optional')}</small>
               </span>
               <div className="cover-preview obi-preview">
                 {obi ? (
-                  <img src={obi} alt="OBI preview" />
+                  <img src={obi} alt={t('editor.obiPreviewAlt')} />
                 ) : (
                   <span>
-                    ＋<small>Choose your paper strip</small>
+                    ＋<small>{t('editor.chooseObi')}</small>
                   </span>
                 )}
               </div>
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                aria-label="Upload OBI paper strip"
+                aria-label={t('editor.uploadObiAria')}
                 disabled={loading || saving}
                 onChange={(event) => {
                   void upload(event.target.files?.[0], 'obi')
                   event.target.value = ''
                 }}
               />
-              <small>Choose image</small>
+              <small>{t('editor.chooseImage')}</small>
             </label>
             {obi && (
               <button
@@ -320,22 +317,17 @@ export function AlbumEditor({
                 disabled={loading || saving}
                 onClick={() => setObi('')}
               >
-                Use generated OBI
+                {t('editor.useGeneratedObi')}
               </button>
             )}
-            <p className="obi-upload-guidance">
-              Upload the entire unfolded strip, with the back flap, spine and
-              front flap from left to right.
-            </p>
+            <p className="obi-upload-guidance">{t('editor.obiUploadGuidance')}</p>
           </div>
         </div>
-        <p className="upload-guidance">
-          JPG, PNG or WebP · Up to 5 MB per image
-        </p>
+        <p className="upload-guidance">{t('editor.uploadGuidance')}</p>
         <fieldset disabled={saving}>
           <div className="editor-fields">
             <label>
-              Album title
+              {t('editor.albumTitle')}
               <input
                 required
                 maxLength={100}
@@ -344,7 +336,7 @@ export function AlbumEditor({
               />
             </label>
             <label>
-              Artist
+              {t('editor.artist')}
               <input
                 required
                 maxLength={100}
@@ -353,7 +345,7 @@ export function AlbumEditor({
               />
             </label>
             <label>
-              Year
+              {t('editor.year')}
               <input
                 type="number"
                 required
@@ -364,27 +356,33 @@ export function AlbumEditor({
               />
             </label>
             <label>
-              Genre
+              {t('editor.genre')}
               <select
                 value={genre}
                 onChange={(event) => setGenre(event.target.value)}
               >
-                {['Indie Folk', 'Alternative', 'Ambient', 'Jazz', 'Other'].map(
-                  (item) => (
-                    <option key={item}>{item}</option>
-                  ),
-                )}
+                {[
+                  { key: 'Indie Folk', labelKey: 'genres.indieFolk' as const },
+                  { key: 'Alternative', labelKey: 'genres.alternative' as const },
+                  { key: 'Ambient', labelKey: 'genres.ambient' as const },
+                  { key: 'Jazz', labelKey: 'genres.jazz' as const },
+                  { key: 'Other', labelKey: 'genres.other' as const },
+                ].map((item) => (
+                  <option key={item.key} value={item.key}>
+                    {t(item.labelKey)}
+                  </option>
+                ))}
               </select>
             </label>
             <label>
-              Number of discs
+              {t('editor.numberOfDiscs')}
               <select
                 value={discCount}
                 onChange={(event) => setDiscCount(Number(event.target.value))}
               >
                 {[1, 2, 3, 4, 5, 6].map((count) => (
                   <option key={count} value={count}>
-                    {count} {count === 1 ? 'disc' : 'discs'}
+                    {count} {count === 1 ? t('editor.discSingle') : t('editor.discPlural')}
                   </option>
                 ))}
               </select>
@@ -397,17 +395,21 @@ export function AlbumEditor({
           </p>
         )}
         <div className="editor-footer">
-          <span>{loading ? 'Reading artwork…' : 'Saved on this browser.'}</span>
+          <span>{loading ? t('editor.readingArtwork') : t('editor.savedNotice')}</span>
           <div>
             <button type="button" onClick={onClose} disabled={saving}>
-              Cancel
+              {t('editor.cancel')}
             </button>
             <button
               type="submit"
               className="save-recording"
               disabled={loading || saving}
             >
-              {saving ? 'Saving…' : album ? 'Save changes' : 'Add recording'}
+              {saving
+                ? t('editor.saving')
+                : album
+                  ? t('editor.saveChanges')
+                  : t('editor.addRecording')}
             </button>
           </div>
         </div>

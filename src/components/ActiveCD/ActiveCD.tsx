@@ -7,6 +7,7 @@ import { CDCase } from '../CDCase/CDCase'
 import { AlbumDetails } from '../AlbumDetails/AlbumDetails'
 import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
 import { useObiAnimation } from '../../hooks/useObiAnimation'
+import { useTranslation } from '../../i18n'
 
 export function ActiveCD({
   album,
@@ -19,6 +20,7 @@ export function ActiveCD({
   onReturned: () => void
   onEdit: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const discs = getAlbumDiscs(album)
   const {
     trayRef,
@@ -93,11 +95,14 @@ export function ActiveCD({
       className="active-layer"
       role="dialog"
       aria-modal="true"
-      aria-label={`${album.title} by ${album.artist}`}
+      aria-label={t('viewer.dialogAria', {
+        title: album.title,
+        artist: album.artist,
+      })}
     >
       <div className="collection-overlay" onClick={close} />
       <div className="viewer-controls">
-        <span>TAKE A CLOSER LOOK</span>
+        <span>{t('viewer.closerLook')}</span>
         <div className="viewer-actions">
           <button
             onClick={() => {
@@ -105,10 +110,14 @@ export function ActiveCD({
               close()
             }}
           >
-            Edit recording
+            {t('viewer.editRecording')}
           </button>
-          <button ref={button} onClick={close} aria-label="Close album">
-            Close <span>×</span>
+          <button
+            ref={button}
+            onClick={close}
+            aria-label={t('viewer.closeAlbumAria')}
+          >
+            {t('viewer.close')} <span>×</span>
           </button>
         </div>
       </div>
