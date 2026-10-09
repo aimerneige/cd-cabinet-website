@@ -450,11 +450,12 @@ test('uploaded OBI scans persist separately from spine artwork and can be reset'
   await expect(page.locator('.obi-print-front strong')).toHaveText('Blue Hours')
 })
 
-test('invalid uploads explain the problem without adding a recording', async ({
+test('invalid uploads explain the problem and preserve the default cover', async ({
   page,
 }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Add recording' }).click()
+  const defaultCover = await page.getByRole('img', { name: 'Cover preview' }).getAttribute('src')
   const input = page.getByLabel('Upload cover artwork')
   await input.setInputFiles({
     name: 'notes.txt',
@@ -480,18 +481,20 @@ test('invalid uploads explain the problem without adding a recording', async ({
   await expect(page.getByRole('alert')).toHaveText(
     'This file could not be opened as an image.',
   )
+  await expect(page.getByRole('img', { name: 'Cover preview' })).toHaveAttribute('src', defaultCover!)
+  await expect(page.locator('.shelf-cd')).toHaveCount(24)
   await page
     .getByRole('textbox', { name: 'Album title', exact: true })
-    .fill('Missing artwork')
+    .fill('Default artwork')
   await page
     .getByRole('textbox', { name: 'Artist', exact: true })
     .fill('Local Artist')
   await page.getByRole('button', { name: 'Add recording', exact: true }).click()
-  await expect(page.getByRole('alert')).toHaveText(
-    'Upload a cover image to add this recording.',
-  )
-  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
-  await expect(page.locator('.shelf-cd')).toHaveCount(24)
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await expect(page.locator('.shelf-cd')).toHaveCount(25)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Default artwork by Local Artist', exact: true }).click()
+  await expect(page.getByRole('img', { name: 'Default artwork cover artwork' })).toHaveAttribute('src', /^data:image\/svg\+xml/)
 })
 
 test('a storage read failure can be retried without overwriting the saved collection', async ({

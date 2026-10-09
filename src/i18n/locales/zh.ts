@@ -98,6 +98,8 @@ export const zh: Record<keyof typeof en, string> = {
   'editor.editTitle': '编辑唱片',
   'editor.closeAria': '关闭唱片编辑器',
   'editor.coverArtwork': '唱片封面',
+  'editor.randomCover': '换一个',
+  'editor.randomCoverGuidance': '默认生成随机封面及配套包装。不满意可以换一个，也可以上传图片单独替换。',
   'editor.chooseCover': '选择封面图片',
   'editor.uploadCoverAria': '上传唱片封面',
   'editor.coverPreviewAlt': '封面预览',

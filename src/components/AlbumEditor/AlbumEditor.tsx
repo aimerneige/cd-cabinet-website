@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import type { Album, AlbumDisc, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, resizeDiscs } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
+import { generateCover, getGeneratedCoverStyle, randomCoverStyle } from '../../lib/generatedCover'
 import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
 import { useTranslation } from '../../i18n'
@@ -32,7 +33,10 @@ export function AlbumEditor({
   )
   const discCount = discs.length
   const [editingDisc, setEditingDisc] = useState(0)
-  const [cover, setCover] = useState(album?.coverUrl ?? '')
+  const [coverStyle, setCoverStyle] = useState(
+    () => album ? getGeneratedCoverStyle(album.coverUrl) : randomCoverStyle(),
+  )
+  const [cover, setCover] = useState(coverStyle ? '' : album?.coverUrl ?? '')
   const [spine, setSpine] = useState(album?.spineUrl ?? '')
   const [backCover, setBackCover] = useState(album?.backCoverUrl ?? '')
   const [obi, setObi] = useState(album?.obiUrl ?? '')
@@ -43,6 +47,12 @@ export function AlbumEditor({
   const pendingUploads = useRef(0)
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
+  const coverUrl = cover || (coverStyle ? generateCover({
+    title: title.trim() || t('editor.albumTitle'),
+    artist: artist.trim() || t('editor.artist'),
+    year: Number(year),
+    genre,
+  }, coverStyle) : '')
 
   useEffect(() => {
     alive.current = true
@@ -144,7 +154,7 @@ export function AlbumEditor({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (saving || loading) return
-    if (!cover) {
+    if (!coverUrl) {
       setError(t('editor.errorMissingCover'))
       return
     }
@@ -179,7 +189,7 @@ export function AlbumEditor({
       genre,
       color: '#7a8273',
       ink: '#f0eadb',
-      coverUrl: cover,
+      coverUrl,
       shelfId,
       order:
         collection
@@ -197,7 +207,8 @@ export function AlbumEditor({
         artist: artist.trim(),
         year: Number(year),
         genre,
-        coverUrl: cover,
+        coverUrl,
+        ...(coverStyle ? { color: coverStyle.color, ink: coverStyle.ink } : {}),
         backCoverUrl: backCover || undefined,
         obiUrl: obi || undefined,
         spineUrl: spine || undefined,
@@ -239,12 +250,26 @@ export function AlbumEditor({
             ×
           </button>
         </div>
+        <div className="random-cover-controls">
+          <p>{t('editor.randomCoverGuidance')}</p>
+          <button
+            type="button"
+            disabled={loading || saving}
+            onClick={() => {
+              setCoverStyle(randomCoverStyle(coverStyle))
+              setCover('')
+              setError('')
+            }}
+          >
+            {t('editor.randomCover')}
+          </button>
+        </div>
         <div className="editor-artwork">
           <label className="artwork-upload">
             <span>{t('editor.coverArtwork')}</span>
             <div className="cover-preview">
-              {cover ? (
-                <img src={cover} alt={t('editor.coverPreviewAlt')} />
+              {coverUrl ? (
+                <img src={coverUrl} alt={t('editor.coverPreviewAlt')} />
               ) : (
                 <span>
                   ＋<small>{t('editor.chooseCover')}</small>
@@ -268,11 +293,18 @@ export function AlbumEditor({
               <span>
                 {t('editor.spineArtwork')} <small>{t('editor.optional')}</small>
               </span>
-              <div className="spine-preview">
+              <div
+                className="spine-preview"
+                style={coverStyle ? { background: coverStyle.color, color: coverStyle.ink } : undefined}
+              >
                 {spine ? (
                   <img src={spine} alt={t('editor.spinePreviewAlt')} />
                 ) : (
-                  <span>{t('editor.spinePlaceholder')}</span>
+                  <span>
+                    {coverStyle
+                      ? `${artist.trim() || t('editor.artist')} · ${title.trim() || t('editor.albumTitle')}`
+                      : t('editor.spinePlaceholder')}
+                  </span>
                 )}
               </div>
               <input

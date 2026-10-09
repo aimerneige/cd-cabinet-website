@@ -36,6 +36,27 @@
   grid-template-columns: 1fr 1fr;
   gap: 25px;
 }
+.random-cover-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.random-cover-controls p {
+  flex: 1;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #66745c;
+}
+.random-cover-controls button {
+  flex-shrink: 0;
+  border: 1px solid #aab49b;
+  background: transparent;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #58664a;
+}
 .back-cover-upload {
   min-width: 0;
 }

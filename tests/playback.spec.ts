@@ -24,12 +24,11 @@ function wave(seconds: number) {
 async function draftAudioAlbum(page: Page) {
   await page.goto('/')
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
-  const image = await page.screenshot()
   await page.getByRole('button', { name: 'Add recording' }).click()
   await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Listening Session')
   await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
-  await page.getByLabel('Upload cover artwork').setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: image })
   await expect(page.getByRole('img', { name: 'Cover preview' })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Cover preview' })).toHaveAttribute('src', /^data:image\/svg\+xml/)
 }
 
 async function seedAudio(page: Page, lengths: number[]) {

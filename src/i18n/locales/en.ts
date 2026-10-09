@@ -98,6 +98,8 @@ export const en = {
   'editor.editTitle': 'Edit recording',
   'editor.closeAria': 'Close recording editor',
   'editor.coverArtwork': 'Cover artwork',
+  'editor.randomCover': 'Try another cover',
+  'editor.randomCoverGuidance': 'Start with a random cover and matching packaging. Try another style or upload your own images.',
   'editor.chooseCover': 'Choose your cover',
   'editor.uploadCoverAria': 'Upload cover artwork',
   'editor.coverPreviewAlt': 'Cover preview',

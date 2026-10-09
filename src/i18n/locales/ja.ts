@@ -100,6 +100,8 @@ export const ja: Record<keyof typeof en, string> = {
   'editor.editTitle': 'アルバムを編集',
   'editor.closeAria': 'アルバムエディタを閉じる',
   'editor.coverArtwork': 'フロントジャケット',
+  'editor.randomCover': '別のデザインにする',
+  'editor.randomCoverGuidance': 'ランダムなジャケットと同じ配色のパッケージを自動生成します。別のデザインを試すか、お好みの画像に差し替えられます。',
   'editor.chooseCover': 'ジャケットを選択',
   'editor.uploadCoverAria': 'フロントジャケットをアップロード',
   'editor.coverPreviewAlt': 'ジャケットのプレビュー',
