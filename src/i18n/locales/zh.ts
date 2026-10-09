@@ -181,7 +181,7 @@ export const zh: Record<keyof typeof en, string> = {
   'editor.readingAudio': '正在检查音频…',
   'audioErrors.invalidType': '请选择 MP3、M4A、WAV、OGG、FLAC、AAC 或 WebM 格式的音频。',
   'audioErrors.tooLarge': '请选择不超过 100 MB 的音频文件。',
-  'audioErrors.decodeFailed': '音频文件为空、已损坏，或此浏览器不支持该格式。',
+  'audioErrors.decodeFailed': '音频文件为空、已损坏，或此浏览器不支持该格式。如果 M4A 文件使用 Apple Lossless（ALAC）编码，请转换为 FLAC 或 MP3 后重试。',
 
   // Language Selector
   'language.selectAria': '选择语言',

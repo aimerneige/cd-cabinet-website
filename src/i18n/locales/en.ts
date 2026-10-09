@@ -181,7 +181,7 @@ export const en = {
   'editor.readingAudio': 'Checking audio…',
   'audioErrors.invalidType': 'Choose an MP3, M4A, WAV, OGG, FLAC, AAC or WebM audio file.',
   'audioErrors.tooLarge': 'Choose an audio file no larger than 100 MB.',
-  'audioErrors.decodeFailed': 'This audio file is empty, damaged or unsupported by your browser.',
+  'audioErrors.decodeFailed': 'This audio file is empty, damaged or unsupported by your browser. If an M4A file uses Apple Lossless (ALAC), convert it to FLAC or MP3 and try again.',
 
   // Language Selector
   'language.selectAria': 'Select language',

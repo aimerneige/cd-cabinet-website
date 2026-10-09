@@ -188,7 +188,7 @@ export const ja: Record<keyof typeof en, string> = {
   'editor.readingAudio': '音声を確認中…',
   'audioErrors.invalidType': 'MP3、M4A、WAV、OGG、FLAC、AAC、WebMの音声を選択してください。',
   'audioErrors.tooLarge': '100MB以下の音声ファイルを選択してください。',
-  'audioErrors.decodeFailed': '音声が空、破損、またはこのブラウザでは非対応です。',
+  'audioErrors.decodeFailed': '音声が空、破損、またはこのブラウザでは非対応です。M4AファイルがApple Lossless（ALAC）形式の場合は、FLACまたはMP3に変換して再試行してください。',
 
   // Language Selector
   'language.selectAria': '言語を選択',
