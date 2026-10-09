@@ -9,7 +9,7 @@ export const zh: Record<keyof typeof en, string> = {
   // Header
   'header.brand': 'cd cabinet',
   'header.note': '给音乐一个安放之处',
-  'header.est': '始于 2025',
+  'header.est': `始于 ${__BUILD_YEAR__}`,
 
   // Hero / Heading
   'hero.eyebrow': '私人音乐典藏',

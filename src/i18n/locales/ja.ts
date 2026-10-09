@@ -9,7 +9,7 @@ export const ja: Record<keyof typeof en, string> = {
   // Header
   'header.brand': 'cd cabinet',
   'header.note': '音楽のための居場所',
-  'header.est': 'EST. 2025',
+  'header.est': `EST. ${__BUILD_YEAR__}`,
 
   // Hero / Heading
   'hero.eyebrow': 'プライベート・アーカイブ',

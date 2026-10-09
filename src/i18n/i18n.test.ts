@@ -52,6 +52,16 @@ describe('i18n store and translation function', () => {
     }
   })
 
+  it('translates header.est with the compile-time year', () => {
+    const currentYear = new Date().getFullYear().toString()
+    expect(t('header.est')).toBe(`EST. ${currentYear}`)
+    useI18nStore.getState().setLocale('zh')
+    expect(t('header.est')).toBe(`始于 ${currentYear}`)
+    useI18nStore.getState().setLocale('ja')
+    expect(t('header.est')).toBe(`EST. ${currentYear}`)
+  })
+
+
   it('interpolates parameters correctly in all languages', () => {
     useI18nStore.getState().setLocale('en')
     expect(

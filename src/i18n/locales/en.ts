@@ -7,7 +7,7 @@ export const en = {
   // Header
   'header.brand': 'cd cabinet',
   'header.note': 'A HOME FOR YOUR MUSIC',
-  'header.est': 'EST. 2025',
+  'header.est': `EST. ${__BUILD_YEAR__}`,
 
   // Hero / Heading
   'hero.eyebrow': 'THE PERSONAL ARCHIVE',
