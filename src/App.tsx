@@ -9,14 +9,7 @@ import { useTranslation } from './i18n'
 import { LanguageSwitcher } from './components/LanguageSwitcher/LanguageSwitcher'
 import { useAudioPlayback } from './hooks/useAudioPlayback'
 import { CompactPlayer } from './components/CDPlayer/CDPlayer'
-
-const GENRE_LIST = [
-  { key: 'All recordings', labelKey: 'genres.all' as const },
-  { key: 'Indie Folk', labelKey: 'genres.indieFolk' as const },
-  { key: 'Alternative', labelKey: 'genres.alternative' as const },
-  { key: 'Ambient', labelKey: 'genres.ambient' as const },
-  { key: 'Jazz', labelKey: 'genres.jazz' as const },
-]
+import { getGenreOptions } from './data/genres'
 
 export default function App() {
   const { t } = useTranslation()
@@ -44,7 +37,11 @@ export default function App() {
     document.title = t('meta.title')
   }, [t])
   const [query, setQuery] = useState('')
-  const [genre, setGenre] = useState('All recordings')
+  const [genre, setGenre] = useState('')
+  const genreFilters = useMemo(() => {
+    const used = new Set(albums.map((album) => album.genre))
+    return getGenreOptions([...used]).filter((item) => used.has(item.key))
+  }, [albums])
   const [sort, setSort] = useState('shelf')
   const [origin, setOrigin] = useState<Origin | null>(null)
   const shown = useMemo(
@@ -55,7 +52,7 @@ export default function App() {
             `${a.title} ${a.artist}`
               .toLowerCase()
               .includes(query.toLowerCase()) &&
-            (genre === 'All recordings' || a.genre === genre),
+            (!genre || a.genre === genre),
         )
         .sort((a, b) =>
           sort === 'artist'
@@ -75,7 +72,7 @@ export default function App() {
   }
   function handleEdit() {
     setQuery('')
-    setGenre('All recordings')
+    setGenre('')
     setSort('shelf')
     toggleEdit()
   }
@@ -125,15 +122,16 @@ export default function App() {
         </section>
         <div className="collection-toolbar">
           <div className="genre-tabs" aria-label={t('toolbar.filterByGenre')}>
-            {GENRE_LIST.map((item) => (
+            {[{ key: '', labelKey: 'genres.all' as const }, ...genreFilters].map((item) => (
               <button
                 disabled={editMode}
                 key={item.key}
                 className={genre === item.key ? 'selected' : ''}
+                aria-pressed={genre === item.key}
                 onClick={() => setGenre(item.key)}
               >
-                {t(item.labelKey)}
-                {item.key === 'All recordings' && <sup>{albums.length}</sup>}
+                {item.labelKey ? t(item.labelKey) : item.key}
+                {item.key === '' && <sup>{albums.length}</sup>}
               </button>
             ))}
           </div>
@@ -272,7 +270,7 @@ export default function App() {
           onClose={() => {
             setEditor(null)
             setQuery('')
-            setGenre('All recordings')
+            setGenre('')
           }}
         />
       )}

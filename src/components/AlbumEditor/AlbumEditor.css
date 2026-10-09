@@ -175,6 +175,40 @@
 .editor-fields label {
   font-size: 11px;
 }
+.editor-fields > div {
+  min-width: 0;
+}
+.editor-artist-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.editor-artist-row + .editor-artist-row,
+.editor-custom-genre {
+  margin-top: 10px;
+}
+.editor-custom-genre {
+  display: block;
+}
+.editor-artist-row label {
+  flex: 1;
+  min-width: 0;
+}
+.editor-add-option {
+  border: 0;
+  background: transparent;
+  padding: 8px 0 0;
+  font-size: 11px;
+  color: #58664a;
+  text-decoration: underline;
+}
+.editor-remove-artist {
+  border: 0;
+  background: transparent;
+  padding: 8px 4px;
+  font-size: 18px;
+  color: #8c5948;
+}
 .editor-fields input,
 .editor-fields select {
   width: 100%;

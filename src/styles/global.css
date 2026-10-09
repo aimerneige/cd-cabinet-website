@@ -214,10 +214,15 @@ h1 em {
 }
 .genre-tabs {
   display: flex;
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
   align-self: stretch;
   gap: 25px;
 }
 .genre-tabs button {
+  flex-shrink: 0;
   border: 0;
   background: none;
   font-size: 11px;
@@ -234,7 +239,7 @@ h1 em {
   content: '';
   height: 2px;
   background: #626f54;
-  bottom: -1px;
+  bottom: 0;
   left: 0;
   right: 0;
 }
@@ -245,6 +250,7 @@ h1 em {
 }
 .toolbar-tools {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 17px;
 }
@@ -879,6 +885,7 @@ footer i {
     padding-top: 8px;
   }
   .genre-tabs {
+    flex-basis: 100%;
     height: 46px;
     gap: 23px;
   }

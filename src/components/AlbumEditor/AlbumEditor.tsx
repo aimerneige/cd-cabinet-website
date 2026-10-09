@@ -7,6 +7,7 @@ import { generateCover, getGeneratedCoverStyle, randomCoverStyle } from '../../l
 import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
 import { useTranslation } from '../../i18n'
+import { getGenreOptions } from '../../data/genres'
 import './AlbumEditor.css'
 
 export function AlbumEditor({
@@ -23,11 +24,25 @@ export function AlbumEditor({
       `album-${crypto.getRandomValues(new Uint32Array(2)).join('-')}`,
   )
   const [title, setTitle] = useState(album?.title ?? '')
-  const [artist, setArtist] = useState(album?.artist ?? '')
+  const [artists, setArtists] = useState(
+    () => album?.artists?.length ? album.artists : [album?.artist ?? ''],
+  )
+  const artist = artists.map((name) => name.trim()).filter(Boolean).join(' / ')
   const [year, setYear] = useState(
     String(album?.year ?? new Date().getFullYear()),
   )
   const [genre, setGenre] = useState(album?.genre ?? 'Alternative')
+  const [customGenre, setCustomGenre] = useState('')
+  const collectionAlbums = useCollection((state) => state.albums)
+  const genreOptions = getGenreOptions([
+    ...collectionAlbums.map((item) => item.genre),
+    ...(album ? [album.genre] : []),
+  ])
+  const customGenreName = customGenre.trim()
+  const genreValue = genre || genreOptions.find((item) =>
+    item.key.toLowerCase() === customGenreName.toLowerCase() ||
+    (item.labelKey && t(item.labelKey).toLowerCase() === customGenreName.toLowerCase()),
+  )?.key || customGenreName
   const [discs, setDiscs] = useState<AlbumDisc[]>(
     () => album ? getAlbumDiscs(album) : [{ id: `${draftId}-disc-1`, tracks: [] }],
   )
@@ -51,7 +66,7 @@ export function AlbumEditor({
     title: title.trim() || t('editor.albumTitle'),
     artist: artist.trim() || t('editor.artist'),
     year: Number(year),
-    genre,
+    genre: genreValue,
   }, coverStyle) : '')
 
   useEffect(() => {
@@ -158,8 +173,12 @@ export function AlbumEditor({
       setError(t('editor.errorMissingCover'))
       return
     }
-    if (!title.trim() || !artist.trim()) {
+    if (!title.trim() || artists.some((name) => !name.trim())) {
       setError(t('editor.errorMissingFields'))
+      return
+    }
+    if (!genreValue) {
+      setError(t('editor.errorMissingGenre'))
       return
     }
     if (discs.some((disc) => disc.tracks.some((track) => !track.title.trim()))) {
@@ -205,8 +224,9 @@ export function AlbumEditor({
         ...base,
         title: title.trim(),
         artist: artist.trim(),
+        artists: artists.map((name) => name.trim()),
         year: Number(year),
-        genre,
+        genre: genreValue,
         coverUrl,
         ...(coverStyle ? { color: coverStyle.color, ink: coverStyle.ink } : {}),
         backCoverUrl: backCover || undefined,
@@ -421,15 +441,36 @@ export function AlbumEditor({
                 onChange={(event) => setTitle(event.target.value)}
               />
             </label>
-            <label>
-              {t('editor.artist')}
-              <input
-                required
-                maxLength={100}
-                value={artist}
-                onChange={(event) => setArtist(event.target.value)}
-              />
-            </label>
+            <div className="editor-artists">
+              {artists.map((name, index) => (
+                <div className="editor-artist-row" key={index}>
+                  <label>
+                    {index === 0 ? t('editor.artist') : t('editor.artistNumber', { number: index + 1 })}
+                    <input
+                      required
+                      maxLength={100}
+                      value={name}
+                      onChange={(event) => setArtists((previous) => previous.map((item, position) =>
+                        position === index ? event.target.value : item,
+                      ))}
+                    />
+                  </label>
+                  {artists.length > 1 && (
+                    <button
+                      type="button"
+                      className="editor-remove-artist"
+                      aria-label={t('editor.removeArtist', { number: index + 1 })}
+                      onClick={() => setArtists((previous) => previous.filter((_, position) => position !== index))}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button type="button" className="editor-add-option" onClick={() => setArtists((previous) => [...previous, ''])}>
+                {t('editor.addArtist')}
+              </button>
+            </div>
             <label>
               {t('editor.year')}
               <input
@@ -441,25 +482,29 @@ export function AlbumEditor({
                 onChange={(event) => setYear(event.target.value)}
               />
             </label>
-            <label>
-              {t('editor.genre')}
-              <select
-                value={genre}
-                onChange={(event) => setGenre(event.target.value)}
-              >
-                {[
-                  { key: 'Indie Folk', labelKey: 'genres.indieFolk' as const },
-                  { key: 'Alternative', labelKey: 'genres.alternative' as const },
-                  { key: 'Ambient', labelKey: 'genres.ambient' as const },
-                  { key: 'Jazz', labelKey: 'genres.jazz' as const },
-                  { key: 'Other', labelKey: 'genres.other' as const },
-                ].map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {t(item.labelKey)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="editor-genre">
+              <label>
+                {t('editor.genre')}
+                <select value={genre} onChange={(event) => setGenre(event.target.value)}>
+                  {genreOptions.map((item) => (
+                    <option key={item.key} value={item.key}>
+                      {item.labelKey ? t(item.labelKey) : item.key}
+                    </option>
+                  ))}
+                  <option value="">{t('editor.customGenre')}</option>
+                </select>
+              </label>
+              {genre ? (
+                <button type="button" className="editor-add-option" onClick={() => setGenre('')}>
+                  {t('editor.addGenre')}
+                </button>
+              ) : (
+                <label className="editor-custom-genre">
+                  {t('editor.customGenre')}
+                  <input required maxLength={80} value={customGenre} onChange={(event) => setCustomGenre(event.target.value)} />
+                </label>
+              )}
+            </div>
             <label>
               {t('editor.numberOfDiscs')}
               <select
