@@ -43,14 +43,12 @@ export function ActiveCD({
   const pendingPlay = useRef(false)
   const pendingDisc = useRef<number | null>(null)
   const {
-    trayRef,
-    frontDisc,
-    backDisc,
+    trayRefs,
     discIndex,
     isTurning,
     selectDisc,
     resetTray,
-  } = useDiscAnimation(discs, Math.max(0, loadedIndex))
+  } = useDiscAnimation(discs, getCaseDepth(album), Math.max(0, loadedIndex))
   const disc = discs[discIndex] ?? discs[0]
   const {
     layer,
@@ -324,9 +322,7 @@ export function ActiveCD({
       <CDCase
         album={album}
         disc={disc}
-        frontDisc={frontDisc}
-        backDisc={backDisc}
-        trayRef={trayRef}
+        trayRefs={trayRefs}
         ref={caseRef}
         view={view}
         paperRef={paperRef}

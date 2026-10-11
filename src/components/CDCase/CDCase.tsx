@@ -11,9 +11,7 @@ export const CDCase = forwardRef<
   {
     album: Album
     disc?: AlbumDisc
-    frontDisc: AlbumDisc
-    backDisc: AlbumDisc
-    trayRef: RefObject<HTMLDivElement | null>
+    trayRefs: RefObject<(HTMLDivElement | null)[]>
     view: CaseView
     paperRef: RefObject<HTMLDivElement | null>
     obiMode: ObiMode
@@ -22,7 +20,7 @@ export const CDCase = forwardRef<
     ejectedDiscId?: string
   }
 >(function CDCase(
-  { album, disc, frontDisc, backDisc, trayRef, view, paperRef, obiMode, onPlayDisc, canPlayDisc, ejectedDiscId },
+  { album, disc, trayRefs, view, paperRef, obiMode, onPlayDisc, canPlayDisc, ejectedDiscId },
   ref,
 ) {
   const { t } = useTranslation()
@@ -80,13 +78,21 @@ export const CDCase = forwardRef<
           )}
         </div>
         <div className="case-edge edge-right" />
-        {discs.length === 3 && <DiscTray album={album} disc={discs[2]} onPlay={discs[2].id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === discs[2].id} />}
-        <div className="tray-leaf" ref={trayRef}>
-          <DiscTray album={album} disc={frontDisc} side="front" onPlay={frontDisc.id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === frontDisc.id} />
-          {discs.length > 1 && (
-            <DiscTray album={album} disc={backDisc} side="back" onPlay={backDisc.id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === backDisc.id} />
-          )}
-        </div>
+        {discs.length > 1 && discs.length % 2 === 1 && (
+          <DiscTray album={album} disc={discs[discs.length - 1]} onPlay={discs[discs.length - 1].id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === discs[discs.length - 1].id} />
+        )}
+        {Array.from({ length: Math.max(1, Math.floor(discs.length / 2)) }, (_, index) => {
+          const frontDisc = discs[index * 2]
+          const backDisc = discs[index * 2 + 1]
+          return (
+            <div className="tray-leaf" key={frontDisc.id} ref={(element) => { trayRefs.current[index] = element }}>
+              <DiscTray album={album} disc={frontDisc} side="front" onPlay={frontDisc.id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === frontDisc.id} />
+              {backDisc && (
+                <DiscTray album={album} disc={backDisc} side="back" onPlay={backDisc.id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === backDisc.id} />
+              )}
+            </div>
+          )
+        })}
         <span className="selected-disc-label" aria-live="polite">
           {discs.length > 1
             ? `DISC ${discs.findIndex((item) => item.id === selected.id) + 1} / ${discs.length}`

@@ -68,6 +68,50 @@ test('track selection loads the CD player, reports missing audio and returns the
   expect(errors).toEqual([])
 })
 
+test('six-disc page jumps load the right audio and restore the spread when reopening', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await draftAudioAlbum(page)
+  await page.getByLabel('Number of discs').selectOption('6')
+  for (const number of [3, 6]) {
+    await page.getByRole('button', { name: `Disc ${number}`, exact: true }).click()
+    await page.getByLabel('Add audio files').setInputFiles({
+      name: `Disc ${number} song.wav`, mimeType: 'audio/wav', buffer: wave(30),
+    })
+    await expect(page.locator('.editor-track-list li')).toHaveCount(1)
+  }
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  const source = page.getByRole('button', { name: 'Open Listening Session by Local Artist', exact: true })
+  await source.click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await page.getByRole('button', { name: 'Disc 6', exact: true }).click()
+  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 6 / 6')
+  await page.getByRole('button', { name: 'Play disc 6 from the beginning', exact: true }).click()
+  await expect(page.locator('.display-track')).toHaveText('Disc 6 song')
+  await expect(page.locator('.cd-player')).not.toHaveClass(/is-loading/)
+  await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
+  await page.getByRole('button', { name: 'Disc 3', exact: true }).click()
+  await expect(page.locator('.display-track')).toHaveText('Disc 3 song')
+  await expect(page.locator('.cd-player')).not.toHaveClass(/is-loading/)
+  await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
+  const spread = await page.locator('.tray-leaf').evaluateAll((elements) =>
+    elements.map((element) => getComputedStyle(element).transform),
+  )
+  await page.getByRole('button', { name: 'Close album', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await source.click()
+  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+  await page.getByRole('button', { name: 'Return CD to case', exact: true }).click()
+  await expect(page.locator('.cd-player')).toHaveCount(0)
+  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 3 / 6')
+  expect(await page.locator('.tray-leaf').evaluateAll((elements) =>
+    elements.map((element) => getComputedStyle(element).transform),
+  )).toEqual(spread)
+  await expect(page.getByRole('button', { name: 'Play disc 3 from the beginning', exact: true })).toBeVisible()
+  expect(errors).toEqual([])
+})
+
 test('multi-disc audio, titles and replacements persist without rewriting unchanged files', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await draftAudioAlbum(page)

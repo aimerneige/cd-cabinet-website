@@ -2,22 +2,24 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 import type { AlbumDisc } from '../types/album'
 
-export function useDiscAnimation(discs: AlbumDisc[], initialIndex = 0) {
-  const trayRef = useRef<HTMLDivElement>(null)
+export function useDiscAnimation(discs: AlbumDisc[], caseDepth: number, initialIndex = 0) {
+  const trayRefs = useRef<(HTMLDivElement | null)[]>([])
   const animation = useRef<gsap.core.Timeline | null>(null)
-  const initialSide = discs.length === 3 ? Math.min(initialIndex, 1) : initialIndex % 2
-  const position = useRef(initialSide)
+  const position = useRef(Math.ceil(initialIndex / 2))
   const closing = useRef(false)
   const [discIndex, setDiscIndex] = useState(initialIndex)
-  const [faces, setFaces] = useState(() => {
-    const initialFaces = [0, Math.min(1, discs.length - 1)]
-    if (discs.length !== 3 || initialIndex !== 2) initialFaces[initialSide] = initialIndex
-    return initialFaces
-  })
   const [isTurning, setIsTurning] = useState(false)
+  const frontDepth = discs.length > 3 ? caseDepth / 2 - 3 : 3
+  const trayTransform = (index: number, turned: boolean) => ({
+    rotationY: turned ? -150 : 0,
+    // 厚盒托盘靠近盒盖铰链，翻开后反向叠放，避免盒盖和前页遮住碟片。
+    z: frontDepth + (turned ? index : -index) * 6,
+  })
 
   useLayoutEffect(() => {
-    gsap.set(trayRef.current, { rotationY: position.current * -150 })
+    trayRefs.current.forEach((tray, index) => {
+      gsap.set(tray, trayTransform(index, index < position.current))
+    })
   }, [])
 
   useEffect(
@@ -29,52 +31,32 @@ export function useDiscAnimation(discs: AlbumDisc[], initialIndex = 0) {
 
   const selectDisc = (index: number) => {
     if (closing.current || animation.current || index === discIndex) return
-    if (discs.length === 3 && discIndex > 0 && index > 0) {
+    const target = Math.ceil(index / 2)
+    if (position.current === target) {
       setDiscIndex(index)
       return
     }
-    const tray = trayRef.current
-    if (!tray) return
-    const target = discs.length === 3 ? (index === 0 ? 0 : 1) : index % 2
     const finish = () => {
       position.current = target
       setDiscIndex(index)
       setIsTurning(false)
       animation.current = null
     }
-    const updateFace = () => {
-      if (discs.length !== 3 || index !== 2) {
-        setFaces((previous) =>
-          previous.map((face, side) => (side === target ? index : face)),
-        )
-      }
-    }
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      updateFace()
-      gsap.set(tray, { rotationY: target * -150 })
+      trayRefs.current.forEach((tray, trayIndex) => {
+        gsap.set(tray, trayTransform(trayIndex, trayIndex < target))
+      })
       finish()
       return
     }
     setIsTurning(true)
     const tl = gsap.timeline({ onComplete: finish })
     animation.current = tl
-    if (position.current === target) {
-      // 同一面的跨页切换先翻开托盘，在隐藏面换页后再翻回。
-      tl.to(tray, {
-        rotationY: (1 - target) * -150,
-        duration: 0.38,
-        ease: 'power2.inOut',
-      })
-        .call(updateFace)
-        .to(tray, {
-          rotationY: target * -150,
-          duration: 0.38,
-          ease: 'power2.inOut',
-        })
-    } else {
-      updateFace()
-      tl.to(tray, {
-        rotationY: target * -150,
+    const step = target > position.current ? 1 : -1
+    for (let page = position.current; page !== target; page += step) {
+      const trayIndex = step > 0 ? page : page - 1
+      tl.to(trayRefs.current[trayIndex], {
+        ...trayTransform(trayIndex, step > 0),
         duration: 0.7,
         ease: 'power2.inOut',
       })
@@ -89,25 +71,30 @@ export function useDiscAnimation(discs: AlbumDisc[], initialIndex = 0) {
     setIsTurning(true)
     if (
       window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-      !Number(gsap.getProperty(trayRef.current, 'rotationY'))
+      trayRefs.current.every((tray) => !Number(gsap.getProperty(tray, 'rotationY')))
     ) {
-      gsap.set(trayRef.current, { rotationY: 0 })
+      trayRefs.current.forEach((tray, index) => {
+        gsap.set(tray, trayTransform(index, false))
+      })
       onClosed()
       return
     }
-    animation.current = gsap
-      .timeline({ onComplete: onClosed })
-      .to(trayRef.current, {
-        rotationY: 0,
-        duration: 0.3,
-        ease: 'power2.inOut',
-      })
+    const tl = gsap.timeline({ onComplete: onClosed })
+    animation.current = tl
+    for (let index = trayRefs.current.length - 1; index >= 0; index--) {
+      const tray = trayRefs.current[index]
+      if (Number(gsap.getProperty(tray, 'rotationY'))) {
+        tl.to(tray, {
+          ...trayTransform(index, false),
+          duration: 0.3,
+          ease: 'power2.inOut',
+        })
+      } else tl.set(tray, trayTransform(index, false))
+    }
   }
 
   return {
-    trayRef,
-    frontDisc: discs[faces[0]],
-    backDisc: discs[faces[1]],
+    trayRefs,
     discIndex,
     isTurning,
     selectDisc,

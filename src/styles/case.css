@@ -82,6 +82,10 @@
 }
 .case-lid {
   transform: translateZ(calc(var(--case-depth) / 2));
+  pointer-events: none;
+}
+.lid-front {
+  pointer-events: auto;
 }
 .tray-leaf {
   position: absolute;
@@ -99,6 +103,9 @@
 }
 .tray-back {
   transform: rotateY(180deg) translateZ(2px);
+}
+.tray-hub {
+  pointer-events: none;
 }
 .selected-disc-label {
   backface-visibility: hidden;

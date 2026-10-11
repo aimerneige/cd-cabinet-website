@@ -20,7 +20,7 @@ export function useAlbumAnimation(
   const closeRequested = useRef(false)
   const viewTimeline = useRef<gsap.core.Timeline | null>(null)
   const opened = useRef(true)
-  const trayAngle = useRef(0)
+  const trayTransforms = useRef<{ rotationY: number; z: number }[]>([])
   const [view, setView] = useState<CaseView>('inside')
   const [isChangingView, setIsChangingView] = useState(true)
   const returnCallback = useRef(onReturned)
@@ -123,12 +123,15 @@ export function useAlbumAnimation(
     const jewel = caseRef.current!
     const body = jewel.querySelector('.case-body')!
     const lid = jewel.querySelector('.case-lid')!
-    const tray = jewel.querySelector('.tray-leaf')!
+    const trays = [...jewel.querySelectorAll('.tray-leaf')]
     const reduced = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches
     if (opened.current)
-      trayAngle.current = Number(gsap.getProperty(tray, 'rotationY'))
+      trayTransforms.current = trays.map((tray) => ({
+        rotationY: Number(gsap.getProperty(tray, 'rotationY')),
+        z: Number(gsap.getProperty(tray, 'z')),
+      }))
     if (next !== 'back') opened.current = next === 'inside'
     setIsChangingView(true)
     const tl = gsap.timeline({
@@ -166,15 +169,20 @@ export function useAlbumAnimation(
           ease: 'power2.inOut',
         },
         0,
-      ).to(
-        tray,
-        {
-          rotationY: opened.current ? trayAngle.current : 0,
-          duration: reduced ? 0 : 0.4,
-          ease: 'power2.inOut',
-        },
-        0,
       )
+      trays.forEach((tray, index) => {
+        tl.to(
+          tray,
+          {
+            ...(opened.current
+              ? trayTransforms.current[index]
+              : { rotationY: 0, z: trays.length > 1 ? caseDepth / 2 - 3 - index * 6 : 3 }),
+            duration: reduced ? 0 : 0.4,
+            ease: 'power2.inOut',
+          },
+          0,
+        )
+      })
     }
   }
 

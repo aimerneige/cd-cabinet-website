@@ -155,26 +155,115 @@ test('three-disc trays reveal the base disc and can close during a turn', async 
   await expect(page.locator('[data-album-id="album-18"]')).toBeFocused()
 })
 
-test('six-disc sets support page jumps and reduced motion switches without a turn', async ({ page }) => {
-  await page.goto('/')
-  await page.locator('[data-album-id="album-1"]').click()
-  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
-  await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
-  await expect(page.locator('.album-editor')).toBeVisible()
-  await page.getByLabel('Number of discs').selectOption('6')
-  await page.getByRole('button', { name: 'Save changes', exact: true }).click()
-  await expect(page.locator('.album-editor')).toHaveCount(0)
-  await page.locator('[data-album-id="album-1"]').click()
-  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
-  await page.getByRole('button', { name: 'Disc 5', exact: true }).click()
-  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 5 / 6')
-  await expect(page.locator('.tray-front .tray-disc-label')).toHaveText('DISC 5 / 6')
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.getByRole('button', { name: 'Disc 6', exact: true }).click()
-  await expect(page.locator('.selected-disc-label')).toHaveText('DISC 6 / 6')
-  await expect(page.locator('.track-list')).toHaveAttribute('aria-busy', 'false')
-  await expect(page.locator('.tray-back .tray-disc-label')).toHaveText('DISC 6 / 6')
-})
+for (const count of [4, 5, 6]) {
+  test(`${count}-disc sets keep fixed trays and turn every page in both directions`, async ({ page }) => {
+    const errors: string[] = []
+    page.on('pageerror', (error) => errors.push(error.message))
+    if (count > 4) await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.locator('[data-album-id="album-1"]').click()
+    await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+    await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
+    await expect(page.locator('.album-editor')).toBeVisible()
+    await page.getByLabel('Number of discs').selectOption(String(count))
+    await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+    await expect(page.locator('.album-editor')).toHaveCount(0)
+    await page.locator('[data-album-id="album-1"]').click()
+    await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
+    await expect(page.locator('.tray-leaf')).toHaveCount(Math.floor(count / 2))
+    await expect(page.locator('.cd-case [data-disc-id]')).toHaveCount(count)
+    const discIds = await page.locator('.cd-case [data-disc-id]').evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute('data-disc-id')),
+    )
+    const transforms = () => page.locator('.tray-leaf').evaluateAll((elements) =>
+      elements.map((element) => getComputedStyle(element).transform),
+    )
+    const selectDisc = async (number: number) => {
+      await page.getByRole('button', { name: `Disc ${number}`, exact: true }).click()
+      await expect(page.locator('.selected-disc-label')).toHaveText(`DISC ${number} / ${count}`)
+      await expect(page.locator('.track-list')).toHaveAttribute('aria-busy', 'false')
+      const disc = page.getByRole('button', { name: `Play disc ${number} from the beginning`, exact: true })
+      await expect(disc).toHaveCount(1)
+      const visibleDiscs = await disc.evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        return [0.2, 0.5, 0.8].map((x) =>
+          document.elementFromPoint(rect.x + rect.width * x, rect.y + rect.height * 0.5)
+            ?.closest('[data-disc-id]')?.getAttribute('data-disc-id'),
+        )
+      })
+      expect(visibleDiscs).toEqual(Array(3).fill(await disc.getAttribute('data-disc-id')))
+      if (count > 4) {
+        const rect = (await disc.boundingBox())!
+        expect(rect.x).toBeGreaterThanOrEqual(0)
+        expect(rect.x + rect.width).toBeLessThanOrEqual(390)
+      }
+      expect(await page.locator('.cd-case [data-disc-id]').evaluateAll((elements) =>
+        elements.map((element) => element.getAttribute('data-disc-id')),
+      )).toEqual(discIds)
+    }
+    await selectDisc(1)
+    for (let number = 2; number <= count; number++) {
+      const before = await transforms()
+      await selectDisc(number)
+      if (number % 2 === 1) expect(await transforms()).toEqual(before)
+      else expect(await transforms()).not.toEqual(before)
+    }
+    await page.screenshot({ path: `test-results/${count}-disc-last-page.png` })
+    for (let number = count - 1; number >= 1; number--) await selectDisc(number)
+    const closed = await transforms()
+    const turnFrames = count === 6 ? page.evaluate(async () => {
+      const frames: number[][] = []
+      while (document.querySelector('.selected-disc-label')?.textContent !== 'DISC 6 / 6') {
+        frames.push([...document.querySelectorAll('.tray-leaf')].map((element) =>
+          new DOMMatrix(getComputedStyle(element).transform).m11,
+        ))
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+      }
+      return frames
+    }) : null
+    await selectDisc(count)
+    if (turnFrames) {
+      const frames = await turnFrames
+      for (let index = 0; index < 3; index++) {
+        expect(frames.some((frame) => frame[index] < 0.99 && frame[index] > -0.85)).toBe(true)
+        if (index > 0) expect(frames.every((frame) => frame[index] >= 0.99 || frame[index - 1] < -0.86)).toBe(true)
+      }
+    }
+    const opened = await transforms()
+    await page.getByRole('button', { name: 'Back', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    expect(await transforms()).toEqual(opened)
+    await page.getByRole('button', { name: 'Front', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Front', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    const lidDepth = await page.locator('.case-lid').evaluate((element) =>
+      new DOMMatrix(getComputedStyle(element).transform).m43,
+    )
+    const foldedTrays = await page.locator('.tray-leaf').evaluateAll((elements) =>
+      elements.map((element) => {
+        const transform = new DOMMatrix(getComputedStyle(element).transform)
+        return { facingFront: transform.m11 === 1, depth: transform.m43 }
+      }),
+    )
+    expect(foldedTrays.every((tray) => tray.facingFront && tray.depth < lidDepth)).toBe(true)
+    await page.screenshot({ path: `test-results/${count}-disc-front.png` })
+    await page.getByRole('button', { name: 'Inside', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Inside', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    expect(await transforms()).toEqual(opened)
+    await selectDisc(count)
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await selectDisc(1)
+    expect(await transforms()).toEqual(closed)
+    await selectDisc(count)
+    expect(await transforms()).toEqual(opened)
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.getByRole('button', { name: 'Disc 1', exact: true }).click()
+    await expect(page.locator('.track-list')).toHaveAttribute('aria-busy', 'true')
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page.locator('[data-album-id="album-1"]')).toBeFocused()
+    expect(errors).toEqual([])
+  })
+}
 
 test('uploaded artwork, multi-disc additions and edits survive a reload', async ({
   page,
