@@ -113,6 +113,7 @@
   display: grid;
   place-items: center;
 }
+.cover-preview.back-artwork-preview { aspect-ratio: 69 / 59; }
 .cover-preview img {
   width: 100%;
   height: 100%;

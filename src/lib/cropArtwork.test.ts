@@ -4,10 +4,18 @@ import { withDiscCount } from './album'
 import { getArtworkCrop, getCropOutputSize, type ArtworkKind } from './cropArtwork'
 
 describe('artwork crop dimensions', () => {
-  it('locks booklet, back insert and disc images to a square, with a circular disc guide', () => {
-    const kinds: ArtworkKind[] = ['cover', 'bookletBack', 'back', 'backInside', 'disc', 'page']
+  it('locks booklet and disc images to a square, with a circular disc guide', () => {
+    const kinds: ArtworkKind[] = ['cover', 'bookletBack', 'disc', 'page']
     for (const kind of kinds) {
       expect(getArtworkCrop(kind, albums[0])).toEqual({ width: 1, height: 1, round: kind === 'disc' })
+    }
+  })
+
+  it('uses the landscape back panel without the separately uploaded spines on both sides', () => {
+    for (const kind of ['back', 'backInside'] as const) {
+      for (const count of [1, 4, 6]) {
+        expect(getArtworkCrop(kind, withDiscCount(albums[0], count))).toEqual({ width: 69, height: 59, round: false })
+      }
     }
   })
 
@@ -23,7 +31,7 @@ describe('artwork crop dimensions', () => {
   })
 
   it('exports exact integer ratios and limits the longest edge to 2048 pixels', () => {
-    for (const kind of ['cover', 'spine', 'obi'] as const) {
+    for (const kind of ['cover', 'back', 'backInside', 'spine', 'obi'] as const) {
       const profile = getArtworkCrop(kind, withDiscCount(albums[0], 4))
       for (const area of [{ width: 6000, height: 6000 }, { width: 3, height: 10 }, { width: 143, height: 745 }]) {
         const size = getCropOutputSize(area, profile)

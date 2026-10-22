@@ -6,11 +6,11 @@ export function ArtworkInput({ label, src, alt, uploadLabel, resetLabel, custom,
   resetLabel: string
   custom: boolean
   disabled: boolean
-  variant?: 'square' | 'disc' | 'spine' | 'obi'
+  variant?: 'square' | 'disc' | 'spine' | 'obi' | 'back'
   onUpload: (file: File | undefined) => void
   onReset: () => void
 }) {
-  const preview = variant === 'spine' ? 'spine-preview' : `cover-preview${variant === 'disc' ? ' disc-artwork-preview' : variant === 'obi' ? ' obi-preview' : ''}`
+  const preview = variant === 'spine' ? 'spine-preview' : `cover-preview${variant === 'disc' ? ' disc-artwork-preview' : variant === 'obi' ? ' obi-preview' : variant === 'back' ? ' back-artwork-preview' : ''}`
   return (
     <div className="artwork-input">
       <label className="artwork-upload">

@@ -129,17 +129,17 @@ export function getBackCoverArtwork(album: ArtworkDetails & Pick<Album, 'backCov
   const color = escapeXml(album.color)
   const ink = escapeXml(album.ink)
   const count = album.discs?.length || 1
-  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-back="${style?.id ?? 'custom'}" width="1000" height="1000" viewBox="0 0 600 600">
-    <rect width="600" height="600" fill="${color}"/>
-    <rect x="18" y="18" width="564" height="564" fill="none" stroke="${ink}" opacity=".3"/>
-    <g fill="none" stroke="${style?.accent ?? ink}" opacity=".15"><circle cx="530" cy="300" r="140"/><circle cx="530" cy="300" r="110"/></g>
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-back="${style?.id ?? 'custom'}" width="1380" height="1180" viewBox="0 0 690 590">
+    <rect width="690" height="590" fill="${color}"/>
+    <rect x="18" y="18" width="654" height="554" fill="none" stroke="${ink}" opacity=".3"/>
+    <g fill="none" stroke="${style?.accent ?? ink}" opacity=".15"><circle cx="620" cy="295" r="140"/><circle cx="620" cy="295" r="110"/></g>
     <g fill="${ink}">
       ${text(album.artist, 65, 18)}
       ${text(album.title, 112, 32, 'Georgia, serif')}
       ${text('ORIGINAL RECORDINGS', 150, 11)}
       ${album.tracks.slice(0, 12).map((track, index) => `
         ${text(`${String(index + 1).padStart(2, '0')}  ${track.title}`, 190 + index * 28, 14, 'Arial, sans-serif', 40, 450)}
-        <g text-anchor="end">${text(track.duration ?? '', 190 + index * 28, 12, 'Arial, sans-serif', 560, 55)}</g>
+        <g text-anchor="end">${text(track.duration ?? '', 190 + index * 28, 12, 'Arial, sans-serif', 650, 55)}</g>
       `).join('')}
       ${text(`${album.year} · ${count} ${count === 1 ? 'CD' : 'CDs'} · ${album.genre}`, 555, 11)}
     </g>
@@ -197,9 +197,11 @@ export function getInnerArtwork(
   if (uploaded) return uploaded
   const color = escapeXml(album.color)
   const ink = escapeXml(album.ink)
-  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-inside="${side}" width="1000" height="1000" viewBox="0 0 600 600">
-    <rect width="600" height="600" fill="${color}"/>
-    <g fill="none" stroke="${ink}" opacity=".25"><circle cx="300" cy="285" r="170"/><circle cx="300" cy="285" r="130"/><path d="M40 460H560"/></g>
+  const width = side === 'back' ? 690 : 600
+  const height = side === 'back' ? 590 : 600
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-inside="${side}" width="${side === 'back' ? 1380 : 1000}" height="${side === 'back' ? 1180 : 1000}" viewBox="0 0 ${width} ${height}">
+    <rect width="${width}" height="${height}" fill="${color}"/>
+    <g fill="none" stroke="${ink}" opacity=".25"><circle cx="${width / 2}" cy="285" r="170"/><circle cx="${width / 2}" cy="285" r="130"/><path d="M40 460H${width - 40}"/></g>
     <g fill="${ink}">
       ${text(side === 'booklet' ? 'BOOKLET' : 'ORIGINAL RECORDINGS', 65, 14)}
       ${text(album.title, 510, 32, 'Georgia, serif')}

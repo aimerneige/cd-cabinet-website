@@ -139,4 +139,16 @@ describe('generated packaging', () => {
       expect(svg).toContain(`data-obi-panel="front" transform="translate(${count > 3 ? 112 : 78} 0)"`)
     }
   })
+
+  it('generates landscape back inserts while keeping both booklet covers square', () => {
+    const album = { ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png', tracks: [] }
+    for (const source of [getBackCoverArtwork(album), getInnerArtwork(album, 'back')]) {
+      const svg = decodeURIComponent(source)
+      expect(svg).toContain('width="1380" height="1180" viewBox="0 0 690 590"')
+      expect(svg).toContain('<rect width="690" height="590"')
+    }
+    expect(decodeURIComponent(getInnerArtwork(album, 'booklet'))).toContain('width="1000" height="1000" viewBox="0 0 600 600"')
+    const cover = generateCover(details, randomCoverStyle())
+    expect(decodeURIComponent(cover)).toContain('width="1000" height="1000" viewBox="0 0 600 600"')
+  })
 })

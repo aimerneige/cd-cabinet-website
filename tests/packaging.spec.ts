@@ -56,6 +56,8 @@ test('independent booklet, case and per-disc images survive reload and reset sep
   await expect(page.locator('.case-spine-right img')).toHaveAttribute('src', right)
   await expect(page.locator('.case-rear img')).toHaveAttribute('src', outer)
   await expect(page.locator('.case-back img')).toHaveAttribute('src', inner)
+  await expect(page.locator('.case-rear img')).toHaveCSS('object-fit', 'contain')
+  await expect(page.locator('.case-back img')).toHaveCSS('object-fit', 'contain')
   await expect(page.locator('.tray-front .disc')).toHaveCSS('background-image', `url("${first}")`)
   await expect(page.locator('.tray-back .disc')).toHaveCSS('background-image', `url("${second}")`)
   await page.getByRole('button', { name: 'Case artwork', exact: true }).click()

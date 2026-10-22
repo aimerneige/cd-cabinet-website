@@ -93,6 +93,8 @@ test('fixed ratios follow case thickness and the disc has a circular guide on mo
   for (const [count, upload, ratio, alt] of [
     ['1', 'Upload spine artwork', '2:25', 'Spine preview'],
     ['1', 'Upload OBI paper strip', '31:76', 'OBI preview'],
+    ['1', 'Upload back cover artwork', '69:59', 'Back cover preview'],
+    ['4', 'Upload inside back cover', '69:59', 'Back cover inside preview'],
     ['4', 'Upload right spine artwork', '29:150', 'Right spine preview'],
     ['4', 'Upload OBI paper strip', '79:152', 'OBI preview'],
     ['4', 'Upload disc artwork', '1:1', 'Disc preview'],
@@ -118,6 +120,10 @@ test('fixed ratios follow case thickness and the disc has a circular guide on mo
     const result = await pixels(page.getByRole('img', { name: alt, exact: true }))
     const [width, height] = ratio.split(':').map(Number)
     expect(result.width / result.height).toBe(width / height)
+    if (ratio === '69:59') {
+      const preview = (await page.getByRole('img', { name: alt, exact: true }).locator('..').boundingBox())!
+      expect(preview.width / preview.height).toBeCloseTo(69 / 59, 2)
+    }
   }
 })
 

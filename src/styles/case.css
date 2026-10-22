@@ -22,12 +22,12 @@
 .case-rear > img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 .case-back {
   transform: translateZ(calc(var(--case-depth) / -2));
 }
-.case-back > img { width: 100%; height: 100%; object-fit: cover; }
+.case-back > img { width: 100%; height: 100%; object-fit: contain; }
 .case-spine-right { overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .case-spine-right > span { writing-mode: vertical-rl; white-space: nowrap; font-size: 9px; }
 .edge-top,

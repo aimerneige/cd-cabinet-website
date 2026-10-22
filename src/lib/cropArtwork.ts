@@ -12,7 +12,8 @@ export interface ArtworkCrop {
 export function getArtworkCrop(kind: ArtworkKind, album: Pick<Album, 'discs'>): ArtworkCrop {
   const depth = getCaseDepth(album)
   const [width, height] = kind === 'spine' || kind === 'rightSpine' ? [depth, 300]
-    : kind === 'obi' ? [92 + depth + 8, 304] : [1, 1]
+    : kind === 'obi' ? [92 + depth + 8, 304]
+    : kind === 'back' || kind === 'backInside' ? [138, 118] : [1, 1]
   let divisor = width
   let remainder = height
   while (remainder) [divisor, remainder] = [remainder, divisor % remainder]

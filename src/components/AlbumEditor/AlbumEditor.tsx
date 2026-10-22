@@ -353,10 +353,10 @@ export function AlbumEditor({
             uploadLabel={t('editor.uploadRightSpine')} resetLabel={t('editor.useGeneratedRightSpine')} custom={!!rightSpine} disabled={loading || saving} variant="spine"
             onUpload={(file) => upload(file, 'rightSpine')} onReset={() => setRightSpine('')} />
           <ArtworkInput label={t('editor.backCoverArtwork')} src={getBackCoverArtwork(previewAlbum)} alt={t('editor.backCoverPreviewAlt')}
-            uploadLabel={t('editor.uploadBackCoverAria')} resetLabel={t('editor.useGeneratedBackCover')} custom={!!backCover} disabled={loading || saving}
+            uploadLabel={t('editor.uploadBackCoverAria')} resetLabel={t('editor.useGeneratedBackCover')} custom={!!backCover} disabled={loading || saving} variant="back"
             onUpload={(file) => upload(file, 'back')} onReset={() => setBackCover('')} />
           <ArtworkInput label={t('editor.backInsideArtwork')} src={getInnerArtwork(previewAlbum, 'back')} alt={t('editor.backInsidePreview')}
-            uploadLabel={t('editor.uploadBackInside')} resetLabel={t('editor.useGeneratedBackInside')} custom={!!backInside} disabled={loading || saving}
+            uploadLabel={t('editor.uploadBackInside')} resetLabel={t('editor.useGeneratedBackInside')} custom={!!backInside} disabled={loading || saving} variant="back"
             onUpload={(file) => upload(file, 'backInside')} onReset={() => setBackInside('')} />
           <div className="disc-artwork">
             {discCount > 1 && <select aria-label={t('viewer.chooseDiscAria')} value={editingDisc} disabled={loading || saving} onChange={(event) => setEditingDisc(Number(event.target.value))}>

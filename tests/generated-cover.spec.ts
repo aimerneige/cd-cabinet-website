@@ -30,7 +30,7 @@ test('default covers can be changed, saved and edited without losing their desig
     await expect(obiPreview).not.toHaveAttribute('src', previousObi)
     await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1000)
     await expect.poll(() => discPreview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1000)
-    await expect.poll(() => backPreview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1000)
+    await expect.poll(() => backPreview.evaluate((image: HTMLImageElement) => [image.naturalWidth, image.naturalHeight])).toEqual([1380, 1180])
     await expect.poll(() => obiPreview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(372)
     source = (await preview.getAttribute('src'))!
   }
