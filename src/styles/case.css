@@ -24,41 +24,6 @@
   height: 100%;
   object-fit: cover;
 }
-.generated-back-cover {
-  height: 100%;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-}
-.generated-back-cover > span,
-.generated-back-cover footer {
-  font-size: 7px;
-  letter-spacing: 1px;
-}
-.generated-back-cover h3 {
-  font: 28px/1.1 'Libre Caslon Display', Georgia, serif;
-  margin: 12px 0 5px;
-}
-.generated-back-cover p {
-  font-size: 9px;
-  margin: 0 0 12px;
-}
-.generated-back-cover ol {
-  padding-left: 15px;
-  margin: 0;
-  font-size: 8px;
-}
-.generated-back-cover li {
-  padding: 3px 0;
-}
-.generated-back-cover li small {
-  float: right;
-  font-size: 7px;
-}
-.generated-back-cover footer {
-  margin-top: auto;
-  padding-top: 10px;
-}
 .case-back {
   transform: translateZ(calc(var(--case-depth) / -2));
 }

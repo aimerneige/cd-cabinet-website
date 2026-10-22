@@ -5,20 +5,36 @@ test('default covers can be changed, saved and edited without losing their desig
   await page.goto('/')
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
   await page.getByRole('button', { name: 'Add recording' }).click()
-  const preview = page.getByRole('img', { name: 'Cover preview' })
+  const preview = page.getByRole('img', { name: 'Cover preview', exact: true })
+  const discPreview = page.getByRole('img', { name: 'Disc preview', exact: true })
+  const backPreview = page.getByRole('img', { name: 'Back cover preview', exact: true })
   await expect(preview).toHaveAttribute('src', /^data:image\/svg\+xml/)
+  await expect(discPreview).toHaveAttribute('src', /^data:image\/svg\+xml/)
+  await expect(backPreview).toHaveAttribute('src', /^data:image\/svg\+xml/)
   await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('夜の音 (Live)')
   await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('林 & Friends')
   let source = (await preview.getAttribute('src'))!
   expect(decodeURIComponent(source)).toContain('夜の音 (Live)')
   expect(decodeURIComponent(source)).toContain('林 &amp; Friends')
   for (let index = 0; index < 5; index++) {
+    const previousDisc = (await discPreview.getAttribute('src'))!
+    const previousBack = (await backPreview.getAttribute('src'))!
     await page.getByRole('button', { name: 'Try another cover' }).click()
     await expect(preview).not.toHaveAttribute('src', source)
+    await expect(discPreview).not.toHaveAttribute('src', previousDisc)
+    await expect(backPreview).not.toHaveAttribute('src', previousBack)
     await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1000)
+    await expect.poll(() => discPreview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1000)
+    await expect.poll(() => backPreview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1000)
     source = (await preview.getAttribute('src'))!
   }
   const style = decodeURIComponent(source).match(/data-cd-cover="([^"]+)"/)![1]
+  const discSource = (await discPreview.getAttribute('src'))!
+  const backSource = (await backPreview.getAttribute('src'))!
+  expect(decodeURIComponent(discSource)).toContain(`data-cd-disc="${style}"`)
+  expect(decodeURIComponent(backSource)).toContain(`data-cd-back="${style}"`)
+  expect(discSource).not.toBe(source)
+  expect(backSource).not.toBe(source)
   const color = decodeURIComponent(source).match(/<rect width="600" height="600" fill="([^"]+)"/)![1]
   const expectedColor = await preview.evaluate((_, value) => {
     const element = document.createElement('div')
@@ -35,18 +51,67 @@ test('default covers can be changed, saved and edited without losing their desig
   await expect(page.locator('.case-spine')).toHaveCSS('background-color', expectedColor)
   await expect(page.locator('.case-rear')).toHaveCSS('background-color', expectedColor)
   await expect(page.locator('.obi-strip')).toHaveCSS('--obi-ink', color)
-  await expect(page.locator('.tray-front .disc')).toHaveCSS('background-image', /data:image\/svg\+xml/)
+  await expect(page.locator('.tray-front .disc')).toHaveCSS('background-image', `url("${discSource}")`)
+  await expect(page.locator('.case-rear img')).toHaveAttribute('src', backSource)
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await expect(preview).toHaveAttribute('src', source)
   await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('新しい音')
   const updated = (await preview.getAttribute('src'))!
   expect(decodeURIComponent(updated)).toContain(`data-cd-cover="${style}"`)
   expect(decodeURIComponent(updated)).toContain('新しい音')
+  const updatedDisc = (await discPreview.getAttribute('src'))!
+  const updatedBack = (await backPreview.getAttribute('src'))!
+  expect(decodeURIComponent(updatedDisc)).toContain('新しい音')
+  expect(decodeURIComponent(updatedBack)).toContain('新しい音')
   await page.getByRole('button', { name: 'Save changes', exact: true }).click()
   await expect(page.locator('.album-editor')).toHaveCount(0)
   await page.reload()
   await page.getByRole('button', { name: 'Open 新しい音 by 林 & Friends', exact: true }).click()
   await expect(page.getByRole('img', { name: '新しい音 cover artwork' })).toHaveAttribute('src', updated)
+  await expect(page.locator('.tray-front .disc')).toHaveCSS('background-image', `url("${updatedDisc}")`)
+  await expect(page.locator('.case-rear img')).toHaveAttribute('src', updatedBack)
+})
+
+test('disc text stays inside its printable ring with long multilingual details and multiple discs', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.shelf-cd')).toHaveCount(24)
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByLabel('Number of discs').selectOption('6')
+  await page.getByRole('combobox', { name: 'Choose a disc' }).selectOption('5')
+  const preview = page.getByRole('img', { name: 'Disc preview', exact: true })
+  const source = (await preview.getAttribute('src'))!
+  expect(decodeURIComponent(source)).toContain('DISC 6 / 6')
+  expect(decodeURIComponent((await page.getByRole('img', { name: 'Back cover preview', exact: true }).getAttribute('src'))!)).toContain('6 CDs')
+  for (const [title, artist] of [
+    ['夜の音 <Live> & 回声'.repeat(5), '林 & Friends (现场演奏)'.repeat(5)],
+    ['W'.repeat(18), 'W'.repeat(30)],
+  ]) {
+    await page.getByRole('textbox', { name: 'Album title', exact: true }).fill(title)
+    await page.getByRole('textbox', { name: 'Artist', exact: true }).fill(artist)
+    const bounds = await preview.evaluate((image: HTMLImageElement) => {
+      const documentSvg = new DOMParser().parseFromString(decodeURIComponent(image.src.split(',')[1]), 'image/svg+xml')
+      const svg = document.importNode(documentSvg.documentElement, true)
+      document.body.append(svg)
+      try {
+        return [...svg.querySelectorAll('text')].map((element) => {
+          const box = element.getBBox()
+          const corners = [box.x, box.x + box.width].flatMap((x) => [box.y, box.y + box.height].map((y) => Math.hypot(x, y - 300)))
+          return { text: element.textContent, outer: Math.max(...corners), above: box.y + box.height < 234, below: box.y > 366 }
+        })
+      } finally {
+        svg.remove()
+      }
+    })
+    for (const bound of bounds) {
+      expect(bound.outer, bound.text ?? '').toBeLessThan(265)
+      expect(bound.above || bound.below, bound.text ?? '').toBe(true)
+    }
+  }
+  await page.getByRole('button', { name: 'Disc 2', exact: true }).click()
+  expect(decodeURIComponent((await preview.getAttribute('src'))!)).toContain('DISC 2 / 6')
+  await page.getByLabel('Number of discs').selectOption('1')
+  expect(decodeURIComponent((await preview.getAttribute('src'))!)).toContain('DISC 1 / 1')
+  expect(decodeURIComponent((await page.getByRole('img', { name: 'Back cover preview', exact: true }).getAttribute('src'))!)).toContain('1 CD')
 })
 
 test('uploads replace individual artwork and randomizing preserves other uploaded images', async ({ page }) => {

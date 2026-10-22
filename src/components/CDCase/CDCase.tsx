@@ -1,6 +1,7 @@
 import { forwardRef, type RefObject } from 'react'
 import type { Album, AlbumDisc } from '../../types/album'
 import { getAlbumDiscs } from '../../lib/album'
+import { getBackCoverArtwork, getDiscArtwork } from '../../lib/generatedCover'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
 import type { ObiMode } from '../../hooks/useObiAnimation'
 import { ObiStrip } from '../ObiStrip/ObiStrip'
@@ -38,30 +39,10 @@ export const CDCase = forwardRef<
           aria-hidden={view !== 'back'}
           style={{ background: album.color, color: album.ink }}
         >
-          {album.backCoverUrl ? (
-            <img
-              src={album.backCoverUrl}
-              alt={t('viewer.backCoverArtworkAlt', { title: album.title })}
-            />
-          ) : (
-            <div className="generated-back-cover">
-              <span>ORIGINAL RECORDINGS</span>
-              <h3>{album.title}</h3>
-              <p>{album.artist}</p>
-              <ol>
-                {album.tracks.slice(0, 12).map((track) => (
-                  <li key={track.id}>
-                    {track.title}
-                    <small>{track.duration}</small>
-                  </li>
-                ))}
-              </ol>
-              <footer>
-                {album.year} · {discs.length}{' '}
-                {discs.length === 1 ? 'CD' : 'CDs'} · {album.genre}
-              </footer>
-            </div>
-          )}
+          <img
+            src={getBackCoverArtwork(album)}
+            alt={t('viewer.backCoverArtworkAlt', { title: album.title })}
+          />
         </div>
         <div className="case-edge edge-top" />
         <div className="case-edge edge-bottom" />
@@ -152,7 +133,7 @@ function DiscTray({
           }
         } : undefined}
         style={{
-          backgroundImage: `url(${disc.labelUrl ?? album.coverUrl})`,
+          backgroundImage: `url(${getDiscArtwork(album, disc)})`,
         }}
       >
         <div className="disc-center" />

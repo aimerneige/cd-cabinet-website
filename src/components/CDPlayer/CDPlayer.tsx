@@ -2,6 +2,7 @@ import type { RefObject } from 'react'
 import type { Album, AlbumDisc } from '../../types/album'
 import { useTranslation } from '../../i18n'
 import { formatTime } from '../../lib/audio'
+import { getDiscArtwork } from '../../lib/generatedCover'
 import type { AudioPlayback } from '../../hooks/useAudioPlayback'
 import './CDPlayer.css'
 
@@ -83,7 +84,7 @@ export function CDPlayer({
           <div
             ref={discRef}
             className={`disc player-disc${spinning ? ' is-spinning' : ''}`}
-            style={{ backgroundImage: `url(${disc.labelUrl ?? album.coverUrl})` }}
+            style={{ backgroundImage: `url(${getDiscArtwork(album, disc)})` }}
           ><div className="disc-center" /></div>
           <div className="player-glass" aria-hidden="true" />
           <span className="player-well-label">OPTICAL PICKUP · DIGITAL AUDIO</span>
@@ -122,7 +123,7 @@ export function CompactPlayer({ playback }: { playback: AudioPlayback }) {
     <section className="compact-player" aria-label={t('player.label')}>
       <div
         className={`disc compact-disc${playback.playing ? ' is-spinning' : ''}`}
-        style={{ backgroundImage: `url(${playback.disc.labelUrl ?? playback.album.coverUrl})` }}
+        style={{ backgroundImage: `url(${getDiscArtwork(playback.album, playback.disc)})` }}
         aria-hidden="true"
       ><div className="disc-center" /></div>
       <div className="compact-track">

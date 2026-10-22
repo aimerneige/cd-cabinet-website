@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { generateCover, getGeneratedCoverStyle, randomCoverStyle } from './generatedCover'
+import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, randomCoverStyle } from './generatedCover'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -46,5 +46,66 @@ describe('generated covers', () => {
     expect(svg).toContain('A &amp; B&apos;s (Live)')
     expect(svg).not.toContain('<script>')
     expect(cover).not.toMatch(/[\s'"()]/)
+  })
+})
+
+describe('generated packaging', () => {
+  const discs = [
+    { id: 'disc-1', tracks: [{ id: 'track-1', title: 'Opening & Echo', duration: '3:24' }] },
+    { id: 'disc-2', title: 'Live sessions', tracks: [] },
+  ]
+
+  it('generates separate matching disc labels and back covers for every saved style', () => {
+    const random = vi.spyOn(Math, 'random')
+    for (let index = 0; index < 5; index++) {
+      random.mockReturnValue(index / 5)
+      const style = randomCoverStyle()
+      const album = {
+        ...details, color: style.color, ink: style.ink,
+        coverUrl: generateCover(details, style), discs, tracks: discs[0].tracks,
+      }
+      const disc = getDiscArtwork(album, discs[1])
+      const back = getBackCoverArtwork(album)
+      expect(disc).not.toBe(album.coverUrl)
+      expect(back).not.toBe(album.coverUrl)
+      expect(back).not.toBe(disc)
+      expect(decodeURIComponent(disc)).toContain(`data-cd-disc="${style.id}"`)
+      expect(decodeURIComponent(disc)).toContain('DISC 2 / 2')
+      expect(decodeURIComponent(disc)).toContain('Live sessions')
+      expect(decodeURIComponent(disc)).toContain(style.color)
+      expect(getDiscArtwork(album, discs[0])).not.toBe(disc)
+      expect(getDiscArtwork(album, discs[1])).toBe(disc)
+      expect(decodeURIComponent(back)).toContain(`data-cd-back="${style.id}"`)
+      expect(decodeURIComponent(back)).toContain('Opening &amp; Echo')
+      expect(decodeURIComponent(back)).toContain('3:24')
+      expect(decodeURIComponent(back)).toContain('2 CDs')
+    }
+  })
+
+  it('keeps custom artwork and generates independent labels for uploaded covers', () => {
+    const album = {
+      ...details, color: '#536f78', ink: '#f3eee0',
+      coverUrl: 'data:image/png;base64,cover', tracks: [],
+    }
+    expect(decodeURIComponent(getDiscArtwork(album, discs[0]))).toContain('data-cd-disc="custom"')
+    expect(decodeURIComponent(getDiscArtwork(album, discs[0]))).toContain('DISC 1 / 1')
+    expect(getDiscArtwork(album, { ...discs[0], labelUrl: '/disc.png' })).toBe('/disc.png')
+    expect(getBackCoverArtwork({ ...album, backCoverUrl: '/back.png' })).toBe('/back.png')
+    expect(getBackCoverArtwork(album)).not.toBe(album.coverUrl)
+  })
+
+  it('escapes all album, disc and track text and keeps CSS URLs safe', () => {
+    const value = '<script>alert("x")</script> & B\'s (Live)'
+    const album = {
+      ...details, title: value, artist: value, genre: value,
+      color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png',
+      tracks: [{ id: 'track-1', title: value, duration: value }],
+    }
+    for (const url of [getDiscArtwork(album, { ...discs[0], title: value }), getBackCoverArtwork(album)]) {
+      const svg = decodeURIComponent(url.slice(url.indexOf(',') + 1))
+      expect(svg).toContain('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; B&apos;s (Live)')
+      expect(svg).not.toContain('<script>')
+      expect(url).not.toMatch(/[\s'"()]/)
+    }
   })
 })

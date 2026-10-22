@@ -7,6 +7,7 @@ import type { Origin } from '../../hooks/useAlbumAnimation'
 import { CDCase } from '../CDCase/CDCase'
 import { AlbumDetails } from '../AlbumDetails/AlbumDetails'
 import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
+import { getDiscArtwork } from '../../lib/generatedCover'
 import { useObiAnimation } from '../../hooks/useObiAnimation'
 import { useTranslation } from '../../i18n'
 import type { AudioPlayback } from '../../hooks/useAudioPlayback'
@@ -170,7 +171,7 @@ export function ActiveCD({
     if (outgoingDisc.current) {
       const previous = createGhost(target, rect)
       previous.classList.add('is-outgoing')
-      previous.style.backgroundImage = `url(${outgoingDisc.current.disc.labelUrl ?? outgoingDisc.current.album.coverUrl})`
+      previous.style.backgroundImage = `url(${getDiscArtwork(outgoingDisc.current.album, outgoingDisc.current.disc)})`
       gsap.set(copy, { autoAlpha: 0 })
       tl.to(player, { opacity: 1, duration: 0.2 }, 0)
         .to(previous, { y: '-=55', rotation: -20, duration: 0.3, ease: 'power2.out' }, 0)

@@ -285,7 +285,7 @@ test('uploaded artwork, multi-disc additions and edits survive a reload', async 
     .getByLabel('Upload cover artwork')
     .setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: image })
   await expect(
-    page.getByRole('img', { name: 'Cover preview' }),
+    page.getByRole('img', { name: 'Cover preview', exact: true }),
   ).toHaveAttribute('src', /^data:image\/png/)
   await page
     .getByLabel('Upload spine artwork')
@@ -347,8 +347,8 @@ test('uploaded artwork, multi-disc additions and edits survive a reload', async 
   await updated.click()
   await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
   await expect(page.locator('.album-meta')).toContainText('3 CDs')
-  await expect(page.locator('.case-rear img')).toHaveCount(0)
-  await expect(page.locator('.generated-back-cover')).toContainText('Updated Session')
+  await expect(page.locator('.case-rear img')).toHaveAttribute('src', /^data:image\/svg\+xml/)
+  expect(decodeURIComponent((await page.locator('.case-rear img').getAttribute('src'))!)).toContain('Updated Session')
   await page.screenshot({ path: 'test-results/multi-disc-uploaded.png' })
 })
 
@@ -544,7 +544,7 @@ test('invalid uploads explain the problem and preserve the default cover', async
 }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Add recording' }).click()
-  const defaultCover = await page.getByRole('img', { name: 'Cover preview' }).getAttribute('src')
+  const defaultCover = await page.getByRole('img', { name: 'Cover preview', exact: true }).getAttribute('src')
   const input = page.getByLabel('Upload cover artwork')
   await input.setInputFiles({
     name: 'notes.txt',
@@ -570,7 +570,7 @@ test('invalid uploads explain the problem and preserve the default cover', async
   await expect(page.getByRole('alert')).toHaveText(
     'This file could not be opened as an image.',
   )
-  await expect(page.getByRole('img', { name: 'Cover preview' })).toHaveAttribute('src', defaultCover!)
+  await expect(page.getByRole('img', { name: 'Cover preview', exact: true })).toHaveAttribute('src', defaultCover!)
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
   await page
     .getByRole('textbox', { name: 'Album title', exact: true })
@@ -652,7 +652,7 @@ test('a failed save reports the error and rolls back uploaded artwork', async ({
   await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Unsaved recording')
   await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
   await page.getByLabel('Upload cover artwork').setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: image })
-  await expect(page.getByRole('img', { name: 'Cover preview' })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'Cover preview', exact: true })).toBeVisible()
   await page.evaluate(() => {
     const put = IDBObjectStore.prototype.put
     IDBObjectStore.prototype.put = function (value, key) {

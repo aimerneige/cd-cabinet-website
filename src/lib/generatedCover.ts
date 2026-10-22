@@ -1,4 +1,4 @@
-import type { Album } from '../types/album'
+import type { Album, AlbumDisc } from '../types/album'
 
 const styles = [
   { id: 'dusk', color: '#536f78', ink: '#f3eee0', accent: '#e4b88c' },
@@ -9,6 +9,7 @@ const styles = [
 ] as const
 
 export type CoverStyle = (typeof styles)[number]
+type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs'>
 
 const prefix = 'data:image/svg+xml;charset=utf-8,'
 const opening = (style: CoverStyle) =>
@@ -29,10 +30,21 @@ function escapeXml(value: string): string {
   })[character]!)
 }
 
-function text(value: string, y: number, size: number, font = 'Arial, sans-serif'): string {
+function text(value: string, y: number, size: number, font = 'Arial, sans-serif', x = 40, maxWidth = 520): string {
   const width = Array.from(value).reduce((sum, character) => sum + (/^[\x00-\x7f]$/.test(character) ? 0.6 : 1), 0) * size
-  const fit = width > 520 ? ' textLength="520" lengthAdjust="spacingAndGlyphs"' : ''
-  return `<text x="40" y="${y}" font-family="${font}" font-size="${size}"${fit}>${escapeXml(value)}</text>`
+  const fit = width > maxWidth ? ` textLength="${maxWidth}" lengthAdjust="spacingAndGlyphs"` : ''
+  return `<text x="${x}" y="${y}" font-family="${font}" font-size="${size}"${fit}>${escapeXml(value)}</text>`
+}
+
+function discText(value: string, y: number, size: number, maxWidth: number, font = 'Arial, sans-serif'): string {
+  // 圆形区域采用保守字宽，避免 W 等宽字母被低估后超出安全边界。
+  const fit = Array.from(value).length * size > maxWidth ? ` textLength="${maxWidth}" lengthAdjust="spacingAndGlyphs"` : ''
+  return `<text x="0" y="${y}" font-family="${font}" font-size="${size}"${fit}>${escapeXml(value)}</text>`
+}
+
+function svgUrl(svg: string): string {
+  // 图片也用于 CSS url()，额外转义括号等字符，避免专辑信息破坏背景图片地址。
+  return prefix + encodeURIComponent(svg).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)
 }
 
 export function generateCover(
@@ -71,6 +83,64 @@ export function generateCover(
       ${text(`${details.year} · ${details.genre} · STEREO`, 560, 11)}
     </g>
   </svg>`
-  // 封面也用于 CSS url()，额外转义括号等字符，避免专辑信息破坏背景图片地址。
-  return prefix + encodeURIComponent(svg).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)
+  return svgUrl(svg)
+}
+
+export function getDiscArtwork(
+  album: ArtworkDetails,
+  disc: AlbumDisc,
+): string {
+  if (disc.labelUrl) return disc.labelUrl
+  const style = getGeneratedCoverStyle(album.coverUrl)
+  const color = escapeXml(album.color)
+  const ink = escapeXml(album.ink)
+  const accent = style?.accent ?? ink
+  const discs = album.discs?.length ? album.discs : [disc]
+  const number = discs.findIndex((item) => item.id === disc.id) + 1
+  const designs: Record<CoverStyle['id'], string> = {
+    dusk: '<path d="M65 320Q180 210 300 320T535 320M65 350Q180 240 300 350T535 350"/>',
+    orbit: '<circle cx="300" cy="300" r="120"/><ellipse cx="300" cy="300" rx="235" ry="90"/>',
+    arch: '<path d="M115 375V300A185 185 0 0 1 485 300V375M155 375V300A145 145 0 0 1 445 300V375"/>',
+    waves: [255, 300, 345].map((y) => `<path d="M65 ${y}Q180 ${y - 50} 300 ${y}T535 ${y}"/>`).join(''),
+    tiles: '<path d="M100 245H220V365H100ZM380 245H500V365H380Z"/><circle cx="300" cy="300" r="140"/>',
+  }
+  // 文字放在圆形安全区内，避开中央直径约 21% 的盘毂及外缘。
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-disc="${style?.id ?? 'custom'}" width="1000" height="1000" viewBox="0 0 600 600">
+    <defs><mask id="disc-print"><circle cx="300" cy="300" r="300" fill="white"/><circle cx="300" cy="300" r="66" fill="black"/></mask></defs>
+    <g mask="url(#disc-print)">
+      <circle cx="300" cy="300" r="300" fill="${color}"/>
+      <g fill="none" stroke="${accent}" stroke-width="3" opacity=".35">${designs[style?.id ?? 'orbit']}</g>
+      <g fill="none" stroke="${ink}" opacity=".4"><circle cx="300" cy="300" r="265"/><circle cx="300" cy="300" r="82"/></g>
+      <g fill="${ink}" text-anchor="middle" transform="translate(300 0)">
+        ${discText(album.artist, 150, 17, 330)}
+        ${discText(album.title, 195, 32, 360, 'Georgia, serif')}
+        ${discText(disc.title ?? 'COMPACT DISC · DIGITAL AUDIO', 420, 13, 340)}
+        ${discText(`DISC ${number} / ${discs.length}`, 454, 19, 300)}
+        ${discText(`${album.year} · ${album.genre}`, 484, 12, 250)}
+      </g>
+    </g>
+  </svg>`)
+}
+
+export function getBackCoverArtwork(album: ArtworkDetails & Pick<Album, 'backCoverUrl' | 'tracks'>): string {
+  if (album.backCoverUrl) return album.backCoverUrl
+  const style = getGeneratedCoverStyle(album.coverUrl)
+  const color = escapeXml(album.color)
+  const ink = escapeXml(album.ink)
+  const count = album.discs?.length || 1
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-back="${style?.id ?? 'custom'}" width="1000" height="1000" viewBox="0 0 600 600">
+    <rect width="600" height="600" fill="${color}"/>
+    <rect x="18" y="18" width="564" height="564" fill="none" stroke="${ink}" opacity=".3"/>
+    <g fill="none" stroke="${style?.accent ?? ink}" opacity=".15"><circle cx="530" cy="300" r="140"/><circle cx="530" cy="300" r="110"/></g>
+    <g fill="${ink}">
+      ${text(album.artist, 65, 18)}
+      ${text(album.title, 112, 32, 'Georgia, serif')}
+      ${text('ORIGINAL RECORDINGS', 150, 11)}
+      ${album.tracks.slice(0, 12).map((track, index) => `
+        ${text(`${String(index + 1).padStart(2, '0')}  ${track.title}`, 190 + index * 28, 14, 'Arial, sans-serif', 40, 450)}
+        <g text-anchor="end">${text(track.duration ?? '', 190 + index * 28, 12, 'Arial, sans-serif', 560, 55)}</g>
+      `).join('')}
+      ${text(`${album.year} · ${count} ${count === 1 ? 'CD' : 'CDs'} · ${album.genre}`, 555, 11)}
+    </g>
+  </svg>`)
 }

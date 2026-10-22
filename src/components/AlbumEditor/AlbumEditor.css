@@ -66,6 +66,24 @@
   gap: 25px;
   margin-top: 22px;
 }
+.disc-artwork {
+  min-width: 0;
+  font-size: 11px;
+}
+.disc-artwork > span {
+  display: block;
+  margin-bottom: 10px;
+}
+.cover-preview.disc-artwork-preview {
+  background: transparent;
+}
+.disc-artwork-preview img {
+  border-radius: 50%;
+}
+.disc-artwork select {
+  width: 100%;
+  margin-top: 10px;
+}
 .obi-preview img {
   object-fit: contain;
 }

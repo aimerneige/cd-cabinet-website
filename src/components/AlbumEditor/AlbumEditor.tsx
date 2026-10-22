@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import type { Album, AlbumDisc, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, resizeDiscs } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
-import { generateCover, getGeneratedCoverStyle, randomCoverStyle } from '../../lib/generatedCover'
+import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, randomCoverStyle } from '../../lib/generatedCover'
 import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
 import { useTranslation } from '../../i18n'
@@ -62,12 +62,17 @@ export function AlbumEditor({
   const pendingUploads = useRef(0)
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
-  const coverUrl = cover || (coverStyle ? generateCover({
+  const artworkDetails = {
     title: title.trim() || t('editor.albumTitle'),
     artist: artist.trim() || t('editor.artist'),
     year: Number(year),
     genre: genreValue,
-  }, coverStyle) : '')
+    color: coverStyle?.color ?? album?.color ?? '#7a8273',
+    ink: coverStyle?.ink ?? album?.ink ?? '#f0eadb',
+    tracks: discs.flatMap((disc) => disc.tracks),
+    discs,
+  }
+  const coverUrl = cover || (coverStyle ? generateCover(artworkDetails, coverStyle) : '')
 
   useEffect(() => {
     alive.current = true
@@ -359,13 +364,10 @@ export function AlbumEditor({
                 {t('editor.backCoverArtwork')} <small>{t('editor.optional')}</small>
               </span>
               <div className="cover-preview">
-                {backCover ? (
-                  <img src={backCover} alt={t('editor.backCoverPreviewAlt')} />
-                ) : (
-                  <span>
-                    ＋<small>{t('editor.chooseBackCover')}</small>
-                  </span>
-                )}
+                <img
+                  src={getBackCoverArtwork({ ...artworkDetails, coverUrl, backCoverUrl: backCover })}
+                  alt={t('editor.backCoverPreviewAlt')}
+                />
               </div>
               <input
                 type="file"
@@ -389,6 +391,28 @@ export function AlbumEditor({
                 {t('editor.useGeneratedBackCover')}
               </button>
             )}
+          </div>
+          <div className="disc-artwork">
+            <span>{t('editor.discArtwork')}</span>
+            <div className="cover-preview disc-artwork-preview">
+              <img
+                src={getDiscArtwork({ ...artworkDetails, coverUrl }, discs[editingDisc])}
+                alt={t('editor.discPreviewAlt')}
+              />
+            </div>
+            {discCount > 1 && (
+              <select
+                aria-label={t('viewer.chooseDiscAria')}
+                value={editingDisc}
+                disabled={loading || saving}
+                onChange={(event) => setEditingDisc(Number(event.target.value))}
+              >
+                {discs.map((disc, index) => (
+                  <option key={disc.id} value={index}>{t('viewer.discButton', { number: index + 1 })}</option>
+                ))}
+              </select>
+            )}
+            <p className="obi-upload-guidance">{t('editor.discGuidance')}</p>
           </div>
           <div className="back-cover-upload">
             <label className="artwork-upload">
