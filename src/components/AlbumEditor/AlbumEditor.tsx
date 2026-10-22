@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import type { Album, AlbumDisc, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, resizeDiscs } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
-import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, randomCoverStyle } from '../../lib/generatedCover'
+import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getObiArtwork, randomCoverStyle } from '../../lib/generatedCover'
 import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
 import { useTranslation } from '../../i18n'
@@ -420,13 +420,10 @@ export function AlbumEditor({
                 {t('editor.obiPaperStrip')} <small>{t('editor.optional')}</small>
               </span>
               <div className="cover-preview obi-preview">
-                {obi ? (
-                  <img src={obi} alt={t('editor.obiPreviewAlt')} />
-                ) : (
-                  <span>
-                    ＋<small>{t('editor.chooseObi')}</small>
-                  </span>
-                )}
+                <img
+                  src={getObiArtwork({ ...artworkDetails, coverUrl, obiUrl: obi })}
+                  alt={t('editor.obiPreviewAlt')}
+                />
               </div>
               <input
                 type="file"

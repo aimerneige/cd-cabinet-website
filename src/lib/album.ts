@@ -6,8 +6,8 @@ export function getAlbumDiscs(album: Album): AlbumDisc[] {
     : [{ id: `${album.id}-disc-1`, tracks: album.tracks }]
 }
 
-export function getCaseDepth(album: Album): number {
-  return getAlbumDiscs(album).length <= 3 ? 24 : 58
+export function getCaseDepth(album: Pick<Album, 'discs'>): number {
+  return (album.discs?.length || 1) <= 3 ? 24 : 58
 }
 
 export function withDiscCount(album: Album, count: number): Album {

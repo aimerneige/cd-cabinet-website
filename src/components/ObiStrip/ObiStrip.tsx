@@ -1,6 +1,7 @@
 import type { CSSProperties, RefObject } from 'react'
 import type { Album } from '../../types/album'
-import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
+import { getCaseDepth } from '../../lib/album'
+import { getObiArtwork } from '../../lib/generatedCover'
 import { useTranslation } from '../../i18n'
 
 export function ObiStrip({
@@ -17,26 +18,12 @@ export function ObiStrip({
   const style = {
     '--obi-depth': `${depth}px`,
     '--obi-width': `${92 + depth}px`,
-    '--obi-ink': album.color,
-    '--obi-image': album.obiUrl ? `url(${album.obiUrl})` : 'none',
+    '--obi-image': `url(${getObiArtwork(album)})`,
   } as CSSProperties
   const print = (side: string) => (
     <div
-      className={`obi-print obi-print-${side}${album.obiUrl ? ' obi-uploaded' : ''}`}
-    >
-      {!album.obiUrl && (
-        <>
-          <span className="obi-edition">COMPACT DISC</span>
-          <strong>{side === 'back' ? album.artist : album.title}</strong>
-          <span className="obi-caption">
-            {side === 'back'
-              ? `${album.year} · ${getAlbumDiscs(album).length} CD`
-              : album.artist}
-          </span>
-          <span className="obi-footer">ORIGINAL RECORDINGS</span>
-        </>
-      )}
-    </div>
+      className={`obi-print obi-print-${side} obi-artwork${album.obiUrl ? ' obi-uploaded' : ''}`}
+    />
   )
   return (
     <div

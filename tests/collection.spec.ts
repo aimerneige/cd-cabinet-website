@@ -530,13 +530,15 @@ test('uploaded OBI scans persist separately from spine artwork and can be reset'
   expect(await page.locator('.obi-print-front').evaluate((el) => getComputedStyle(el).backgroundImage)).toMatch(/^url\("data:image\/png/)
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await page.getByRole('button', { name: 'Use generated OBI', exact: true }).click()
+  const generatedObi = (await page.getByRole('img', { name: 'OBI preview', exact: true }).getAttribute('src'))!
+  expect(decodeURIComponent(generatedObi)).toContain('Blue Hours')
   await page.getByRole('button', { name: 'Save changes', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.reload()
   await page.locator('[data-album-id="album-1"]').click()
   await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
   await expect(page.locator('.obi-uploaded')).toHaveCount(0)
-  await expect(page.locator('.obi-print-front strong')).toHaveText('Blue Hours')
+  await expect(page.locator('.obi-print-front')).toHaveCSS('background-image', `url("${generatedObi}")`)
 })
 
 test('invalid uploads explain the problem and preserve the default cover', async ({

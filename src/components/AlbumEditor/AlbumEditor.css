@@ -84,7 +84,7 @@
   width: 100%;
   margin-top: 10px;
 }
-.obi-preview img {
+.cover-preview.obi-preview img {
   object-fit: contain;
 }
 .obi-upload-guidance {

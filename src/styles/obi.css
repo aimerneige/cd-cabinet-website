@@ -37,7 +37,6 @@
   inset: 0;
   backface-visibility: hidden;
   background: #eee6cd;
-  color: var(--obi-ink);
   border-top: 1px solid #fff9;
   border-bottom: 1px solid #c4bba1;
   box-shadow:
@@ -62,64 +61,18 @@
 .obi-print-back {
   background-color: #e9e0c8;
 }
-.obi-edition {
-  display: block;
-  margin: 13px 4px;
-  font-size: 6px;
-  letter-spacing: 0.4px;
-  padding-bottom: 7px;
-  border-bottom: 1px solid currentColor;
-}
-.obi-print strong {
-  position: absolute;
-  left: 8px;
-  top: 55px;
-  max-height: 190px;
-  writing-mode: vertical-rl;
-  font:
-    16px/1.2 'Libre Caslon Display',
-    Georgia,
-    serif;
-  letter-spacing: 1px;
-}
-.obi-caption {
-  position: absolute;
-  right: 5px;
-  top: 55px;
-  max-height: 180px;
-  writing-mode: vertical-rl;
-  font-size: 7px;
-  letter-spacing: 0.6px;
-}
-.obi-footer {
-  position: absolute;
-  bottom: 15px;
-  left: 4px;
-  right: 4px;
-  font-size: 5px;
-  letter-spacing: 0.4px;
-  border-top: 1px solid currentColor;
-  padding-top: 5px;
-}
-.obi-print-spine strong {
-  left: 5px;
-  font-size: 12px;
-}
-.obi-print-spine .obi-caption {
-  display: none;
-}
-.obi-uploaded {
+.obi-artwork {
   background-image: var(--obi-image);
   background-size: var(--obi-width) 304px;
   background-repeat: no-repeat;
 }
-.obi-print-front.obi-uploaded {
+.obi-print-front.obi-artwork {
   background-position: calc(-46px - var(--obi-depth)) 0;
 }
-.obi-print-spine.obi-uploaded {
+.obi-print-spine.obi-artwork {
   background-position: -46px 0;
 }
-.obi-print-back.obi-uploaded {
+.obi-print-back.obi-artwork {
   background-position: 0 0;
 }
 .has-flat-obi .case-body > :not(.obi-strip) {

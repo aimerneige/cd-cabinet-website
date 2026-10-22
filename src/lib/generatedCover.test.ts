@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, randomCoverStyle } from './generatedCover'
+import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getObiArtwork, randomCoverStyle } from './generatedCover'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -55,7 +55,7 @@ describe('generated packaging', () => {
     { id: 'disc-2', title: 'Live sessions', tracks: [] },
   ]
 
-  it('generates separate matching disc labels and back covers for every saved style', () => {
+  it('generates matching disc labels, back covers and OBI strips for every saved style', () => {
     const random = vi.spyOn(Math, 'random')
     for (let index = 0; index < 5; index++) {
       random.mockReturnValue(index / 5)
@@ -79,6 +79,15 @@ describe('generated packaging', () => {
       expect(decodeURIComponent(back)).toContain('Opening &amp; Echo')
       expect(decodeURIComponent(back)).toContain('3:24')
       expect(decodeURIComponent(back)).toContain('2 CDs')
+      const obi = getObiArtwork(album)
+      expect(obi).not.toBe(album.coverUrl)
+      expect(obi).not.toBe(back)
+      expect(getObiArtwork(album)).toBe(obi)
+      expect(decodeURIComponent(obi)).toContain(`data-cd-obi="${style.id}"`)
+      expect(decodeURIComponent(obi)).toContain('夜の音 (Live)')
+      expect(decodeURIComponent(obi)).toContain('林 &amp; Friends')
+      expect(decodeURIComponent(obi)).toContain(style.color)
+      expect(decodeURIComponent(obi)).toContain('2 CDs')
     }
   })
 
@@ -92,6 +101,8 @@ describe('generated packaging', () => {
     expect(getDiscArtwork(album, { ...discs[0], labelUrl: '/disc.png' })).toBe('/disc.png')
     expect(getBackCoverArtwork({ ...album, backCoverUrl: '/back.png' })).toBe('/back.png')
     expect(getBackCoverArtwork(album)).not.toBe(album.coverUrl)
+    expect(getObiArtwork({ ...album, obiUrl: '/obi.png' })).toBe('/obi.png')
+    expect(decodeURIComponent(getObiArtwork(album))).toContain('data-cd-obi="custom"')
   })
 
   it('escapes all album, disc and track text and keeps CSS URLs safe', () => {
@@ -101,11 +112,24 @@ describe('generated packaging', () => {
       color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png',
       tracks: [{ id: 'track-1', title: value, duration: value }],
     }
-    for (const url of [getDiscArtwork(album, { ...discs[0], title: value }), getBackCoverArtwork(album)]) {
+    for (const url of [getDiscArtwork(album, { ...discs[0], title: value }), getBackCoverArtwork(album), getObiArtwork(album)]) {
       const svg = decodeURIComponent(url.slice(url.indexOf(',') + 1))
       expect(svg).toContain('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; B&apos;s (Live)')
       expect(svg).not.toContain('<script>')
       expect(url).not.toMatch(/[\s'"()]/)
+    }
+  })
+
+  it('sizes the unfolded OBI to standard and thicker cases', () => {
+    const album = { ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png' }
+    expect(decodeURIComponent(getObiArtwork(album))).toContain('viewBox="0 0 124 304"')
+    for (const count of [0, 1, 3, 4, 6]) {
+      const discs = Array.from({ length: count }, (_, index) => ({ id: `disc-${index}`, tracks: [] }))
+      const svg = decodeURIComponent(getObiArtwork({ ...album, discs }))
+      expect(svg).toContain(`viewBox="0 0 ${count > 3 ? 158 : 124} 304"`)
+      expect(svg).toContain('data-obi-panel="back" transform="translate(0 0)"')
+      expect(svg).toContain('data-obi-panel="spine" transform="translate(46 0)"')
+      expect(svg).toContain(`data-obi-panel="front" transform="translate(${count > 3 ? 112 : 78} 0)"`)
     }
   })
 })

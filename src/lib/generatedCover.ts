@@ -1,4 +1,5 @@
 import type { Album, AlbumDisc } from '../types/album'
+import { getCaseDepth } from './album'
 
 const styles = [
   { id: 'dusk', color: '#536f78', ink: '#f3eee0', accent: '#e4b88c' },
@@ -36,8 +37,8 @@ function text(value: string, y: number, size: number, font = 'Arial, sans-serif'
   return `<text x="${x}" y="${y}" font-family="${font}" font-size="${size}"${fit}>${escapeXml(value)}</text>`
 }
 
-function discText(value: string, y: number, size: number, maxWidth: number, font = 'Arial, sans-serif'): string {
-  // 圆形区域采用保守字宽，避免 W 等宽字母被低估后超出安全边界。
+function centeredText(value: string, y: number, size: number, maxWidth: number, font = 'Arial, sans-serif'): string {
+  // 采用保守字宽，避免 W 等宽字母被低估后超出印刷区域。
   const fit = Array.from(value).length * size > maxWidth ? ` textLength="${maxWidth}" lengthAdjust="spacingAndGlyphs"` : ''
   return `<text x="0" y="${y}" font-family="${font}" font-size="${size}"${fit}>${escapeXml(value)}</text>`
 }
@@ -112,11 +113,11 @@ export function getDiscArtwork(
       <g fill="none" stroke="${accent}" stroke-width="3" opacity=".35">${designs[style?.id ?? 'orbit']}</g>
       <g fill="none" stroke="${ink}" opacity=".4"><circle cx="300" cy="300" r="265"/><circle cx="300" cy="300" r="82"/></g>
       <g fill="${ink}" text-anchor="middle" transform="translate(300 0)">
-        ${discText(album.artist, 150, 17, 330)}
-        ${discText(album.title, 195, 32, 360, 'Georgia, serif')}
-        ${discText(disc.title ?? 'COMPACT DISC · DIGITAL AUDIO', 420, 13, 340)}
-        ${discText(`DISC ${number} / ${discs.length}`, 454, 19, 300)}
-        ${discText(`${album.year} · ${album.genre}`, 484, 12, 250)}
+        ${centeredText(album.artist, 150, 17, 330)}
+        ${centeredText(album.title, 195, 32, 360, 'Georgia, serif')}
+        ${centeredText(disc.title ?? 'COMPACT DISC · DIGITAL AUDIO', 420, 13, 340)}
+        ${centeredText(`DISC ${number} / ${discs.length}`, 454, 19, 300)}
+        ${centeredText(`${album.year} · ${album.genre}`, 484, 12, 250)}
       </g>
     </g>
   </svg>`)
@@ -142,5 +143,48 @@ export function getBackCoverArtwork(album: ArtworkDetails & Pick<Album, 'backCov
       `).join('')}
       ${text(`${album.year} · ${count} ${count === 1 ? 'CD' : 'CDs'} · ${album.genre}`, 555, 11)}
     </g>
+  </svg>`)
+}
+
+export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): string {
+  if (album.obiUrl) return album.obiUrl
+  const style = getGeneratedCoverStyle(album.coverUrl)
+  const color = escapeXml(album.color)
+  const ink = escapeXml(album.ink)
+  const depth = getCaseDepth(album) + 8
+  const width = 92 + depth
+  const count = album.discs?.length || 1
+  const discLabel = `${album.year} · ${count} ${count === 1 ? 'CD' : 'CDs'}`
+  const panel = (side: 'back' | 'spine' | 'front', x: number, panelWidth: number) => {
+    const spine = side === 'spine'
+    const paper = side === 'back' ? '#e9e0c8' : spine ? '#e2d8bd' : '#eee6cd'
+    return `<g data-obi-panel="${side}" transform="translate(${x} 0)">
+      <rect width="${panelWidth}" height="304" fill="${paper}"/>
+      <rect y="24" width="${panelWidth}" height="17" fill="${color}"/>
+      <g transform="translate(${panelWidth / 2} 0)" text-anchor="middle">
+        <g fill="${color}">${centeredText('COMPACT DISC', 15, 4.5, panelWidth - 8)}</g>
+        <g fill="${ink}">${centeredText('STEREO', 35, 6, panelWidth - 8)}</g>
+        <g fill="${color}">
+          ${centeredText('ORIGINAL RECORDINGS', 274, 4.5, panelWidth - 8)}
+          ${centeredText(discLabel, 288, 5.5, panelWidth - 8)}
+          ${centeredText(album.genre, 299, 5, panelWidth - 8)}
+        </g>
+      </g>
+      <g fill="${color}" text-anchor="middle" writing-mode="vertical-rl" style="text-orientation:mixed">
+        <g transform="translate(${spine ? panelWidth / 2 : 16} 0)">
+          ${centeredText(side === 'back' ? album.artist : album.title, 150, spine ? 12 : 15, 188, 'Georgia, serif')}
+        </g>
+        ${spine ? '' : `<g transform="translate(36 0)">${centeredText(side === 'front' ? album.artist : discLabel, 150, 7, 188)}</g>`}
+      </g>
+      <circle cx="${panelWidth / 2}" cy="250" r="4" fill="${style?.accent ?? color}"/>
+      <path d="M4 263H${panelWidth - 4}" stroke="${color}" opacity=".45"/>
+    </g>`
+  }
+  // 展开图按后折页、侧脊、前折页排列，使用与 3D 纸带一致的实际尺寸。
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-obi="${style?.id ?? 'custom'}" width="${width * 3}" height="912" viewBox="0 0 ${width} 304">
+    ${panel('back', 0, 46)}
+    ${panel('spine', 46, depth)}
+    ${panel('front', 46 + depth, 46)}
+    <path d="M46 0V304M${46 + depth} 0V304" fill="none" stroke="${color}" stroke-dasharray="2 3" opacity=".25"/>
   </svg>`)
 }
