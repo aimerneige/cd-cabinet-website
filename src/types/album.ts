@@ -31,6 +31,7 @@ export interface Album {
   backInsideUrl?: string
   spineUrl?: string
   rightSpineUrl?: string
+  spineWidthMm?: number
   obiUrl?: string
   color: string
   ink: string

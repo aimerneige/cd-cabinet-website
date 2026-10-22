@@ -3,7 +3,8 @@ import type { CSSProperties, FormEvent } from 'react'
 import type { Album, AlbumDisc, BookletPage, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, resizeDiscs } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
-import { getArtworkCrop, type ArtworkCrop, type ArtworkKind } from '../../lib/cropArtwork'
+import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
+import { alignSpineArtwork } from '../../lib/spineArtwork'
 import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from '../../lib/generatedCover'
 import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
@@ -51,7 +52,8 @@ export function AlbumEditor({
     () => album ? getAlbumDiscs(album) : [{ id: `${draftId}-disc-1`, tracks: [] }],
   )
   const discCount = discs.length
-  const caseDepth = getCaseDepth({ discs })
+  const [spineWidthMm, setSpineWidthMm] = useState(album?.spineWidthMm)
+  const caseDepth = getCaseDepth({ discs, spineWidthMm })
   const [editingDisc, setEditingDisc] = useState(0)
   const [coverStyle, setCoverStyle] = useState(
     () => album ? getGeneratedCoverStyle(album.coverUrl) : randomCoverStyle(),
@@ -70,7 +72,7 @@ export function AlbumEditor({
   const [saving, setSaving] = useState(false)
   const pendingUploads = useRef(0)
   const cropSequence = useRef(0)
-  const cropResolver = useRef<((source: string | null) => void) | null>(null)
+  const cropResolver = useRef<((result: ArtworkCropResult | null) => void) | null>(null)
   const [cropRequest, setCropRequest] = useState<{ id: number; source: string; profile: ArtworkCrop; resizeWidth: boolean; name: string; current: number; total: number } | null>(null)
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
@@ -83,6 +85,7 @@ export function AlbumEditor({
     ink: coverStyle?.ink ?? album?.ink ?? '#f0eadb',
     tracks: discs.flatMap((disc) => disc.tracks),
     discs,
+    spineWidthMm,
   }
   const coverUrl = cover || (coverStyle ? generateCover(artworkDetails, coverStyle) : '')
   const previewAlbum = { ...artworkDetails, coverUrl, bookletBackUrl: bookletBack, backInsideUrl: backInside, spineUrl: spine, rightSpineUrl: rightSpine, backCoverUrl: backCover, obiUrl: obi }
@@ -106,17 +109,17 @@ export function AlbumEditor({
     }
   }, [])
 
-  function finishCrop(source: string | null) {
+  function finishCrop(result: ArtworkCropResult | null) {
     const resolve = cropResolver.current
     cropResolver.current = null
     setCropRequest(null)
-    resolve?.(source)
+    resolve?.(result)
   }
 
-  async function readImages(files: File[], kind: ArtworkKind, apply: (sources: string[]) => void) {
+  async function readImages(files: File[], kind: ArtworkKind, apply: (results: ArtworkCropResult[]) => void | Promise<void>) {
     if (!files.length || pendingUploads.current > 0 || saving) return
     const previous = document.activeElement as HTMLElement | null
-    const profile = getArtworkCrop(kind, { discs })
+    const profile = getArtworkCrop(kind, { discs, spineWidthMm })
     pendingUploads.current += 1
     setLoading(true)
     setError('')
@@ -127,16 +130,16 @@ export function AlbumEditor({
         sources.push(await readArtwork(file))
         if (!alive.current) return
       }
-      const cropped: string[] = []
+      const cropped: ArtworkCropResult[] = []
       for (const [index, source] of sources.entries()) {
-        const result = await new Promise<string | null>((resolve) => {
+        const result = await new Promise<ArtworkCropResult | null>((resolve) => {
           cropResolver.current = resolve
           setCropRequest({ id: ++cropSequence.current, source, profile, resizeWidth: kind === 'spine' || kind === 'rightSpine', name: files[index].name, current: index + 1, total: files.length })
         })
         if (!result || !alive.current) return
         cropped.push(result)
       }
-      if (alive.current) apply(cropped)
+      if (alive.current) await apply(cropped)
     } catch (cause) {
       if (alive.current)
         setError(
@@ -156,19 +159,28 @@ export function AlbumEditor({
   function upload(file: File | undefined, kind: Exclude<ArtworkKind, 'page'>) {
     if (!file) return
     const discId = discs[editingDisc].id
-    void readImages([file], kind, ([source]) => {
+    void readImages([file], kind, async ([result]) => {
+      if (kind === 'spine' || kind === 'rightSpine') {
+        const aligned = await alignSpineArtwork({ spineUrl: spine, rightSpineUrl: rightSpine, spineWidthMm }, kind === 'spine' ? 'left' : 'right', result)
+        if (!alive.current) return
+        setSpine(aligned.spineUrl ?? '')
+        setRightSpine(aligned.rightSpineUrl ?? '')
+        setSpineWidthMm(aligned.spineWidthMm)
+        return
+      }
+      const source = result.source
       if (kind === 'disc') {
         setDiscs((previous) => previous.map((disc) => disc.id === discId ? { ...disc, labelUrl: source } : disc))
       } else {
-        const setters = { cover: setCover, bookletBack: setBookletBack, spine: setSpine, rightSpine: setRightSpine, back: setBackCover, backInside: setBackInside, obi: setObi }
+        const setters = { cover: setCover, bookletBack: setBookletBack, back: setBackCover, backInside: setBackInside, obi: setObi }
         setters[kind](source)
       }
     })
   }
 
   function uploadPages(files: File[]) {
-    void readImages(files, 'page', (sources) => setBookletPages((previous) => [...previous, ...sources.map((imageUrl, index) => ({
-      id: crypto.randomUUID?.() ?? `page-${crypto.getRandomValues(new Uint32Array(2)).join('-')}`, title: files[index].name.replace(/\.[^.]+$/, ''), text: '', imageUrl,
+    void readImages(files, 'page', (results) => setBookletPages((previous) => [...previous, ...results.map((result, index) => ({
+      id: crypto.randomUUID?.() ?? `page-${crypto.getRandomValues(new Uint32Array(2)).join('-')}`, title: files[index].name.replace(/\.[^.]+$/, ''), text: '', imageUrl: result.source,
     }))]))
   }
 
@@ -247,8 +259,7 @@ export function AlbumEditor({
           collection
             .filter((item) => item.shelfId === id)
             .reduce((units, item) => units + getCaseDepth(item) / 24, 0) +
-            1 +
-            Math.min(discCount - 1, 3) * 0.5 <=
+            caseDepth / 24 <=
           24,
       ) ??
       `shelf-${Math.max(0, ...shelves.map((id) => Number(id.split('-')[1]) || 0)) + 1}`
@@ -288,6 +299,7 @@ export function AlbumEditor({
         backCoverUrl: backCover || undefined,
         obiUrl: obi || undefined,
         spineUrl: spine || undefined,
+        spineWidthMm,
         discs: savedDiscs,
         tracks: savedDiscs.flatMap((disc) => disc.tracks),
       })
@@ -350,10 +362,10 @@ export function AlbumEditor({
             onUpload={(file) => upload(file, 'bookletBack')} onReset={() => setBookletBack('')} />
           <ArtworkInput label={t('editor.spineArtwork')} src={getSpineArtwork(previewAlbum, 'left')} alt={t('editor.spinePreviewAlt')}
             uploadLabel={t('editor.uploadSpineAria')} resetLabel={t('editor.useGeneratedSpine')} custom={!!spine} disabled={loading || saving} variant="spine"
-            onUpload={(file) => upload(file, 'spine')} onReset={() => setSpine('')} />
+            onUpload={(file) => upload(file, 'spine')} onReset={() => { setSpine(''); if (!rightSpine) setSpineWidthMm(undefined) }} />
           <ArtworkInput label={t('editor.rightSpineArtwork')} src={getSpineArtwork(previewAlbum, 'right')} alt={t('editor.rightSpinePreview')}
             uploadLabel={t('editor.uploadRightSpine')} resetLabel={t('editor.useGeneratedRightSpine')} custom={!!rightSpine} disabled={loading || saving} variant="spine"
-            onUpload={(file) => upload(file, 'rightSpine')} onReset={() => setRightSpine('')} />
+            onUpload={(file) => upload(file, 'rightSpine')} onReset={() => { setRightSpine(''); if (!spine) setSpineWidthMm(undefined) }} />
           <ArtworkInput label={t('editor.backCoverArtwork')} src={getBackCoverArtwork(previewAlbum)} alt={t('editor.backCoverPreviewAlt')}
             uploadLabel={t('editor.uploadBackCoverAria')} resetLabel={t('editor.useGeneratedBackCover')} custom={!!backCover} disabled={loading || saving} variant="back"
             onUpload={(file) => upload(file, 'back')} onReset={() => setBackCover('')} />

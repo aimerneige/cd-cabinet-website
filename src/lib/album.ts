@@ -1,12 +1,25 @@
 import type { Album, AlbumDisc } from '../types/album'
 
+export const MIN_SPINE_WIDTH_MM = 2
+export const MAX_SPINE_WIDTH_MM = 40
+export const SPINE_HEIGHT_MM = 118
+
+export function isSpineWidthMm(width: unknown): width is number {
+  return typeof width === 'number' && Number.isFinite(width) && width >= MIN_SPINE_WIDTH_MM && width <= MAX_SPINE_WIDTH_MM
+}
+
+export function clampSpineWidthMm(width: number): number {
+  return Math.max(MIN_SPINE_WIDTH_MM, Math.min(MAX_SPINE_WIDTH_MM, Math.round(width * 10) / 10))
+}
+
 export function getAlbumDiscs(album: Album): AlbumDisc[] {
   return album.discs?.length
     ? album.discs
     : [{ id: `${album.id}-disc-1`, tracks: album.tracks }]
 }
 
-export function getCaseDepth(album: Pick<Album, 'discs'>): number {
+export function getCaseDepth(album: Pick<Album, 'discs' | 'spineWidthMm'>): number {
+  if (isSpineWidthMm(album.spineWidthMm)) return album.spineWidthMm * 300 / SPINE_HEIGHT_MM
   return (album.discs?.length || 1) <= 3 ? 24 : 58
 }
 

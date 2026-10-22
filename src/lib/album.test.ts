@@ -20,6 +20,16 @@ describe('multi-disc albums', () => {
     expect(changed.tracks).toEqual(albums[0].tracks)
   })
 
+  it('preserves an artwork-driven case width across disc count changes and rejects invalid widths', () => {
+    const album = { ...albums[0], spineWidthMm: 6.5 }
+    expect(getCaseDepth(album)).toBeCloseTo(6.5 / 118 * 300, 10)
+    expect(getCaseDepth(withDiscCount(album, 6))).toBe(getCaseDepth(album))
+    for (const spineWidthMm of [undefined, 0, -1, 41, NaN, Infinity]) {
+      expect(getCaseDepth({ ...album, spineWidthMm })).toBe(24)
+      expect(getCaseDepth({ ...withDiscCount(album, 4), spineWidthMm })).toBe(58)
+    }
+  })
+
   it('preserves every track when reducing the number of discs', () => {
     const before = getAlbumDiscs(albums[17])
     const changed = withDiscCount(albums[17], 2)

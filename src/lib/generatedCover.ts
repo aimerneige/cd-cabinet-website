@@ -10,7 +10,7 @@ const styles = [
 ] as const
 
 export type CoverStyle = (typeof styles)[number]
-type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs'>
+type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs' | 'spineWidthMm'>
 
 const prefix = 'data:image/svg+xml;charset=utf-8,'
 const opening = (style: CoverStyle) =>

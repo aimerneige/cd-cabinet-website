@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { albums } from '../data/albums'
 import { withDiscCount } from './album'
-import { getArtworkCrop, getCropOutputSize, resizeSpineCrop, type ArtworkKind } from './cropArtwork'
+import { getArtworkCrop, getCropOutputSize, getSpineCrop, type ArtworkKind } from './cropArtwork'
 
 describe('artwork crop dimensions', () => {
   it('locks booklet and disc images to a square, with a circular disc guide', () => {
@@ -30,14 +30,21 @@ describe('artwork crop dimensions', () => {
     }
   })
 
-  it('bounds spine crop adjustments to 75–125% of the default while preserving height', () => {
-    for (const count of [1, 4]) {
-      const profile = getArtworkCrop('spine', withDiscCount(albums[0], count))
-      for (const [input, percent] of [[30, 75], [75, 75], [100, 100], [125, 125], [200, 125]]) {
-        const resized = resizeSpineCrop(profile, input)
-        expect(resized.width / resized.height).toBeCloseTo(profile.width / profile.height * percent / 100, 10)
-      }
+  it('uses absolute millimeter limits and 0.1 mm steps against a 118 mm height', () => {
+    for (const [input, width] of [[0, 2], [2, 2], [6.54, 6.5], [22.8, 22.8], [40, 40], [100, 40]]) {
+      const profile = getSpineCrop(input)
+      expect(profile.width / profile.height).toBeCloseTo(width / 118, 10)
     }
+  })
+
+  it('matches generated spines and OBI crops to the shared thickness', () => {
+    const album = { ...albums[0], spineWidthMm: 6.5 }
+    for (const kind of ['spine', 'rightSpine'] as const) {
+      const profile = getArtworkCrop(kind, album)
+      expect(profile.width / profile.height).toBeCloseTo(6.5 / 118, 10)
+    }
+    const obi = getArtworkCrop('obi', album)
+    expect(obi.width / obi.height).toBeCloseTo((100 + 6.5 / 118 * 300) / 304, 10)
   })
 
   it('keeps rounding within one pixel and limits the longest edge to 2048 pixels', () => {
@@ -54,9 +61,8 @@ describe('artwork crop dimensions', () => {
   })
 
   it('bounds output even when an adjusted ratio needs more than 2048 integer pixels', () => {
-    for (const count of [1, 4]) {
-      for (const percent of [75, 91, 100, 113, 125]) {
-        const profile = resizeSpineCrop(getArtworkCrop('spine', withDiscCount(albums[0], count)), percent)
+    for (const widthMm of [2, 6.5, 9.1, 22.8, 40]) {
+      for (const profile of [getSpineCrop(widthMm), getArtworkCrop('obi', { spineWidthMm: widthMm })]) {
         for (const area of [{ width: 9000, height: 9000 }, { width: 60, height: 600 }]) {
           const size = getCropOutputSize(area, profile)
           expect(Math.max(size.width, size.height)).toBeLessThanOrEqual(2048)

@@ -151,4 +151,15 @@ describe('generated packaging', () => {
     const cover = generateCover(details, randomCoverStyle())
     expect(decodeURIComponent(cover)).toContain('width="1000" height="1000" viewBox="0 0 600 600"')
   })
+
+  it('fits generated spines and OBI folds to the thickness selected in the cropper', () => {
+    const album = { ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png', spineWidthMm: 6.5 }
+    const depth = 6.5 * 300 / 118
+    for (const side of ['left', 'right'] as const) {
+      expect(decodeURIComponent(getSpineArtwork(album, side))).toContain(`viewBox="0 0 ${depth * 2} 600"`)
+    }
+    const obi = decodeURIComponent(getObiArtwork(album))
+    expect(obi).toContain(`viewBox="0 0 ${92 + depth + 8} 304"`)
+    expect(obi).toContain(`data-obi-panel="front" transform="translate(${46 + depth + 8} 0)"`)
+  })
 })
