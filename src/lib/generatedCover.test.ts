@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getObiArtwork, randomCoverStyle } from './generatedCover'
+import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from './generatedCover'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -103,6 +103,13 @@ describe('generated packaging', () => {
     expect(getBackCoverArtwork(album)).not.toBe(album.coverUrl)
     expect(getObiArtwork({ ...album, obiUrl: '/obi.png' })).toBe('/obi.png')
     expect(decodeURIComponent(getObiArtwork(album))).toContain('data-cd-obi="custom"')
+    expect(getInnerArtwork({ ...album, bookletBackUrl: '/booklet.png' }, 'booklet')).toBe('/booklet.png')
+    expect(getInnerArtwork({ ...album, backInsideUrl: '/inside.png' }, 'back')).toBe('/inside.png')
+    expect(getSpineArtwork({ ...album, spineUrl: '/left.png' }, 'left')).toBe('/left.png')
+    expect(getSpineArtwork({ ...album, rightSpineUrl: '/right.png' }, 'right')).toBe('/right.png')
+    expect(getInnerArtwork(album, 'booklet')).not.toBe(getInnerArtwork(album, 'back'))
+    expect(getInnerArtwork(album, 'booklet')).not.toBe(album.coverUrl)
+    expect(decodeURIComponent(getSpineArtwork({ ...album, spineUrl: '/left.png' }, 'right'))).toContain('data-cd-spine="right"')
   })
 
   it('escapes all album, disc and track text and keeps CSS URLs safe', () => {
@@ -112,7 +119,7 @@ describe('generated packaging', () => {
       color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png',
       tracks: [{ id: 'track-1', title: value, duration: value }],
     }
-    for (const url of [getDiscArtwork(album, { ...discs[0], title: value }), getBackCoverArtwork(album), getObiArtwork(album)]) {
+    for (const url of [getDiscArtwork(album, { ...discs[0], title: value }), getBackCoverArtwork(album), getObiArtwork(album), getInnerArtwork(album, 'booklet'), getInnerArtwork(album, 'back'), getSpineArtwork(album, 'right')]) {
       const svg = decodeURIComponent(url.slice(url.indexOf(',') + 1))
       expect(svg).toContain('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; B&apos;s (Live)')
       expect(svg).not.toContain('<script>')

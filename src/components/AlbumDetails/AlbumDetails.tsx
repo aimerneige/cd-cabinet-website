@@ -17,6 +17,8 @@ export function AlbumDetails({
   onPlayTrack,
   currentTrackId,
   isPlayingDisc,
+  onReadBooklet,
+  onReadCase,
 }: {
   album: Album
   disc: AlbumDisc
@@ -30,6 +32,8 @@ export function AlbumDetails({
   onPlayTrack: (index: number) => void
   currentTrackId?: string
   isPlayingDisc: boolean
+  onReadBooklet: () => void
+  onReadCase: () => void
 }) {
   const { t } = useTranslation()
   const discs = getAlbumDiscs(album)
@@ -97,6 +101,10 @@ export function AlbumDetails({
               </button>
             ))}
           </div>
+        </div>
+        <div className="disc-selector">
+          <button onClick={onReadBooklet}>{t('booklet.read')}</button>
+          <button onClick={onReadCase}>{t('booklet.caseArtwork')}</button>
         </div>
       </div>
       <ol className="track-list" aria-busy={isTurning}>

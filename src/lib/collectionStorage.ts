@@ -92,13 +92,22 @@ export async function loadCollection(): Promise<Album[] | null> {
     saved.albums?.map((album) => ({
       ...album,
       coverUrl: restore(album.coverUrl),
+      bookletBackUrl: album.bookletBackUrl ? restore(album.bookletBackUrl) : undefined,
+      bookletPages: album.bookletPages?.map((page) => ({
+        ...page, imageUrl: page.imageUrl ? restore(page.imageUrl) : undefined,
+      })),
       backCoverUrl: album.backCoverUrl
         ? restore(album.backCoverUrl)
         : undefined,
       spineUrl: album.spineUrl ? restore(album.spineUrl) : undefined,
+      rightSpineUrl: album.rightSpineUrl ? restore(album.rightSpineUrl) : undefined,
+      backInsideUrl: album.backInsideUrl ? restore(album.backInsideUrl) : undefined,
       obiUrl: album.obiUrl ? restore(album.obiUrl) : undefined,
       tracks: album.tracks.map(restoreTrack),
-      discs: album.discs?.map((disc) => ({ ...disc, tracks: disc.tracks.map(restoreTrack) })),
+      discs: album.discs?.map((disc) => ({
+        ...disc, labelUrl: disc.labelUrl ? restore(disc.labelUrl) : undefined,
+        tracks: disc.tracks.map(restoreTrack),
+      })),
     })) ?? null
   )
 }
@@ -121,16 +130,23 @@ export async function saveCollection(albums: Album[]): Promise<void> {
   const metadata = albums.map((album) => ({
     ...album,
     coverUrl: store(album.coverUrl, `${album.id}:cover`),
+    bookletBackUrl: album.bookletBackUrl ? store(album.bookletBackUrl, `${album.id}:booklet-back`) : undefined,
+    bookletPages: album.bookletPages?.map((page) => ({
+      ...page, imageUrl: page.imageUrl ? store(page.imageUrl, `${album.id}:page:${page.id}`) : undefined,
+    })),
     backCoverUrl: album.backCoverUrl
       ? store(album.backCoverUrl, `${album.id}:back`)
       : undefined,
     spineUrl: album.spineUrl
       ? store(album.spineUrl, `${album.id}:spine`)
       : undefined,
+    rightSpineUrl: album.rightSpineUrl ? store(album.rightSpineUrl, `${album.id}:spine-right`) : undefined,
+    backInsideUrl: album.backInsideUrl ? store(album.backInsideUrl, `${album.id}:back-inside`) : undefined,
     obiUrl: album.obiUrl ? store(album.obiUrl, `${album.id}:obi`) : undefined,
     tracks: album.tracks.map((track) => storeTrack(track, album.id)),
     discs: album.discs?.map((disc) => ({
-      ...disc, tracks: disc.tracks.map((track) => storeTrack(track, album.id)),
+      ...disc, labelUrl: disc.labelUrl ? store(disc.labelUrl, `${album.id}:disc:${disc.id}`) : undefined,
+      tracks: disc.tracks.map((track) => storeTrack(track, album.id)),
     })),
   }))
   return new Promise((resolve, reject) => {

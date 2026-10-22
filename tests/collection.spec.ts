@@ -291,7 +291,7 @@ test('uploaded artwork, multi-disc additions and edits survive a reload', async 
     .getByLabel('Upload spine artwork')
     .setInputFiles({ name: 'spine.png', mimeType: 'image/png', buffer: image })
   await expect(
-    page.getByRole('img', { name: 'Spine preview' }),
+    page.getByRole('img', { name: 'Spine preview', exact: true }),
   ).toHaveAttribute('src', /^data:image\/png/)
   await page.getByLabel('Upload back cover artwork').setInputFiles({ name: 'back.png', mimeType: 'image/png', buffer: image })
   await expect(page.getByRole('img', { name: 'Back cover preview' })).toHaveAttribute('src', /^data:image\/png/)

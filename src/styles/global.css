@@ -795,19 +795,6 @@ footer i {
   transform: rotateY(180deg) translateZ(1px);
   border-left: 9px solid #9fa891aa;
 }
-.lid-inside img {
-  filter: saturate(0.8);
-}
-.lid-inside span {
-  position: absolute;
-  bottom: 14px;
-  left: 12px;
-  font-size: 6px;
-  letter-spacing: 1px;
-  color: #fff;
-  background: #292d2980;
-  padding: 4px;
-}
 .album-details {
   position: absolute;
   left: 50%;

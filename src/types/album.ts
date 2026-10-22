@@ -11,6 +11,12 @@ export interface AlbumDisc {
   labelUrl?: string
   tracks: Track[]
 }
+export interface BookletPage {
+  id: string
+  title: string
+  text: string
+  imageUrl?: string
+}
 export interface Album {
   id: string
   title: string
@@ -19,8 +25,12 @@ export interface Album {
   year: number
   genre: string
   coverUrl: string
+  bookletBackUrl?: string
+  bookletPages?: BookletPage[]
   backCoverUrl?: string
+  backInsideUrl?: string
   spineUrl?: string
+  rightSpineUrl?: string
   obiUrl?: string
   color: string
   ink: string

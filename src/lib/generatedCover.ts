@@ -188,3 +188,38 @@ export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): st
     <path d="M46 0V304M${46 + depth} 0V304" fill="none" stroke="${color}" stroke-dasharray="2 3" opacity=".25"/>
   </svg>`)
 }
+
+export function getInnerArtwork(
+  album: ArtworkDetails & Pick<Album, 'bookletBackUrl' | 'backInsideUrl'>,
+  side: 'booklet' | 'back',
+): string {
+  const uploaded = side === 'booklet' ? album.bookletBackUrl : album.backInsideUrl
+  if (uploaded) return uploaded
+  const color = escapeXml(album.color)
+  const ink = escapeXml(album.ink)
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-inside="${side}" width="1000" height="1000" viewBox="0 0 600 600">
+    <rect width="600" height="600" fill="${color}"/>
+    <g fill="none" stroke="${ink}" opacity=".25"><circle cx="300" cy="285" r="170"/><circle cx="300" cy="285" r="130"/><path d="M40 460H560"/></g>
+    <g fill="${ink}">
+      ${text(side === 'booklet' ? 'BOOKLET' : 'ORIGINAL RECORDINGS', 65, 14)}
+      ${text(album.title, 510, 32, 'Georgia, serif')}
+      ${text(album.artist, 548, 16)}
+      ${text(`${album.year} · ${album.genre}`, 575, 10)}
+    </g>
+  </svg>`)
+}
+
+export function getSpineArtwork(
+  album: ArtworkDetails & Pick<Album, 'spineUrl' | 'rightSpineUrl'>,
+  side: 'left' | 'right',
+): string {
+  const uploaded = side === 'left' ? album.spineUrl : album.rightSpineUrl
+  if (uploaded) return uploaded
+  const width = getCaseDepth(album) * 2
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-spine="${side}" width="${width * 3}" height="1800" viewBox="0 0 ${width} 600">
+    <rect width="${width}" height="600" fill="${escapeXml(album.color)}"/>
+    <g fill="${escapeXml(album.ink)}" text-anchor="middle" writing-mode="vertical-rl" transform="translate(${width / 2} 0)">
+      ${centeredText(`${album.artist} · ${album.title}`, 300, 18, 520)}
+    </g>
+  </svg>`)
+}

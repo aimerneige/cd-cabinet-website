@@ -1,7 +1,7 @@
 import { forwardRef, type RefObject } from 'react'
 import type { Album, AlbumDisc } from '../../types/album'
 import { getAlbumDiscs } from '../../lib/album'
-import { getBackCoverArtwork, getDiscArtwork } from '../../lib/generatedCover'
+import { getBackCoverArtwork, getDiscArtwork, getInnerArtwork } from '../../lib/generatedCover'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
 import type { ObiMode } from '../../hooks/useObiAnimation'
 import { ObiStrip } from '../ObiStrip/ObiStrip'
@@ -33,7 +33,7 @@ export const CDCase = forwardRef<
       ref={ref}
     >
       <div className="case-body">
-        <div className="case-back" />
+        <div className="case-back"><img src={getInnerArtwork(album, 'back')} alt={t('editor.backInsideArtwork')} /></div>
         <div
           className="case-rear"
           aria-hidden={view !== 'back'}
@@ -58,7 +58,9 @@ export const CDCase = forwardRef<
             </span>
           )}
         </div>
-        <div className="case-edge edge-right" />
+        <div className="case-edge edge-right case-spine-right" style={{ background: album.color, color: album.ink }}>
+          {album.rightSpineUrl ? <img className="spine-artwork" src={album.rightSpineUrl} alt="" /> : <span>{album.artist} · {album.title}</span>}
+        </div>
         {discs.length > 1 && discs.length % 2 === 1 && (
           <DiscTray album={album} disc={discs[discs.length - 1]} onPlay={discs[discs.length - 1].id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === discs[discs.length - 1].id} />
         )}
@@ -87,8 +89,7 @@ export const CDCase = forwardRef<
             />
           </div>
           <div className="lid-inside">
-            <img src={album.coverUrl} alt="" />
-            <span>ORIGINAL RECORDINGS · {album.year}</span>
+            <img src={getInnerArtwork(album, 'booklet')} alt={t('editor.bookletBackArtwork')} />
           </div>
         </div>
         <ObiStrip

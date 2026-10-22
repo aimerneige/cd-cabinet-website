@@ -12,6 +12,7 @@ import { useObiAnimation } from '../../hooks/useObiAnimation'
 import { useTranslation } from '../../i18n'
 import type { AudioPlayback } from '../../hooks/useAudioPlayback'
 import { CDPlayer, CompactPlayer } from '../CDPlayer/CDPlayer'
+import { ArtworkReader } from '../ArtworkReader/ArtworkReader'
 
 export function ActiveCD({
   album,
@@ -32,6 +33,7 @@ export function ActiveCD({
     ? discs.findIndex((item) => item.id === playback.disc?.id)
     : -1
   const [playerOpen, setPlayerOpen] = useState(loadedIndex >= 0)
+  const [reader, setReader] = useState<'booklet' | 'case' | null>(null)
   const [isLoadingDisc, setIsLoadingDisc] = useState(false)
   const [startingPlayback, setStartingPlayback] = useState(false)
   const startFrame = useRef<number | null>(null)
@@ -261,6 +263,7 @@ export function ActiveCD({
     document.body.style.overflow = 'hidden'
     button.current?.focus({ preventScroll: true })
     const keydown = (event: KeyboardEvent) => {
+      if (document.querySelector('dialog[open]')) return
       if (event.key === 'Escape') closeRef.current()
       if (event.key === 'Tab') {
         const controls = [
@@ -375,7 +378,10 @@ export function ActiveCD({
         isOpen={isOpen}
         obiMode={obiMode}
         onSelectObi={selectMode}
+        onReadBooklet={() => setReader('booklet')}
+        onReadCase={() => setReader('case')}
       />
+      {reader && <ArtworkReader album={album} mode={reader} onClose={() => setReader(null)} />}
     </div>
   )
 }
