@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { CSSProperties, FormEvent } from 'react'
 import type { Album, AlbumDisc, BookletPage, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, resizeDiscs } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
@@ -51,6 +51,7 @@ export function AlbumEditor({
     () => album ? getAlbumDiscs(album) : [{ id: `${draftId}-disc-1`, tracks: [] }],
   )
   const discCount = discs.length
+  const caseDepth = getCaseDepth({ discs })
   const [editingDisc, setEditingDisc] = useState(0)
   const [coverStyle, setCoverStyle] = useState(
     () => album ? getGeneratedCoverStyle(album.coverUrl) : randomCoverStyle(),
@@ -70,7 +71,7 @@ export function AlbumEditor({
   const pendingUploads = useRef(0)
   const cropSequence = useRef(0)
   const cropResolver = useRef<((source: string | null) => void) | null>(null)
-  const [cropRequest, setCropRequest] = useState<{ id: number; source: string; profile: ArtworkCrop; name: string; current: number; total: number } | null>(null)
+  const [cropRequest, setCropRequest] = useState<{ id: number; source: string; profile: ArtworkCrop; resizeWidth: boolean; name: string; current: number; total: number } | null>(null)
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
   const artworkDetails = {
@@ -130,7 +131,7 @@ export function AlbumEditor({
       for (const [index, source] of sources.entries()) {
         const result = await new Promise<string | null>((resolve) => {
           cropResolver.current = resolve
-          setCropRequest({ id: ++cropSequence.current, source, profile, name: files[index].name, current: index + 1, total: files.length })
+          setCropRequest({ id: ++cropSequence.current, source, profile, resizeWidth: kind === 'spine' || kind === 'rightSpine', name: files[index].name, current: index + 1, total: files.length })
         })
         if (!result || !alive.current) return
         cropped.push(result)
@@ -301,6 +302,7 @@ export function AlbumEditor({
     <dialog
       ref={dialog}
       className="album-editor"
+      style={{ '--spine-preview-width': `${caseDepth / 2}px` } as CSSProperties}
       aria-labelledby="editor-title"
       onKeyDown={(event) => event.stopPropagation()}
       onCancel={(event) => {

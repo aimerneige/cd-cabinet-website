@@ -19,6 +19,12 @@
 .crop-information { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; color: #78836b; }
 .crop-stage { position: relative; flex: 1; min-height: 120px; background: #272c27; }
 .crop-disc-hole { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid #fff9; background: #202720b0; pointer-events: none; }
+.crop-width-frame { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.crop-width-handle { position: absolute; top: 50%; width: 24px; height: 44px; transform: translateY(-50%); pointer-events: auto; cursor: ew-resize; touch-action: none; user-select: none; display: grid; place-items: center; background: #272c2799; border-radius: 4px; }
+.crop-width-handle::after { content: ''; width: 3px; height: 24px; border-radius: 2px; background: #fff; }
+.crop-width-left { left: -24px; }
+.crop-width-right { right: -24px; }
+.crop-width-handle:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .crop-guidance { margin: 0; font-size: 11px; line-height: 1.6; color: #78836b; }
 .crop-zoom { display: flex; align-items: center; gap: 18px; font-size: 12px; }
 .crop-zoom input { flex: 1; min-width: 0; accent-color: #66745c; }

@@ -20,10 +20,18 @@ export function getArtworkCrop(kind: ArtworkKind, album: Pick<Album, 'discs'>): 
   return { width: width / divisor, height: height / divisor, round: kind === 'disc' }
 }
 
+export function resizeSpineCrop(profile: ArtworkCrop, percent: number): ArtworkCrop {
+  const widthPercent = Math.max(75, Math.min(125, Math.round(percent)))
+  if (widthPercent === 100) return profile
+  return { ...profile, width: profile.width * widthPercent, height: profile.height * 100 }
+}
+
 export function getCropOutputSize(area: Pick<Area, 'width' | 'height'>, profile: ArtworkCrop) {
-  // 按最简整数比例输出，避免细侧脊和 OBI 在像素取整后变形；限制大图的内存占用。
-  const units = Math.max(1, Math.floor(Math.min(area.width / profile.width, area.height / profile.height, 2048 / Math.max(profile.width, profile.height))))
-  return { width: profile.width * units, height: profile.height * units }
+  const scale = Math.min(area.width / profile.width, area.height / profile.height, 2048 / Math.max(profile.width, profile.height))
+  const units = Math.floor(scale)
+  if (units >= 1) return { width: profile.width * units, height: profile.height * units }
+  // 微调后的比例可能需要很大的整数尺寸；允许一个像素内的取整误差，避免超出尺寸限制。
+  return { width: Math.max(1, Math.round(profile.width * scale)), height: Math.max(1, Math.round(profile.height * scale)) }
 }
 
 export function cropArtwork(image: HTMLImageElement, area: Area, profile: ArtworkCrop): string {
