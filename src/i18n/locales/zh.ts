@@ -197,8 +197,20 @@ export const zh: Record<keyof typeof en, string> = {
   'booklet.read': '阅读歌词本',
   'booklet.caseArtwork': '查看盘盒纸品',
 
-  // Artwork Errors
+  'crop.title': '裁剪图片',
+  'crop.close': '关闭裁剪窗口',
+  'crop.ratio': '固定比例 {ratio}',
+  'crop.progress': '第 {current} 张，共 {total} 张',
+  'crop.source': '待裁剪图片',
+  'crop.position': '调整裁剪位置',
+  'crop.guidance': '拖动图片或使用方向键调整位置，缩放以选择裁剪范围。比例保持固定。',
+  'crop.zoom': '缩放',
+  'crop.reset': '重置裁剪',
+  'crop.cancel': '取消上传',
+  'crop.apply': '使用裁剪结果',
+  'crop.failed': '无法裁剪此图片，请重试或选择其他图片。',
 
+  // Artwork Errors
   'artworkErrors.invalidType': '请选择 JPG、PNG 或 WebP 格式的图片。',
   'artworkErrors.tooLarge': '请选择小于 5 MB 的图片。',
   'artworkErrors.readFailed': '无法读取图片，请重试。',

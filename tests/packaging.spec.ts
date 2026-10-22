@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
+import { confirmCrop } from './helpers/artwork'
 
 async function image(page: Page, color: string) {
   const source = await page.evaluate((fill) => {
@@ -15,8 +16,11 @@ async function image(page: Page, color: string) {
 async function upload(page: Page, label: string, color: string) {
   const scan = await image(page, color)
   await page.getByLabel(label, { exact: true }).setInputFiles(scan.file)
+  await confirmCrop(page)
   await expect(page.getByRole('button', { name: 'Try another cover', exact: true })).toBeEnabled()
-  return scan.source
+  const preview = page.getByLabel(label, { exact: true }).locator('..').locator('img')
+  await expect(preview).toHaveAttribute('src', /^data:image\/png/)
+  return (await preview.getAttribute('src'))!
 }
 
 async function draft(page: Page, title: string) {
@@ -92,7 +96,9 @@ test('mixed booklet pages can be ordered, read on a phone and deleted without le
   await page.getByLabel('Upload booklet pages', { exact: true }).setInputFiles([
     { ...scan.file, name: 'First scan.png' }, { ...other.file, name: 'Second scan.png' },
   ])
+  await confirmCrop(page, 2)
   await expect(page.locator('.booklet-pages-editor li')).toHaveCount(2)
+  const croppedScan = (await page.locator('.booklet-pages-editor li img').first().getAttribute('src'))!
   await page.getByRole('button', { name: 'Add text page', exact: true }).click()
   await page.getByRole('textbox', { name: 'Page 3 title', exact: true }).fill('Words')
   const lyrics = '<b>First line & 回声</b>\n\n' + '夜の音 — another verse\n'.repeat(100) + 'Last verse'
@@ -120,7 +126,7 @@ test('mixed booklet pages can be ordered, read on a phone and deleted without le
   expect(reader.x).toBeGreaterThanOrEqual(0)
   expect(reader.x + reader.width).toBeLessThanOrEqual(390)
   await page.keyboard.press('ArrowRight')
-  await expect(page.locator('.reader-paper img')).toHaveAttribute('src', scan.source)
+  await expect(page.locator('.reader-paper img')).toHaveAttribute('src', croppedScan)
   await expect(page.locator('.reader-paper')).toHaveJSProperty('scrollTop', 0)
   await page.keyboard.press('ArrowRight')
   await expect(page.getByRole('button', { name: 'Next page', exact: true })).toBeDisabled()
@@ -155,6 +161,7 @@ test('invalid booklet image batches and failed saves leave no partial pages or d
   await upload(page, 'Upload disc artwork', '#779999')
   await upload(page, 'Upload booklet back cover', '#997799')
   await page.getByLabel('Upload booklet pages', { exact: true }).setInputFiles(scan.file)
+  await confirmCrop(page)
   await expect(page.locator('.booklet-pages-editor li')).toHaveCount(1)
   await page.evaluate(() => {
     const put = IDBObjectStore.prototype.put

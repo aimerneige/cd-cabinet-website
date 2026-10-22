@@ -1,0 +1,27 @@
+.artwork-cropper {
+  width: min(740px, calc(100vw - 28px));
+  height: min(740px, calc(100dvh - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 22px;
+  border: 1px solid #b6bbac;
+  background: #eeece5;
+  color: #384033;
+  pointer-events: auto;
+}
+.artwork-cropper[open] { display: flex; flex-direction: column; gap: 14px; }
+.artwork-cropper::backdrop { background: #302e2788; backdrop-filter: blur(5px); }
+.artwork-cropper header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.artwork-cropper header > div { min-width: 0; }
+.artwork-cropper h2 { font: 32px/1.1 'Libre Caslon Display', Georgia, serif; margin: 0; }
+.artwork-cropper header p { margin: 8px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: #78836b; }
+.artwork-cropper button { border: 1px solid #aab49b; padding: 8px 12px; background: transparent; color: inherit; font-size: 12px; }
+.artwork-cropper header button { border: 0; font-size: 26px; }
+.crop-information { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; color: #78836b; }
+.crop-stage { position: relative; flex: 1; min-height: 120px; background: #272c27; }
+.crop-disc-hole { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid #fff9; background: #202720b0; pointer-events: none; }
+.crop-guidance { margin: 0; font-size: 11px; line-height: 1.6; color: #78836b; }
+.crop-zoom { display: flex; align-items: center; gap: 18px; font-size: 12px; }
+.crop-zoom input { flex: 1; min-width: 0; accent-color: #66745c; }
+.crop-actions, .crop-actions > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.crop-actions .crop-apply { background: #66745c; color: white; }
+@media (max-width: 700px) { .artwork-cropper { padding: 14px; } .artwork-cropper button { padding: 8px; font-size: 11px; } }

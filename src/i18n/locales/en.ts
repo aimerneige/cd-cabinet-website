@@ -197,8 +197,20 @@ export const en = {
   'booklet.read': 'Read booklet',
   'booklet.caseArtwork': 'Case artwork',
 
-  // Artwork Errors
+  'crop.title': 'Crop image',
+  'crop.close': 'Close cropper',
+  'crop.ratio': 'Fixed ratio {ratio}',
+  'crop.progress': 'Image {current} of {total}',
+  'crop.source': 'Image to crop',
+  'crop.position': 'Crop position',
+  'crop.guidance': 'Drag the image or use the arrow keys to position it. Zoom to adjust the crop; the aspect ratio stays locked.',
+  'crop.zoom': 'Zoom',
+  'crop.reset': 'Reset crop',
+  'crop.cancel': 'Cancel upload',
+  'crop.apply': 'Use crop',
+  'crop.failed': 'The image could not be cropped. Try again or choose another image.',
 
+  // Artwork Errors
   'artworkErrors.invalidType': 'Choose a JPG, PNG or WebP image.',
   'artworkErrors.tooLarge': 'Choose an image smaller than 5 MB.',
   'artworkErrors.readFailed': 'The image could not be read. Please try again.',

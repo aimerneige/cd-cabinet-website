@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { confirmCrop } from './helpers/artwork'
 
 test('default covers can be changed, saved and edited without losing their design', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -196,6 +197,7 @@ test('uploads replace individual artwork and randomizing preserves other uploade
   await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
   for (const kind of ['cover artwork', 'back cover artwork', 'spine artwork', 'OBI paper strip']) {
     await page.getByLabel(`Upload ${kind}`, { exact: true }).setInputFiles({ name: 'artwork.png', mimeType: 'image/png', buffer: image })
+    await confirmCrop(page)
     await expect(page.getByRole('button', { name: 'Try another cover' })).toBeEnabled()
   }
   await expect(page.getByRole('img', { name: 'Cover preview', exact: true })).toHaveAttribute('src', /^data:image\/png/)
@@ -217,6 +219,7 @@ test('uploads replace individual artwork and randomizing preserves other uploade
   await expect(page.locator('.obi-strip')).toHaveCSS('--obi-image', /data:image\/png/)
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await page.getByLabel('Upload cover artwork', { exact: true }).setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: image })
+  await confirmCrop(page)
   await expect(page.getByRole('img', { name: 'Cover preview', exact: true })).toHaveAttribute('src', /^data:image\/png/)
   await page.getByRole('button', { name: 'Save changes', exact: true }).click()
   await expect(page.locator('.album-editor')).toHaveCount(0)

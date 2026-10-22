@@ -201,8 +201,20 @@ export const ja: Record<keyof typeof en, string> = {
   'booklet.read': 'ブックレットを読む',
   'booklet.caseArtwork': 'ケースの印刷物',
 
-  // Artwork Errors
+  'crop.title': '画像をトリミング',
+  'crop.close': 'トリミングを閉じる',
+  'crop.ratio': '固定比率 {ratio}',
+  'crop.progress': '{current} / {total} 枚目',
+  'crop.source': 'トリミングする画像',
+  'crop.position': '切り抜き位置',
+  'crop.guidance': '画像をドラッグするか矢印キーで位置を調整し、ズームで範囲を選びます。縦横比は固定です。',
+  'crop.zoom': 'ズーム',
+  'crop.reset': '切り抜きをリセット',
+  'crop.cancel': 'アップロードをキャンセル',
+  'crop.apply': '切り抜きを使用',
+  'crop.failed': '画像を切り抜けませんでした。もう一度試すか別の画像を選んでください。',
 
+  // Artwork Errors
   'artworkErrors.invalidType':
     'JPG、PNG、またはWebP画像を選択してください。',
   'artworkErrors.tooLarge': '5MB以下の画像を選択してください。',

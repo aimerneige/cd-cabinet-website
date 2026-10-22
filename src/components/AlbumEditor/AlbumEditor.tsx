@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import type { Album, AlbumDisc, BookletPage, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, resizeDiscs } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
+import { getArtworkCrop, type ArtworkCrop, type ArtworkKind } from '../../lib/cropArtwork'
 import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from '../../lib/generatedCover'
 import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
@@ -10,6 +11,7 @@ import { useTranslation } from '../../i18n'
 import { getGenreOptions } from '../../data/genres'
 import { ArtworkInput } from './ArtworkInput'
 import { BookletPagesEditor } from './BookletPagesEditor'
+import { ArtworkCropper } from './ArtworkCropper'
 import './AlbumEditor.css'
 
 export function AlbumEditor({
@@ -66,6 +68,9 @@ export function AlbumEditor({
   const [readingAudio, setReadingAudio] = useState(false)
   const [saving, setSaving] = useState(false)
   const pendingUploads = useRef(0)
+  const cropSequence = useRef(0)
+  const cropResolver = useRef<((source: string | null) => void) | null>(null)
+  const [cropRequest, setCropRequest] = useState<{ id: number; source: string; profile: ArtworkCrop; name: string; current: number; total: number } | null>(null)
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
   const artworkDetails = {
@@ -93,24 +98,44 @@ export function AlbumEditor({
     dialog.current!.showModal()
     return () => {
       alive.current = false
+      cropResolver.current?.(null)
+      cropResolver.current = null
       document.body.style.overflow = overflow
       requestAnimationFrame(() => previous?.focus({ preventScroll: true }))
     }
   }, [])
 
-  async function readImages(files: File[], apply: (sources: string[]) => void) {
-    if (!files.length) return
+  function finishCrop(source: string | null) {
+    const resolve = cropResolver.current
+    cropResolver.current = null
+    setCropRequest(null)
+    resolve?.(source)
+  }
+
+  async function readImages(files: File[], kind: ArtworkKind, apply: (sources: string[]) => void) {
+    if (!files.length || pendingUploads.current > 0 || saving) return
+    const previous = document.activeElement as HTMLElement | null
+    const profile = getArtworkCrop(kind, { discs })
     pendingUploads.current += 1
     setLoading(true)
     setError('')
     try {
       const sources: string[] = []
-      // 整批成功后再更新草稿，失败时不留下部分内页。
+      // 先验证整批文件，再逐张裁剪；取消或失败时不留下部分内页。
       for (const file of files) {
         sources.push(await readArtwork(file))
         if (!alive.current) return
       }
-      if (alive.current) apply(sources)
+      const cropped: string[] = []
+      for (const [index, source] of sources.entries()) {
+        const result = await new Promise<string | null>((resolve) => {
+          cropResolver.current = resolve
+          setCropRequest({ id: ++cropSequence.current, source, profile, name: files[index].name, current: index + 1, total: files.length })
+        })
+        if (!result || !alive.current) return
+        cropped.push(result)
+      }
+      if (alive.current) apply(cropped)
     } catch (cause) {
       if (alive.current)
         setError(
@@ -120,14 +145,17 @@ export function AlbumEditor({
         )
     } finally {
       pendingUploads.current -= 1
-      if (alive.current) setLoading(pendingUploads.current > 0)
+      if (alive.current) {
+        setLoading(pendingUploads.current > 0)
+        requestAnimationFrame(() => previous?.focus({ preventScroll: true }))
+      }
     }
   }
 
-  function upload(file: File | undefined, kind: 'cover' | 'bookletBack' | 'spine' | 'rightSpine' | 'back' | 'backInside' | 'obi' | 'disc') {
+  function upload(file: File | undefined, kind: Exclude<ArtworkKind, 'page'>) {
     if (!file) return
     const discId = discs[editingDisc].id
-    void readImages([file], ([source]) => {
+    void readImages([file], kind, ([source]) => {
       if (kind === 'disc') {
         setDiscs((previous) => previous.map((disc) => disc.id === discId ? { ...disc, labelUrl: source } : disc))
       } else {
@@ -138,7 +166,7 @@ export function AlbumEditor({
   }
 
   function uploadPages(files: File[]) {
-    void readImages(files, (sources) => setBookletPages((previous) => [...previous, ...sources.map((imageUrl, index) => ({
+    void readImages(files, 'page', (sources) => setBookletPages((previous) => [...previous, ...sources.map((imageUrl, index) => ({
       id: crypto.randomUUID?.() ?? `page-${crypto.getRandomValues(new Uint32Array(2)).join('-')}`, title: files[index].name.replace(/\.[^.]+$/, ''), text: '', imageUrl,
     }))]))
   }
@@ -526,6 +554,7 @@ export function AlbumEditor({
           </div>
         </div>
       </form>
+      {cropRequest && <ArtworkCropper key={cropRequest.id} {...cropRequest} onComplete={finishCrop} />}
     </dialog>
   )
 }

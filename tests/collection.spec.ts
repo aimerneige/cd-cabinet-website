@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { confirmCrop } from './helpers/artwork'
 
 test('opens the case, reverses it, restores focus and the original slot', async ({
   page,
@@ -284,16 +285,19 @@ test('uploaded artwork, multi-disc additions and edits survive a reload', async 
   await page
     .getByLabel('Upload cover artwork')
     .setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: image })
+  await confirmCrop(page)
   await expect(
     page.getByRole('img', { name: 'Cover preview', exact: true }),
   ).toHaveAttribute('src', /^data:image\/png/)
   await page
     .getByLabel('Upload spine artwork')
     .setInputFiles({ name: 'spine.png', mimeType: 'image/png', buffer: image })
+  await confirmCrop(page)
   await expect(
     page.getByRole('img', { name: 'Spine preview', exact: true }),
   ).toHaveAttribute('src', /^data:image\/png/)
   await page.getByLabel('Upload back cover artwork').setInputFiles({ name: 'back.png', mimeType: 'image/png', buffer: image })
+  await confirmCrop(page)
   await expect(page.getByRole('img', { name: 'Back cover preview' })).toHaveAttribute('src', /^data:image\/png/)
   await page.getByRole('button', { name: 'Add recording', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -519,6 +523,7 @@ test('uploaded OBI scans persist separately from spine artwork and can be reset'
   await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await page.getByLabel('Upload OBI paper strip').setInputFiles({ name: 'obi.png', mimeType: 'image/png', buffer: image })
+  await confirmCrop(page)
   await expect(page.getByRole('img', { name: 'OBI preview' })).toHaveAttribute('src', /^data:image\/png/)
   await page.getByRole('button', { name: 'Save changes', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -654,6 +659,7 @@ test('a failed save reports the error and rolls back uploaded artwork', async ({
   await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Unsaved recording')
   await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
   await page.getByLabel('Upload cover artwork').setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: image })
+  await confirmCrop(page)
   await expect(page.getByRole('img', { name: 'Cover preview', exact: true })).toBeVisible()
   await page.evaluate(() => {
     const put = IDBObjectStore.prototype.put
