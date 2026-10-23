@@ -1,4 +1,4 @@
-export function ArtworkInput({ label, src, alt, uploadLabel, resetLabel, custom, disabled, variant = 'square', onUpload, onReset }: {
+export function ArtworkInput({ label, src, alt, uploadLabel, resetLabel, custom, disabled, variant = 'square', onUpload, onUploadMany, onReset }: {
   label: string
   src: string
   alt: string
@@ -8,6 +8,7 @@ export function ArtworkInput({ label, src, alt, uploadLabel, resetLabel, custom,
   disabled: boolean
   variant?: 'square' | 'disc' | 'spine' | 'obi' | 'back'
   onUpload: (file: File | undefined) => void
+  onUploadMany?: (files: File[]) => void
   onReset: () => void
 }) {
   const preview = variant === 'spine' ? 'spine-preview' : `cover-preview${variant === 'disc' ? ' disc-artwork-preview' : variant === 'obi' ? ' obi-preview' : variant === 'back' ? ' back-artwork-preview' : ''}`
@@ -16,8 +17,10 @@ export function ArtworkInput({ label, src, alt, uploadLabel, resetLabel, custom,
       <label className="artwork-upload">
         <span>{label}</span>
         <div className={preview}><img src={src} alt={alt} /></div>
-        <input type="file" accept="image/jpeg,image/png,image/webp" aria-label={uploadLabel} disabled={disabled} onChange={(event) => {
-          onUpload(event.target.files?.[0])
+        <input type="file" accept="image/jpeg,image/png,image/webp" multiple={!!onUploadMany} aria-label={uploadLabel} disabled={disabled} onChange={(event) => {
+          const files = [...event.target.files ?? []]
+          if (files.length > 1 && onUploadMany) onUploadMany(files)
+          else onUpload(files[0])
           event.target.value = ''
         }} />
         <small>{uploadLabel}</small>

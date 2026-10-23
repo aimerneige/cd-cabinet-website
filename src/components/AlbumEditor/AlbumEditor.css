@@ -155,6 +155,8 @@
 .album-editor .booklet-pages-editor { grid-column: 1 / -1; margin: 0; padding: 20px 0; border-top: 1px solid #c5cab9; border-bottom: 1px solid #c5cab9; }
 .booklet-pages-editor legend { font: 24px/1.2 'Libre Caslon Display', Georgia, serif; }
 .booklet-pages-editor > p { font-size: 11px; line-height: 1.7; color: #78836b; }
+.booklet-pages-editor .booklet-page-count { color: #384033; font-weight: 500; }
+.booklet-cover-guidance { font-size: 10px; color: #78836b; line-height: 1.7; }
 .booklet-editor-actions { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
 .booklet-pages-editor button { border: 1px solid #aab49b; background: transparent; color: #58664a; padding: 6px 9px; font-size: 11px; }
 .booklet-pages-editor ol { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 16px; }

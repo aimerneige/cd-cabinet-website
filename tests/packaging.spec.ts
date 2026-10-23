@@ -190,6 +190,69 @@ test('an entire booklet imports as ordered covers and inner pages with direct pa
   await expect(page.getByRole('button', { name: 'Read booklet', exact: true })).toBeFocused()
 })
 
+test('the cover upload imports twelve booklet pages and thumbnails navigate every saved page', async ({ page }) => {
+  await draft(page, 'Twelve Page Booklet')
+  await page.setViewportSize({ width: 390, height: 844 })
+  const coverUpload = page.getByLabel('Upload cover artwork', { exact: true })
+  await expect(coverUpload).toHaveJSProperty('multiple', true)
+  await expect(page.getByLabel('Upload disc artwork', { exact: true })).toHaveJSProperty('multiple', false)
+  const files = []
+  for (let index = 0; index < 12; index += 1) {
+    files.push({ ...(await image(page, `hsl(${index * 30} 60% 50%)`)).file, name: `page-${index + 1}.png` })
+  }
+  await coverUpload.setInputFiles(files)
+  await confirmCrop(page, 12)
+  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(10)
+  await expect(page.locator('.booklet-page-count')).toHaveText('12 pages including the front and back covers')
+  const frontPreview = page.getByRole('img', { name: 'Cover preview', exact: true })
+  const backPreview = page.getByRole('img', { name: 'Booklet reverse preview', exact: true })
+  const front = (await frontPreview.getAttribute('src'))!
+  const back = (await backPreview.getAttribute('src'))!
+  const inner = await page.locator('.booklet-pages-editor li img').evaluateAll((images) => images.map((image) => (image as HTMLImageElement).src))
+  expect(new Set([front, ...inner, back]).size).toBe(12)
+
+  await coverUpload.setInputFiles(files.slice(0, 2))
+  await page.getByRole('dialog', { name: 'Crop image', exact: true }).getByRole('button', { name: 'Use crop', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'Crop image', exact: true }).getByRole('status')).toHaveText('Image 2 of 2')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.artwork-cropper')).toHaveCount(0)
+  await expect(frontPreview).toHaveAttribute('src', front)
+  await expect(backPreview).toHaveAttribute('src', back)
+  await expect(page.locator('.booklet-page-count')).toHaveText('12 pages including the front and back covers')
+
+  await coverUpload.setInputFiles((await image(page, '#242424')).file)
+  await confirmCrop(page)
+  const replacement = (await frontPreview.getAttribute('src'))!
+  expect(replacement).not.toBe(front)
+  await expect(backPreview).toHaveAttribute('src', back)
+  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(10)
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Twelve Page Booklet by Print Artist', exact: true }).click()
+  await page.getByRole('button', { name: 'Read booklet', exact: true }).click()
+  const thumbnails = page.getByRole('group', { name: 'Booklet page thumbnails', exact: true })
+  await expect(thumbnails.getByRole('button')).toHaveCount(12)
+  const picker = page.getByRole('combobox', { name: 'Choose booklet page', exact: true })
+  for (const [index, source] of [replacement, ...inner, back].entries()) {
+    await picker.selectOption(String(index))
+    await expect(page.locator('.reader-paper img')).toHaveAttribute('src', source)
+    await expect(thumbnails.getByRole('button', { name: `Go to booklet page ${index + 1}`, exact: true })).toHaveAttribute('aria-current', 'page')
+  }
+  await expect.poll(() => thumbnails.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0)
+  const strip = (await thumbnails.boundingBox())!
+  const last = (await thumbnails.getByRole('button', { name: 'Go to booklet page 12', exact: true }).boundingBox())!
+  expect(last.x).toBeGreaterThanOrEqual(strip.x)
+  expect(last.x + last.width).toBeLessThanOrEqual(strip.x + strip.width)
+  await thumbnails.getByRole('button', { name: 'Go to booklet page 8', exact: true }).click()
+  await expect(page.locator('.reader-paper img')).toHaveAttribute('src', inner[6])
+  await page.keyboard.press('ArrowRight')
+  await expect(page.locator('.reader-paper img')).toHaveAttribute('src', inner[7])
+  await expect(thumbnails.getByRole('button', { name: 'Go to booklet page 9', exact: true })).toHaveAttribute('aria-current', 'page')
+  expect(await page.locator('.artwork-reader').evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
+  await page.screenshot({ path: 'test-results/twelve-page-booklet-mobile.png' })
+})
+
 test('a full booklet import requires both covers and leaves existing text pages intact on error', async ({ page }) => {
   await draft(page, 'Booklet Validation')
   await page.getByRole('button', { name: 'Add text page', exact: true }).click()

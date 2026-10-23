@@ -405,9 +405,12 @@ export function AlbumEditor({
           </button>
         </div>
         <div className="editor-artwork">
-          <ArtworkInput label={t('editor.coverArtwork')} src={coverUrl} alt={t('editor.coverPreviewAlt')} uploadLabel={t('editor.uploadCoverAria')}
-            resetLabel={t('editor.useGeneratedCover')} custom={!!cover} disabled={loading || saving} onUpload={(file) => upload(file, 'cover')}
-            onReset={() => { setCover(''); if (!coverStyle) setCoverStyle(randomCoverStyle()) }} />
+          <div className="artwork-input">
+            <ArtworkInput label={t('editor.coverArtwork')} src={coverUrl} alt={t('editor.coverPreviewAlt')} uploadLabel={t('editor.uploadCoverAria')}
+              resetLabel={t('editor.useGeneratedCover')} custom={!!cover} disabled={loading || saving} onUpload={(file) => upload(file, 'cover')} onUploadMany={importBooklet}
+              onReset={() => { setCover(''); if (!coverStyle) setCoverStyle(randomCoverStyle()) }} />
+            <p className="booklet-cover-guidance">{t('booklet.coverUploadGuidance')}</p>
+          </div>
           <ArtworkInput label={t('editor.bookletBackArtwork')} src={getInnerArtwork(previewAlbum, 'booklet')} alt={t('editor.bookletBackPreview')}
             uploadLabel={t('editor.uploadBookletBack')} resetLabel={t('editor.useGeneratedBookletBack')} custom={!!bookletBack} disabled={loading || saving}
             onUpload={(file) => upload(file, 'bookletBack')} onReset={() => setBookletBack('')} />

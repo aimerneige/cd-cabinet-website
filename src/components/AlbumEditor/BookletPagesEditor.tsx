@@ -18,6 +18,7 @@ export function BookletPagesEditor({ pages, onChange, onUpload, onImport, disabl
   return (
     <fieldset className="booklet-pages-editor" disabled={disabled}>
       <legend>{t('booklet.pages')}</legend>
+      <p className="booklet-page-count" aria-live="polite">{t('booklet.pageCount', { count: pages.length + 2 })}</p>
       <p>{t('booklet.guidance')}</p>
       <p>{t('booklet.importGuidance')}</p>
       <div className="booklet-editor-actions">
