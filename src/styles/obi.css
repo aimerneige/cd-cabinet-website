@@ -75,6 +75,8 @@
 .obi-print-back.obi-artwork {
   background-position: 0 0;
 }
+.obi-uploaded { background-image: none; }
+.obi-uploaded > img { position: absolute; top: 0; max-width: none; display: block; object-fit: fill; pointer-events: none; }
 .has-flat-obi .case-body > :not(.obi-strip) {
   opacity: 0.2;
 }

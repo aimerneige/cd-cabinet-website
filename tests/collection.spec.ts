@@ -532,7 +532,10 @@ test('uploaded OBI scans persist separately from spine artwork and can be reset'
   await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
   await expect(page.locator('.obi-uploaded')).toHaveCount(3)
   await expect(page.locator('.case-spine img')).toHaveCount(0)
-  expect(await page.locator('.obi-print-front').evaluate((el) => getComputedStyle(el).backgroundImage)).toMatch(/^url\("data:image\/png/)
+  await expect(page.locator('.obi-print-front img')).toHaveAttribute('src', /^data:image\/png/)
+  for (const image of await page.locator('.obi-uploaded img').all()) {
+    expect(await image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true)
+  }
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await page.getByRole('button', { name: 'Use generated OBI', exact: true }).click()
   const generatedObi = (await page.getByRole('img', { name: 'OBI preview', exact: true }).getAttribute('src'))!

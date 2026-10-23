@@ -20,10 +20,13 @@ export function ObiStrip({
     '--obi-width': `${92 + depth}px`,
     '--obi-image': `url(${getObiArtwork(album)})`,
   } as CSSProperties
-  const print = (side: string) => (
+  const print = (side: 'back' | 'spine' | 'front') => (
     <div
       className={`obi-print obi-print-${side} obi-artwork${album.obiUrl ? ' obi-uploaded' : ''}`}
-    />
+    >
+      {album.obiUrl && <img src={album.obiUrl} alt="" draggable={false} loading="eager" decoding="sync"
+        style={{ left: side === 'front' ? -46 - depth : side === 'spine' ? -46 : 0, width: 92 + depth, height: 304 }} />}
+    </div>
   )
   return (
     <div

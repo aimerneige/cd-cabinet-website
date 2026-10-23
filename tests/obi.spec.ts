@@ -1,5 +1,28 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { confirmCrop } from './helpers/artwork'
+
+async function visibleObiColors(page: Page) {
+  const screenshot = await page.screenshot({ animations: 'allow' })
+  return page.evaluate(async (png) => {
+    const image = new Image()
+    image.src = `data:image/png;base64,${png}`
+    await image.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = image.naturalWidth
+    canvas.height = image.naturalHeight
+    const context = canvas.getContext('2d')!
+    context.drawImage(image, 0, 0)
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+    const colors = { back: 0, spine: 0, front: 0 }
+    for (let i = 0; i < pixels.length; i += 4) {
+      const [r, g, b] = [pixels[i], pixels[i + 1], pixels[i + 2]]
+      if (r > 220 && g < 40 && b > 220) colors.back += 1
+      if (r < 40 && g > 220 && b > 220) colors.spine += 1
+      if (r > 220 && g > 220 && b < 40) colors.front += 1
+    }
+    return colors
+  }, screenshot.toString('base64'))
+}
 
 test('recordings without OBI omit its artwork and controls and still open and close normally', async ({ page }) => {
   const errors: string[] = []
@@ -71,4 +94,49 @@ test('OBI can be enabled and removed, with its uploaded file deleted after savin
       transaction.onerror = () => reject(transaction.error)
     }
   }), `${id}:obi`)).toBe(false)
+})
+
+test('uploaded artwork is painted on every fold through front, back and flat animations', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Painted OBI')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Print Artist')
+  await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
+  const source = await page.evaluate(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 1240
+    canvas.height = 3040
+    const context = canvas.getContext('2d')!
+    for (const [x, width, color] of [[0, 460, '#ff00ff'], [460, 320, '#00ffff'], [780, 460, '#ffff00']] as const) {
+      context.fillStyle = color
+      context.fillRect(x, 0, width, 3040)
+    }
+    return canvas.toDataURL('image/png')
+  })
+  await page.getByLabel('Upload OBI paper strip', { exact: true }).setInputFiles({ name: 'folds.png', mimeType: 'image/png', buffer: Buffer.from(source.split(',')[1], 'base64') })
+  await confirmCrop(page)
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Painted OBI by Print Artist', exact: true }).click()
+  await expect(page.locator('.obi-uploaded img')).toHaveCount(3)
+  for (const image of await page.locator('.obi-uploaded img').all()) {
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true)
+  }
+  await page.getByRole('button', { name: 'Front', exact: true }).click()
+  await page.getByRole('button', { name: 'Attached', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Attached', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  expect((await visibleObiColors(page)).front).toBeGreaterThan(100)
+  await page.getByRole('button', { name: 'Lay flat', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Lay flat', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  for (const count of Object.values(await visibleObiColors(page))) expect(count).toBeGreaterThan(100)
+  await page.screenshot({ path: 'test-results/uploaded-obi-flat.png' })
+  await page.getByRole('button', { name: 'Hidden', exact: true }).click()
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await page.getByRole('button', { name: 'Attached', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Attached', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  expect((await visibleObiColors(page)).back).toBeGreaterThan(100)
+  await page.getByRole('button', { name: 'Lay flat', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Lay flat', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  for (const count of Object.values(await visibleObiColors(page))) expect(count).toBeGreaterThan(100)
 })
