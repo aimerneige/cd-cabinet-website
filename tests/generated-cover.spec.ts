@@ -181,7 +181,7 @@ test('generated OBI fits every fold and follows thicker cases on mobile', async 
   await expect(page.locator('.obi-strip')).toHaveCSS('--obi-width', '158px')
   for (const side of ['back', 'spine', 'front']) {
     await expect(page.locator(`.obi-print-${side}`)).toHaveCSS('background-image', `url("${source}")`)
-    await expect(page.locator(`.obi-print-${side}`)).toHaveCSS('background-size', '158px 304px')
+    await expect(page.locator(`.obi-print-${side}`)).toHaveCSS('background-size', '158px 321.797px')
   }
   await expect(page.locator('.obi-print-back')).toHaveCSS('background-position', '0px 0px')
   await expect(page.locator('.obi-print-spine')).toHaveCSS('background-position', '-46px 0px')

@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
+import { CASE_HEIGHT, CASE_WIDTH } from '../lib/album'
 
 export interface Origin {
   x: number
@@ -36,18 +37,19 @@ export function useAlbumAnimation(
     const controls = root.querySelector('.viewer-controls')!
     const compact = window.innerWidth <= 700
     const size = Math.min(
-      compact ? (window.innerWidth - 48) / 1.94 : 360,
+      compact ? (window.innerWidth - 48) / (2 * CASE_WIDTH / CASE_HEIGHT) : 360,
       window.innerHeight * 0.39,
     )
-    const endX = window.innerWidth / 2 + size * 0.03
+    const width = size * CASE_WIDTH / CASE_HEIGHT
+    const endX = window.innerWidth / 2 + width * 0.03
     const endY = Math.max(90, window.innerHeight * 0.17)
     const reduced = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches
-    const initialScale = origin.height / 300
+    const initialScale = origin.height / CASE_HEIGHT
     gsap.set(jewel, {
-      x: origin.x + origin.width / 2 - 150,
-      y: origin.y + origin.height / 2 - 150,
+      x: origin.x + origin.width / 2 - CASE_WIDTH / 2,
+      y: origin.y + origin.height / 2 - CASE_HEIGHT / 2,
       scale: initialScale,
       rotationY: 90,
       transformOrigin: 'center center',
@@ -63,7 +65,7 @@ export function useAlbumAnimation(
       gsap.set(jewel, {
         x: endX,
         y: endY,
-        scale: size / 300,
+        scale: size / CASE_HEIGHT,
         rotationY: 0,
         opacity: 0,
         transformOrigin: 'top left',
@@ -86,8 +88,8 @@ export function useAlbumAnimation(
         .to(
           jewel,
           {
-            x: endX + size / 2 - 150,
-            y: endY + size / 2 - 150,
+            x: endX + width / 2 - CASE_WIDTH / 2,
+            y: endY + size / 2 - CASE_HEIGHT / 2,
             z: 0,
             duration: 0.6,
             ease: 'power3.inOut',
@@ -98,7 +100,7 @@ export function useAlbumAnimation(
           jewel,
           {
             rotationY: 0,
-            scale: size / 300,
+            scale: size / CASE_HEIGHT,
             '--case-depth': `${caseDepth}px`,
             duration: 0.65,
             ease: 'power3.inOut',
@@ -150,10 +152,10 @@ export function useAlbumAnimation(
         x:
           next === 'back'
             ? opened.current
-              ? -300
-              : -150
+              ? -CASE_WIDTH
+              : -CASE_WIDTH / 2
             : next === 'front'
-              ? -150
+              ? -CASE_WIDTH / 2
               : 0,
         duration: reduced ? 0 : 0.65,
         ease: 'power2.inOut',

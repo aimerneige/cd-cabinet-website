@@ -117,11 +117,11 @@ test('fixed ratios follow case thickness and the disc has a circular guide on mo
   const file = await stripedImage(page)
   for (const [count, upload, ratio, alt] of [
     ['1', 'Upload spine artwork', '2:25', 'Spine preview'],
-    ['1', 'Upload OBI paper strip', '31:76', 'OBI preview'],
+    ['1', 'Upload OBI paper strip', '124:321.79661', 'OBI preview'],
     ['1', 'Upload back cover artwork', '69:59', 'Back cover preview'],
     ['4', 'Upload inside back cover', '69:59', 'Back cover inside preview'],
     ['4', 'Upload right spine artwork', '29:150', 'Right spine preview'],
-    ['4', 'Upload OBI paper strip', '79:152', 'OBI preview'],
+    ['4', 'Upload OBI paper strip', '158:321.79661', 'OBI preview'],
     ['4', 'Upload disc artwork', '1:1', 'Disc preview'],
   ]) {
     await page.getByLabel('Number of discs').selectOption(count)

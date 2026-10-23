@@ -5,7 +5,8 @@ import { getObiArtwork } from './generatedCover'
 
 describe('OBI dimensions', () => {
   it('keeps standard dimensions and follows case thickness by default', () => {
-    expect(getObiLayout({})).toEqual({ frontWidth: 46, backWidth: 46, height: 304, depth: 32, width: 124 })
+    expect(getObiLayout({})).toEqual({ frontWidth: 46, backWidth: 46, height: 321.79661, depth: 32, width: 124 })
+    expect(getObiDimensions({}).heightMm).toBeGreaterThan(125)
     expect(getObiLayout({ spineWidthMm: 6.5 }).depth).toBeCloseTo(6.5 * 300 / 118 + 8, 10)
   })
 

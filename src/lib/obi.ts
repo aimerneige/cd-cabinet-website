@@ -1,10 +1,10 @@
 import type { Album, ObiDimensions } from '../types/album'
-import { getCaseDepth, SPINE_HEIGHT_MM } from './album'
+import { CASE_HEIGHT, getCaseDepth, SPINE_HEIGHT_MM } from './album'
 
 export const OBI_DIMENSION_LIMITS = {
   frontWidthMm: { min: 5, max: 60, default: 46 * SPINE_HEIGHT_MM / 300 },
   backWidthMm: { min: 5, max: 60, default: 46 * SPINE_HEIGHT_MM / 300 },
-  heightMm: { min: 40, max: 130, default: 304 * SPINE_HEIGHT_MM / 300 },
+  heightMm: { min: 40, max: 130, default: (CASE_HEIGHT + 4) * SPINE_HEIGHT_MM / 300 },
 }
 
 export function getObiDimensions(album: Pick<Album, 'obiDimensions'>): Required<ObiDimensions> {

@@ -129,14 +129,14 @@ describe('generated packaging', () => {
 
   it('sizes the unfolded OBI to standard and thicker cases', () => {
     const album = { ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png' }
-    expect(decodeURIComponent(getObiArtwork(album))).toContain('viewBox="0 0 124 304"')
+    expect(decodeURIComponent(getObiArtwork(album))).toContain('viewBox="0 0 124 321.79661"')
     for (const count of [0, 1, 3, 4, 6]) {
       const discs = Array.from({ length: count }, (_, index) => ({ id: `disc-${index}`, tracks: [] }))
       const svg = decodeURIComponent(getObiArtwork({ ...album, discs }))
-      expect(svg).toContain(`viewBox="0 0 ${count > 3 ? 158 : 124} 304"`)
-      expect(svg).toContain('data-obi-panel="back" transform="translate(0 0)"')
-      expect(svg).toContain('data-obi-panel="spine" transform="translate(46 0)"')
-      expect(svg).toContain(`data-obi-panel="front" transform="translate(${count > 3 ? 112 : 78} 0)"`)
+      expect(svg).toContain(`viewBox="0 0 ${count > 3 ? 158 : 124} 321.79661"`)
+      expect(svg).toContain('data-obi-panel="back" transform="translate(0 0) scale(1 ')
+      expect(svg).toContain('data-obi-panel="spine" transform="translate(46 0) scale(1 ')
+      expect(svg).toContain(`data-obi-panel="front" transform="translate(${count > 3 ? 112 : 78} 0) scale(1 `)
     }
   })
 
@@ -159,7 +159,7 @@ describe('generated packaging', () => {
       expect(decodeURIComponent(getSpineArtwork(album, side))).toContain(`viewBox="0 0 ${depth * 2} 600"`)
     }
     const obi = decodeURIComponent(getObiArtwork(album))
-    expect(obi).toContain(`viewBox="0 0 ${92 + depth + 8} 304"`)
-    expect(obi).toContain(`data-obi-panel="front" transform="translate(${46 + depth + 8} 0)"`)
+    expect(obi).toContain(`viewBox="0 0 ${92 + depth + 8} 321.79661"`)
+    expect(obi).toContain(`data-obi-panel="front" transform="translate(${46 + depth + 8} 0) scale(1 `)
   })
 })

@@ -26,7 +26,9 @@ describe('artwork crop dimensions', () => {
       for (const side of ['spine', 'rightSpine'] as const) {
         expect(getArtworkCrop(side, album)).toEqual({ width: thick ? 29 : 2, height: thick ? 150 : 25, round: false })
       }
-      expect(getArtworkCrop('obi', album)).toEqual({ width: thick ? 79 : 31, height: thick ? 152 : 76, round: false })
+      const obi = getArtworkCrop('obi', album)
+      expect(obi.width / obi.height).toBeCloseTo((thick ? 158 : 124) / 321.79661, 10)
+      expect(obi.round).toBe(false)
     }
   })
 
@@ -44,7 +46,7 @@ describe('artwork crop dimensions', () => {
       expect(profile.width / profile.height).toBeCloseTo(6.5 / 118, 10)
     }
     const obi = getArtworkCrop('obi', album)
-    expect(obi.width / obi.height).toBeCloseTo((100 + 6.5 / 118 * 300) / 304, 10)
+    expect(obi.width / obi.height).toBeCloseTo((100 + 6.5 / 118 * 300) / 321.79661, 10)
   })
 
   it('keeps rounding within one pixel and limits the longest edge to 2048 pixels', () => {

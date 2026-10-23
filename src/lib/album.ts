@@ -3,6 +3,9 @@ import type { Album, AlbumDisc } from '../types/album'
 export const MIN_SPINE_WIDTH_MM = 2
 export const MAX_SPINE_WIDTH_MM = 40
 export const SPINE_HEIGHT_MM = 118
+// 纸张的 118 mm 对应 300 场景单位，盒体和内部纸张共用此换算比例。
+export const CASE_WIDTH = 142 * 300 / SPINE_HEIGHT_MM
+export const CASE_HEIGHT = 125 * 300 / SPINE_HEIGHT_MM
 
 export function hasObi(album: Pick<Album, 'obiEnabled' | 'obiUrl'>): boolean {
   return album.obiEnabled ?? Boolean(album.obiUrl)

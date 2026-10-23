@@ -609,8 +609,11 @@ footer i {
   font-size: 18px;
 }
 .cd-case {
-  width: 300px;
-  height: 300px;
+  --booklet-size: calc(var(--case-height) * 120 / 125);
+  --paper-height: calc(var(--case-height) * 118 / 125);
+  --back-cover-width: calc(var(--case-width) * 138 / 142);
+  width: var(--case-width);
+  height: var(--case-height);
   position: absolute;
   left: 0;
   top: 0;
@@ -633,7 +636,7 @@ footer i {
 }
 .edge-top,
 .edge-bottom {
-  width: 300px;
+  width: 100%;
   height: 14px;
   left: 0;
   transform: rotateX(90deg);
@@ -645,7 +648,7 @@ footer i {
   bottom: -7px;
 }
 .edge-right {
-  height: 300px;
+  height: 100%;
   width: 14px;
   right: -7px;
   transform: rotateY(90deg);
@@ -654,7 +657,7 @@ footer i {
   position: absolute;
   left: -7px;
   width: 14px;
-  height: 300px;
+  height: 100%;
   transform: rotateY(-90deg);
   border: 1px solid #ccc9b199;
   overflow: hidden;
@@ -684,17 +687,20 @@ footer i {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-left: calc(var(--case-width) - var(--case-height));
 }
 .tray-ring {
   position: absolute;
-  inset: 9px;
+  width: calc(var(--booklet-size) + 2px);
+  aspect-ratio: 1;
   border: 2px solid #1d211b;
   border-radius: 50%;
   box-shadow: 1px 1px 0 #7d817352;
 }
 .disc {
-  width: 252px;
-  height: 252px;
+  width: var(--booklet-size, 252px);
+  height: var(--booklet-size, 252px);
+  flex-shrink: 0;
   border-radius: 50%;
   background-size: cover;
   background-position: center;
@@ -749,6 +755,12 @@ footer i {
   background: repeating-conic-gradient(#828776 0deg 10deg, #262e20 10deg 30deg);
   border: 2px solid #343a2c;
 }
+.tray-ring,
+.tray-hub {
+  left: calc(50% + (var(--case-width) - var(--case-height)) / 2);
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
 .case-lid {
   position: absolute;
   inset: 0;
@@ -773,10 +785,18 @@ footer i {
 }
 .lid-front img,
 .lid-inside img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  position: absolute;
+  top: 50%;
+  right: calc((var(--case-height) - var(--booklet-size)) / 2 - 5px);
+  width: var(--booklet-size);
+  height: var(--booklet-size);
+  transform: translateY(-50%);
+  object-fit: contain;
   display: block;
+}
+.lid-inside img {
+  left: calc((var(--case-height) - var(--booklet-size)) / 2 - 5px);
+  right: auto;
 }
 .lid-front:after {
   content: '';
@@ -793,7 +813,6 @@ footer i {
 }
 .lid-inside {
   transform: rotateY(180deg) translateZ(1px);
-  border-left: 9px solid #9fa891aa;
 }
 .album-details {
   position: absolute;

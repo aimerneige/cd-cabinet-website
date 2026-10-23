@@ -1,6 +1,6 @@
-import { forwardRef, type RefObject } from 'react'
+import { forwardRef, type CSSProperties, type RefObject } from 'react'
 import type { Album, AlbumDisc } from '../../types/album'
-import { getAlbumDiscs, hasObi } from '../../lib/album'
+import { CASE_HEIGHT, CASE_WIDTH, getAlbumDiscs, hasObi } from '../../lib/album'
 import { getBackCoverArtwork, getDiscArtwork, getInnerArtwork } from '../../lib/generatedCover'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
 import type { ObiMode } from '../../hooks/useObiAnimation'
@@ -31,6 +31,7 @@ export const CDCase = forwardRef<
     <div
       className={`cd-case${obiMode === 'flat' ? ' has-flat-obi' : ''}`}
       ref={ref}
+      style={{ '--case-width': `${CASE_WIDTH}px`, '--case-height': `${CASE_HEIGHT}px` } as CSSProperties}
     >
       <div className="case-body">
         <div className="case-back"><img src={getInnerArtwork(album, 'back')} alt={t('editor.backInsideArtwork')} /></div>

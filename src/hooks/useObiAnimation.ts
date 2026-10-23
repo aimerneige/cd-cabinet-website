@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import gsap from 'gsap'
 import type { ObiLayout } from '../lib/obi'
+import { CASE_WIDTH } from '../lib/album'
 
 export type ObiMode = 'attached' | 'hidden' | 'flat'
 
@@ -33,7 +34,7 @@ export function useObiAnimation(
     const body = caseRef.current!.querySelector('.case-body')!
     const reversed = Number(gsap.getProperty(body, 'rotationY')) > 90
     const centered =
-      Math.abs(Number(gsap.getProperty(body, 'x'))) === 150 ? 150 : 0
+      Math.abs(Math.abs(Number(gsap.getProperty(body, 'x'))) - CASE_WIDTH / 2) < 0.01 ? CASE_WIDTH / 2 : 0
     const reduced = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches
