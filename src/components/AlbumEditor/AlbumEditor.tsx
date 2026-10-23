@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import type { Album, AlbumDisc, BookletPage, Track } from '../../types/album'
-import { getAlbumDiscs, getCaseDepth, resizeDiscs } from '../../lib/album'
+import { getAlbumDiscs, getCaseDepth, hasObi, resizeDiscs } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
 import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
 import { alignSpineArtwork } from '../../lib/spineArtwork'
@@ -67,6 +67,7 @@ export function AlbumEditor({
   const [rightSpine, setRightSpine] = useState(album?.rightSpineUrl ?? '')
   const [bookletPages, setBookletPages] = useState<BookletPage[]>(album?.bookletPages ?? [])
   const [obi, setObi] = useState(album?.obiUrl ?? '')
+  const [obiEnabled, setObiEnabled] = useState(album ? hasObi(album) : false)
   const [error, setError] = useState('')
   const [artworkAlert, setArtworkAlert] = useState<{ message: string; returnFocus: HTMLElement | null } | null>(null)
   const [loading, setLoading] = useState(false)
@@ -316,7 +317,8 @@ export function AlbumEditor({
         rightSpineUrl: rightSpine || undefined,
         ...(coverStyle ? { color: coverStyle.color, ink: coverStyle.ink } : {}),
         backCoverUrl: backCover || undefined,
-        obiUrl: obi || undefined,
+        obiUrl: obiEnabled ? obi || undefined : undefined,
+        obiEnabled,
         spineUrl: spine || undefined,
         spineWidthMm,
         discs: savedDiscs,
@@ -402,10 +404,11 @@ export function AlbumEditor({
             <p className="obi-upload-guidance">{t('editor.discGuidance')}</p>
           </div>
           <div className="artwork-input">
-            <ArtworkInput label={t('editor.obiPaperStrip')} src={getObiArtwork(previewAlbum)} alt={t('editor.obiPreviewAlt')}
+            <label className="obi-toggle"><input type="checkbox" checked={obiEnabled} disabled={loading || saving} onChange={(event) => setObiEnabled(event.target.checked)} />{t('editor.includeObi')}</label>
+            {obiEnabled && <><ArtworkInput label={t('editor.obiPaperStrip')} src={getObiArtwork(previewAlbum)} alt={t('editor.obiPreviewAlt')}
               uploadLabel={t('editor.uploadObiAria')} resetLabel={t('editor.useGeneratedObi')} custom={!!obi} disabled={loading || saving} variant="obi"
               onUpload={(file) => upload(file, 'obi')} onReset={() => setObi('')} />
-            <p className="obi-upload-guidance">{t('editor.obiUploadGuidance')}</p>
+            <p className="obi-upload-guidance">{t('editor.obiUploadGuidance')}</p></>}
           </div>
         </div>
         <p className="upload-guidance">{t('editor.uploadGuidance')}</p>

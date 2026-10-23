@@ -6,6 +6,7 @@ test('default covers can be changed, saved and edited without losing their desig
   await page.goto('/')
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
   await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
   const preview = page.getByRole('img', { name: 'Cover preview', exact: true })
   const discPreview = page.getByRole('img', { name: 'Disc preview', exact: true })
   const backPreview = page.getByRole('img', { name: 'Back cover preview', exact: true })
@@ -131,6 +132,7 @@ test('generated OBI fits every fold and follows thicker cases on mobile', async 
   await page.goto('/')
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
   await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
   await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('夜の音 (Live)'.repeat(8))
   await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('W'.repeat(30))
   const preview = page.getByRole('img', { name: 'OBI preview', exact: true })
@@ -196,6 +198,7 @@ test('uploads replace individual artwork and randomizing preserves other uploade
   await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('My cover')
   await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
   for (const kind of ['cover artwork', 'back cover artwork', 'spine artwork', 'OBI paper strip']) {
+    if (kind === 'OBI paper strip') await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
     await page.getByLabel(`Upload ${kind}`, { exact: true }).setInputFiles({ name: 'artwork.png', mimeType: 'image/png', buffer: image })
     await confirmCrop(page)
     await expect(page.getByRole('button', { name: 'Try another cover' })).toBeEnabled()

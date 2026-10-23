@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { albums } from '../data/albums'
-import { getAlbumDiscs, getCaseDepth, withDiscCount } from './album'
+import { getAlbumDiscs, getCaseDepth, hasObi, withDiscCount } from './album'
 
 describe('multi-disc albums', () => {
+  it('shows OBI only when configured and honors explicit removal', () => {
+    expect(hasObi({})).toBe(false)
+    expect(hasObi({ obiEnabled: true })).toBe(true)
+    expect(hasObi({ obiUrl: '/scan.png' })).toBe(true)
+    expect(hasObi({ obiEnabled: false, obiUrl: '/scan.png' })).toBe(false)
+  })
   it('uses standard flip cases for up to three discs and fatboxes for larger sets', () => {
     expect(getAlbumDiscs(albums[0])[0].tracks).toEqual(albums[0].tracks)
     expect(getAlbumDiscs(albums[2])).toHaveLength(2)

@@ -33,6 +33,7 @@ export interface Album {
   rightSpineUrl?: string
   spineWidthMm?: number
   obiUrl?: string
+  obiEnabled?: boolean
   color: string
   ink: string
   shelfId: string

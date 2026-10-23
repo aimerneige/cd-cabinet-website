@@ -21,6 +21,7 @@ export function useObiAnimation(
 
   const selectMode = (next: ObiMode, onComplete?: () => void) => {
     if (closing.current || animation.current) return
+    if (!paperRef.current) { onComplete?.(); return }
     if (next === mode) {
       onComplete?.()
       return
@@ -117,6 +118,7 @@ export function useObiAnimation(
     const moving = !!animation.current
     animation.current?.kill()
     animation.current = null
+    if (!paperRef.current) { onAttached(); return }
     if (mode !== 'flat' && !moving) {
       onAttached()
       return

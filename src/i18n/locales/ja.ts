@@ -136,6 +136,7 @@ export const ja: Record<keyof typeof en, string> = {
   'editor.discPreviewAlt': '盤面のプレビュー',
   'editor.discGuidance': '円形のディスクに合わせ、文字が外周や中央の穴に重ならないように生成します。',
   'editor.obiPaperStrip': '帯（オビ）',
+  'editor.includeObi': '帯（オビ）あり',
   'editor.uploadObiAria': '帯（オビ）をアップロード',
   'editor.obiPreviewAlt': '帯のプレビュー',
   'editor.useGeneratedObi': '自動生成の帯を使用',

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Album } from '../../types/album'
+import { hasObi } from '../../lib/album'
 import { getBackCoverArtwork, getInnerArtwork, getObiArtwork, getSpineArtwork } from '../../lib/generatedCover'
 import { useTranslation } from '../../i18n'
 import './ArtworkReader.css'
@@ -18,7 +19,7 @@ export function ArtworkReader({ album, mode, onClose }: { album: Album; mode: 'b
     { id: 'inner', title: t('editor.backInsideArtwork'), imageUrl: getInnerArtwork(album, 'back'), text: '' },
     { id: 'left', title: t('editor.spineArtwork'), imageUrl: getSpineArtwork(album, 'left'), text: '' },
     { id: 'right', title: t('editor.rightSpineArtwork'), imageUrl: getSpineArtwork(album, 'right'), text: '' },
-    { id: 'obi', title: t('editor.obiPaperStrip'), imageUrl: getObiArtwork(album), text: '' },
+    ...(hasObi(album) ? [{ id: 'obi', title: t('editor.obiPaperStrip'), imageUrl: getObiArtwork(album), text: '' }] : []),
   ]
   const page = pages[index]
   useEffect(() => {

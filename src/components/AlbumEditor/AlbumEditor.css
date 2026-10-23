@@ -81,6 +81,8 @@
   color: #868b7a;
   line-height: 1.7;
 }
+.obi-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 12px; }
+.obi-toggle input { accent-color: #66745c; }
 .artwork-upload {
   display: block;
   position: relative;

@@ -79,6 +79,7 @@ export const albums: Album[] = records.map(
     color,
     ink,
     coverUrl: `/assets/albums/album-${String(index + 1).padStart(2, '0')}.svg`,
+    obiEnabled: true,
     shelfId: `shelf-${Math.floor(index / 12) + 1}`,
     order: index % 12,
     tracks: [

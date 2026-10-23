@@ -134,6 +134,7 @@ export const zh: Record<keyof typeof en, string> = {
   'editor.discPreviewAlt': '盘面预览',
   'editor.discGuidance': '可为每张光盘单独上传盘面，或使用自动生成的图案。圆形预览显示外缘和中心孔的裁切效果。',
   'editor.obiPaperStrip': '侧标纸带（OBI）',
+  'editor.includeObi': '此唱片有 OBI 纸带',
   'editor.uploadObiAria': '上传侧标纸带',
   'editor.obiPreviewAlt': '侧标预览',
   'editor.useGeneratedObi': '使用自动生成的侧标',

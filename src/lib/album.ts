@@ -4,6 +4,10 @@ export const MIN_SPINE_WIDTH_MM = 2
 export const MAX_SPINE_WIDTH_MM = 40
 export const SPINE_HEIGHT_MM = 118
 
+export function hasObi(album: Pick<Album, 'obiEnabled' | 'obiUrl'>): boolean {
+  return album.obiEnabled ?? Boolean(album.obiUrl)
+}
+
 export function isSpineWidthMm(width: unknown): width is number {
   return typeof width === 'number' && Number.isFinite(width) && width >= MIN_SPINE_WIDTH_MM && width <= MAX_SPINE_WIDTH_MM
 }

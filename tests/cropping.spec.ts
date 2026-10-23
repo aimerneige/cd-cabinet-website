@@ -125,6 +125,7 @@ test('fixed ratios follow case thickness and the disc has a circular guide on mo
     ['4', 'Upload disc artwork', '1:1', 'Disc preview'],
   ]) {
     await page.getByLabel('Number of discs').selectOption(count)
+    if (upload === 'Upload OBI paper strip') await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
     await page.getByLabel(upload, { exact: true }).setInputFiles(file)
     const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
     if (upload.includes('spine artwork')) {
@@ -189,6 +190,7 @@ test('booklet crops are confirmed individually and cancelling a batch preserves 
 
 test('the millimeter slider spans its absolute bounds, resets, and persists the chosen case thickness', async ({ page }) => {
   await draft(page)
+  await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
   await page.setViewportSize({ width: 390, height: 844 })
   const file = await stripedImage(page)
   await page.getByLabel('Upload spine artwork', { exact: true }).setInputFiles(file)

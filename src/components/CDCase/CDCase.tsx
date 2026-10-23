@@ -1,6 +1,6 @@
 import { forwardRef, type RefObject } from 'react'
 import type { Album, AlbumDisc } from '../../types/album'
-import { getAlbumDiscs } from '../../lib/album'
+import { getAlbumDiscs, hasObi } from '../../lib/album'
 import { getBackCoverArtwork, getDiscArtwork, getInnerArtwork } from '../../lib/generatedCover'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
 import type { ObiMode } from '../../hooks/useObiAnimation'
@@ -92,11 +92,11 @@ export const CDCase = forwardRef<
             <img src={getInnerArtwork(album, 'booklet')} alt={t('editor.bookletBackArtwork')} />
           </div>
         </div>
-        <ObiStrip
+        {hasObi(album) && <ObiStrip
           album={album}
           paperRef={paperRef}
           hidden={obiMode === 'hidden'}
-        />
+        />}
       </div>
     </div>
   )

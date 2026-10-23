@@ -134,6 +134,7 @@ export const en = {
   'editor.discPreviewAlt': 'Disc preview',
   'editor.discGuidance': 'Upload a disc label or use the generated design. The round preview shows the edge and center cutout.',
   'editor.obiPaperStrip': 'OBI paper strip',
+  'editor.includeObi': 'Include OBI',
   'editor.uploadObiAria': 'Upload OBI paper strip',
   'editor.obiPreviewAlt': 'OBI preview',
   'editor.useGeneratedObi': 'Use generated OBI',

@@ -1,5 +1,5 @@
 import type { Album, AlbumDisc } from '../../types/album'
-import { getAlbumDiscs } from '../../lib/album'
+import { getAlbumDiscs, hasObi } from '../../lib/album'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
 import type { ObiMode } from '../../hooks/useObiAnimation'
 import { useTranslation } from '../../i18n'
@@ -83,7 +83,7 @@ export function AlbumDetails({
             </button>
           ))}
         </div>
-        <div className="obi-controls">
+        {hasObi(album) && <div className="obi-controls">
           <span>{t('viewer.obiStripHeading')}</span>
           <div className="disc-selector" aria-label={t('viewer.obiStripAria')}>
             {(['attached', 'hidden', 'flat'] as const).map((item) => (
@@ -101,7 +101,7 @@ export function AlbumDetails({
               </button>
             ))}
           </div>
-        </div>
+        </div>}
         <div className="disc-selector">
           <button onClick={onReadBooklet}>{t('booklet.read')}</button>
           <button onClick={onReadCase}>{t('booklet.caseArtwork')}</button>
