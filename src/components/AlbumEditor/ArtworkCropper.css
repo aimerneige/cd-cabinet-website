@@ -9,6 +9,14 @@
   pointer-events: auto;
 }
 .artwork-cropper[open] { display: flex; flex-direction: column; gap: 14px; }
+.artwork-cropper.has-obi-controls { gap: 10px; }
+.artwork-cropper .obi-size-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 12px; padding-top: 8px; border-top: 1px solid #c5cab9; }
+.obi-size-controls legend { font-size: 12px; }
+.obi-size-controls label { display: block; min-width: 0; font-size: 10px; }
+.obi-size-controls label > span { display: flex; flex-direction: column; justify-content: space-between; min-height: 40px; }
+.obi-size-controls small { display: block; margin-top: 4px; color: #78836b; white-space: nowrap; }
+.obi-size-controls input { width: 100%; margin: 6px 0 0; accent-color: #66745c; }
+.artwork-cropper .obi-size-controls button { grid-column: 1 / -1; justify-self: start; padding: 6px 9px; font-size: 10px; }
 .artwork-cropper::backdrop { background: #302e2788; backdrop-filter: blur(5px); }
 .artwork-cropper header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .artwork-cropper header > div { min-width: 0; }

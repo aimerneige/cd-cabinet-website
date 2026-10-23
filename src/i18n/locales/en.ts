@@ -142,7 +142,7 @@ export const en = {
   'obi.resetSize': 'Reset OBI size',
   'obi.recrop': 'Recrop OBI image',
   'obi.cropSize': 'OBI size {width} × {height} mm',
-  'obi.cropGuidance': 'Back flap, spine and front flap run from left to right. Dashed lines mark the folds. Adjust the OBI dimensions in the editor to match your scan.',
+  'obi.cropGuidance': 'Back flap, spine and front flap run from left to right. Use the sliders below to match the dashed fold lines to your scan. Dimensions are saved with the crop.',
   'editor.uploadObiAria': 'Upload OBI paper strip',
   'editor.obiPreviewAlt': 'OBI preview',
   'editor.useGeneratedObi': 'Use generated OBI',

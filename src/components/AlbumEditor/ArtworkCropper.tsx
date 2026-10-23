@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import Cropper, { type Area, type Size } from 'react-easy-crop'
-import { cropArtwork, getSpineCrop, type ArtworkCrop, type ArtworkCropResult } from '../../lib/cropArtwork'
+import { cropArtwork, getArtworkCrop, getSpineCrop, type ArtworkCrop, type ArtworkCropResult } from '../../lib/cropArtwork'
 import { clampSpineWidthMm, MAX_SPINE_WIDTH_MM, MIN_SPINE_WIDTH_MM, SPINE_HEIGHT_MM } from '../../lib/album'
-import type { ObiLayout } from '../../lib/obi'
+import { getObiLayout } from '../../lib/obi'
+import type { Album, ObiDimensions } from '../../types/album'
+import { ObiSizeControls } from './ObiSizeControls'
 import { useTranslation } from '../../i18n'
 import 'react-easy-crop/react-easy-crop.css'
 import './ArtworkCropper.css'
 
-export function ArtworkCropper({ source, profile, resizeWidth, obiLayout, name, current, total, onComplete }: {
+export function ArtworkCropper({ source, profile, resizeWidth, obi, name, current, total, onComplete }: {
   source: string
   profile: ArtworkCrop
   resizeWidth: boolean
-  obiLayout?: ObiLayout
+  obi?: Pick<Album, 'discs' | 'spineWidthMm' | 'obiDimensions'>
   name: string
   current: number
   total: number
@@ -30,8 +32,11 @@ export function ArtworkCropper({ source, profile, resizeWidth, obiLayout, name, 
   const [mediaSize, setMediaSize] = useState<Size | null>(null)
   const defaultWidthMm = clampSpineWidthMm(profile.width / profile.height * SPINE_HEIGHT_MM)
   const [widthMm, setWidthMm] = useState(defaultWidthMm)
+  const [obiDimensions, setObiDimensions] = useState<ObiDimensions | undefined>(obi?.obiDimensions)
   const [error, setError] = useState('')
-  const activeProfile = resizeWidth ? getSpineCrop(widthMm) : profile
+  const obiAlbum = obi ? { ...obi, obiDimensions } : undefined
+  const obiLayout = obiAlbum ? getObiLayout(obiAlbum) : undefined
+  const activeProfile = resizeWidth ? getSpineCrop(widthMm) : obiAlbum ? getArtworkCrop('obi', obiAlbum) : profile
   const cropSize = resizeWidth && baseSize ? { width: baseSize.width * widthMm / defaultWidthMm, height: baseSize.height } : undefined
   const minZoom = resizeWidth && size && mediaSize
     ? Math.max(1, Math.round(Math.max(size.width / mediaSize.width, size.height / mediaSize.height) * 100000) / 100000) : 1
@@ -45,11 +50,11 @@ export function ArtworkCropper({ source, profile, resizeWidth, obiLayout, name, 
   }, [])
   function apply() {
     if (!image.current || !area.current) return
-    try { onComplete({ source: cropArtwork(image.current, area.current, activeProfile), ...(resizeWidth ? { spineWidthMm: widthMm } : {}) }) }
+    try { onComplete({ source: cropArtwork(image.current, area.current, activeProfile), ...(resizeWidth ? { spineWidthMm: widthMm } : {}), ...(obi ? { obiDimensions } : {}) }) }
     catch { setError(t('crop.failed')) }
   }
   return (
-    <dialog ref={dialog} className="artwork-cropper" aria-labelledby="crop-title"
+    <dialog ref={dialog} className={`artwork-cropper${obi ? ' has-obi-controls' : ''}`} aria-labelledby="crop-title"
       onKeyDown={(event) => event.stopPropagation()}
       onCancel={(event) => { event.preventDefault(); event.stopPropagation(); onComplete(null) }}>
       <header>
@@ -81,10 +86,11 @@ export function ArtworkCropper({ source, profile, resizeWidth, obiLayout, name, 
       {resizeWidth && <label className="crop-zoom">{t('crop.spineWidth', { width: widthMm.toFixed(1) })}
         <input type="range" aria-label={t('crop.spineWidthLabel')} aria-valuetext={`${widthMm.toFixed(1)} mm`} min={MIN_SPINE_WIDTH_MM} max={MAX_SPINE_WIDTH_MM} step="0.1" value={widthMm}
           onChange={(event) => setWidthMm(clampSpineWidthMm(Number(event.target.value)))} /></label>}
+      {obi && <ObiSizeControls dimensions={obiDimensions} disabled={!ready} onChange={setObiDimensions} />}
       <label className="crop-zoom">{t('crop.zoom')}<input type="range" min={minZoom} max={maxZoom} step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label>
       {error && <p className="editor-error" role="alert">{error}</p>}
       <div className="crop-actions">
-        <button type="button" onClick={() => { setWidthMm(defaultWidthMm); setCrop({ x: 0, y: 0 }); setZoom(1); setError('') }}>{t('crop.reset')}</button>
+        <button type="button" onClick={() => { setWidthMm(defaultWidthMm); setObiDimensions(obi?.obiDimensions); setCrop({ x: 0, y: 0 }); setZoom(1); setError('') }}>{t('crop.reset')}</button>
         <div><button type="button" onClick={() => onComplete(null)}>{t('crop.cancel')}</button>
           <button type="button" className="crop-apply" disabled={!ready} onClick={apply}>{t('crop.apply')}</button></div>
       </div>

@@ -5,7 +5,6 @@ import { getAlbumDiscs, getCaseDepth, hasObi, resizeDiscs } from '../../lib/albu
 import { readArtwork } from '../../lib/readArtwork'
 import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
 import { alignSpineArtwork } from '../../lib/spineArtwork'
-import { getObiLayout, type ObiLayout } from '../../lib/obi'
 import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from '../../lib/generatedCover'
 import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
@@ -15,7 +14,6 @@ import { ArtworkInput } from './ArtworkInput'
 import { BookletPagesEditor } from './BookletPagesEditor'
 import { ArtworkCropper } from './ArtworkCropper'
 import { ArtworkAlert } from './ArtworkAlert'
-import { ObiSizeControls } from './ObiSizeControls'
 import './AlbumEditor.css'
 
 export function AlbumEditor({
@@ -79,7 +77,7 @@ export function AlbumEditor({
   const pendingUploads = useRef(0)
   const cropSequence = useRef(0)
   const cropResolver = useRef<((result: ArtworkCropResult | null) => void) | null>(null)
-  const [cropRequest, setCropRequest] = useState<{ id: number; source: string; profile: ArtworkCrop; resizeWidth: boolean; obiLayout?: ObiLayout; name: string; current: number; total: number } | null>(null)
+  const [cropRequest, setCropRequest] = useState<{ id: number; source: string; profile: ArtworkCrop; resizeWidth: boolean; obi?: Pick<Album, 'discs' | 'spineWidthMm' | 'obiDimensions'>; name: string; current: number; total: number } | null>(null)
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
   const artworkDetails = {
@@ -141,7 +139,7 @@ export function AlbumEditor({
       for (const [index, source] of sources.entries()) {
         const result = await new Promise<ArtworkCropResult | null>((resolve) => {
           cropResolver.current = resolve
-          setCropRequest({ id: ++cropSequence.current, source, profile, resizeWidth: kind === 'spine' || kind === 'rightSpine', obiLayout: kind === 'obi' ? getObiLayout({ discs, spineWidthMm, obiDimensions }) : undefined, name: files[index].name, current: index + 1, total: files.length })
+          setCropRequest({ id: ++cropSequence.current, source, profile, resizeWidth: kind === 'spine' || kind === 'rightSpine', obi: kind === 'obi' ? { discs, spineWidthMm, obiDimensions } : undefined, name: files[index].name, current: index + 1, total: files.length })
         })
         if (!result || !alive.current) return
         cropped.push(result)
@@ -176,11 +174,16 @@ export function AlbumEditor({
         setSpineWidthMm(aligned.spineWidthMm)
         return
       }
+      if (kind === 'obi') {
+        setObi(result.source)
+        setObiDimensions(result.obiDimensions)
+        return
+      }
       const source = result.source
       if (kind === 'disc') {
         setDiscs((previous) => previous.map((disc) => disc.id === discId ? { ...disc, labelUrl: source } : disc))
       } else {
-        const setters = { cover: setCover, bookletBack: setBookletBack, back: setBackCover, backInside: setBackInside, obi: setObi }
+        const setters = { cover: setCover, bookletBack: setBookletBack, back: setBackCover, backInside: setBackInside }
         setters[kind](source)
       }
     })
@@ -427,7 +430,6 @@ export function AlbumEditor({
             {obiEnabled && <><ArtworkInput label={t('editor.obiPaperStrip')} src={getObiArtwork(previewAlbum)} alt={t('editor.obiPreviewAlt')}
               uploadLabel={t('editor.uploadObiAria')} resetLabel={t('editor.useGeneratedObi')} custom={!!obi} disabled={loading || saving} variant="obi"
               onUpload={(file) => upload(file, 'obi')} onReset={() => setObi('')} />
-            <ObiSizeControls dimensions={obiDimensions} disabled={loading || saving} onChange={setObiDimensions} />
             {obi && <button type="button" className="remove-spine" disabled={loading || saving} onClick={() => void recropObi()}>{t('obi.recrop')}</button>}
             <p className="obi-upload-guidance">{t('editor.obiUploadGuidance')}</p></>}
           </div>

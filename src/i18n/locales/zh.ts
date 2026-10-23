@@ -142,7 +142,7 @@ export const zh: Record<keyof typeof en, string> = {
   'obi.resetSize': '重置 OBI 尺寸',
   'obi.recrop': '重新裁剪 OBI 图片',
   'obi.cropSize': 'OBI 尺寸 {width} × {height} mm',
-  'obi.cropGuidance': '从左到右依次为后折页、侧脊和前折页，虚线标出折线。可先在编辑器中调整 OBI 尺寸，使其与扫描图一致。',
+  'obi.cropGuidance': '从左到右依次为后折页、侧脊和前折页，虚线标出折线。拖动下方滑块调整尺寸，使折线与扫描图一致，确认裁剪后生效。',
   'editor.uploadObiAria': '上传侧标纸带',
   'editor.obiPreviewAlt': '侧标预览',
   'editor.useGeneratedObi': '使用自动生成的侧标',

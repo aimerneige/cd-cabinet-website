@@ -144,7 +144,7 @@ export const ja: Record<keyof typeof en, string> = {
   'obi.resetSize': '帯の寸法をリセット',
   'obi.recrop': '帯の画像を再トリミング',
   'obi.cropSize': '帯の寸法 {width} × {height} mm',
-  'obi.cropGuidance': '左から裏側、背、表側の順です。破線は折り目を示します。画像に合わせてエディタで帯の寸法を調整できます。',
+  'obi.cropGuidance': '左から裏側、背、表側の順です。下のスライダーで寸法を調整し、破線を画像の折り目に合わせてください。寸法はトリミング確定時に保存されます。',
   'editor.uploadObiAria': '帯（オビ）をアップロード',
   'editor.obiPreviewAlt': '帯のプレビュー',
   'editor.useGeneratedObi': '自動生成の帯を使用',

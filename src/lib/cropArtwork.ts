@@ -1,5 +1,5 @@
 import type { Area } from 'react-easy-crop'
-import type { Album } from '../types/album'
+import type { Album, ObiDimensions } from '../types/album'
 import { clampSpineWidthMm, getCaseDepth, isSpineWidthMm, SPINE_HEIGHT_MM } from './album'
 import { getObiLayout } from './obi'
 
@@ -12,6 +12,7 @@ export interface ArtworkCrop {
 export interface ArtworkCropResult {
   source: string
   spineWidthMm?: number
+  obiDimensions?: ObiDimensions
 }
 
 export function getArtworkCrop(kind: ArtworkKind, album: Pick<Album, 'discs' | 'spineWidthMm' | 'obiDimensions'>): ArtworkCrop {
