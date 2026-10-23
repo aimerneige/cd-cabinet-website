@@ -152,6 +152,52 @@ test('mixed booklet pages can be ordered, read on a phone and deleted without le
   }), id)).toBe(0)
 })
 
+test('an entire booklet imports as ordered covers and inner pages with direct page selection', async ({ page }) => {
+  await draft(page, 'Complete Booklet')
+  await page.setViewportSize({ width: 390, height: 844 })
+  const files = []
+  for (const color of ['#aa3344', '#339955', '#335599', '#ccaa44']) files.push((await image(page, color)).file)
+  await page.getByLabel('Import entire booklet', { exact: true }).setInputFiles(files.map((file, index) => ({ ...file, name: `scan-${index + 1}.png` })))
+  await confirmCrop(page, 4)
+  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(2)
+  const front = (await page.getByRole('img', { name: 'Cover preview', exact: true }).getAttribute('src'))!
+  const back = (await page.getByRole('img', { name: 'Booklet reverse preview', exact: true }).getAttribute('src'))!
+  const inner = await page.locator('.booklet-pages-editor li img').evaluateAll((images) => images.map((image) => (image as HTMLImageElement).src))
+  expect(new Set([front, ...inner, back]).size).toBe(4)
+  await page.getByLabel('Import entire booklet', { exact: true }).setInputFiles(files.slice(0, 2))
+  await expect(page.getByRole('dialog', { name: 'Crop image', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Use crop', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'Crop image', exact: true }).getByRole('status')).toHaveText('Image 2 of 2')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.artwork-cropper')).toHaveCount(0)
+  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(2)
+  await expect(page.getByRole('img', { name: 'Cover preview', exact: true })).toHaveAttribute('src', front)
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Complete Booklet by Print Artist', exact: true }).click()
+  await page.getByRole('button', { name: 'Read booklet', exact: true }).click()
+  const picker = page.getByRole('combobox', { name: 'Choose booklet page', exact: true })
+  await expect(picker.locator('option')).toHaveCount(4)
+  for (const [index, source] of [front, ...inner, back].entries()) {
+    await picker.selectOption(String(index))
+    await expect(page.locator('.reader-paper img')).toHaveAttribute('src', source)
+  }
+  const reader = (await page.locator('.artwork-reader').boundingBox())!
+  expect(reader.x + reader.width).toBeLessThanOrEqual(390)
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'Read booklet', exact: true })).toBeFocused()
+})
+
+test('a full booklet import requires both covers and leaves existing text pages intact on error', async ({ page }) => {
+  await draft(page, 'Booklet Validation')
+  await page.getByRole('button', { name: 'Add text page', exact: true }).click()
+  await page.getByRole('textbox', { name: 'Page 1 text / lyrics', exact: true }).fill('Keep these lyrics')
+  await page.getByLabel('Import entire booklet', { exact: true }).setInputFiles((await image(page, '#339955')).file)
+  await dismissArtworkAlert(page, 'Choose at least two booklet images, including the front and back covers.')
+  await expect(page.getByRole('textbox', { name: 'Page 1 text / lyrics', exact: true })).toHaveValue('Keep these lyrics')
+})
+
 test('invalid booklet image batches and failed saves leave no partial pages or disc images', async ({ page }) => {
   await draft(page, 'Unfinished Session')
   const scan = await image(page, '#668866')

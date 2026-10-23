@@ -150,7 +150,7 @@
   padding: 0;
   border: 0;
 }
-.album-editor .booklet-pages-editor { margin: 28px 0; padding: 20px 0; border-top: 1px solid #c5cab9; border-bottom: 1px solid #c5cab9; }
+.album-editor .booklet-pages-editor { grid-column: 1 / -1; margin: 0; padding: 20px 0; border-top: 1px solid #c5cab9; border-bottom: 1px solid #c5cab9; }
 .booklet-pages-editor legend { font: 24px/1.2 'Libre Caslon Display', Georgia, serif; }
 .booklet-pages-editor > p { font-size: 11px; line-height: 1.7; color: #78836b; }
 .booklet-editor-actions { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }

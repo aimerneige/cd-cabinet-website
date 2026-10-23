@@ -41,6 +41,7 @@ export function ArtworkReader({ album, mode, onClose }: { album: Album; mode: 'b
       onCancel={(event) => { event.preventDefault(); onClose() }}
       onKeyDown={(event) => {
         event.stopPropagation()
+        if (event.target instanceof HTMLSelectElement) return
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); turn(event.key === 'ArrowLeft' ? -1 : 1) }
       }}>
       <header>
@@ -53,7 +54,10 @@ export function ArtworkReader({ album, mode, onClose }: { album: Album; mode: 'b
       </div>
       <nav aria-label={t('booklet.navigation')}>
         <button type="button" disabled={index === 0} onClick={() => turn(-1)}>{t('booklet.previous')}</button>
-        <span aria-live="polite">{page.title || t('booklet.pageNumber', { number: index })}<small>{index + 1} / {pages.length}</small></span>
+        <span aria-live="polite">{mode === 'booklet' && pages.length > 2
+          ? <select aria-label={t('booklet.choosePage')} value={index} onChange={(event) => setIndex(Number(event.target.value))}>
+            {pages.map((item, number) => <option key={item.id} value={number}>{number + 1} · {item.title || t('booklet.pageNumber', { number })}</option>)}
+          </select> : page.title || t('booklet.pageNumber', { number: index })}<small>{index + 1} / {pages.length}</small></span>
         <button type="button" disabled={index === pages.length - 1} onClick={() => turn(1)}>{t('booklet.next')}</button>
       </nav>
     </dialog>

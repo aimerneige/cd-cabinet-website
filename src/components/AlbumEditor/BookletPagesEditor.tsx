@@ -1,10 +1,11 @@
 import type { BookletPage } from '../../types/album'
 import { useTranslation } from '../../i18n'
 
-export function BookletPagesEditor({ pages, onChange, onUpload, disabled }: {
+export function BookletPagesEditor({ pages, onChange, onUpload, onImport, disabled }: {
   pages: BookletPage[]
   onChange: (pages: BookletPage[]) => void
   onUpload: (files: File[]) => void
+  onImport: (files: File[]) => void
   disabled: boolean
 }) {
   const { t } = useTranslation()
@@ -18,7 +19,15 @@ export function BookletPagesEditor({ pages, onChange, onUpload, disabled }: {
     <fieldset className="booklet-pages-editor" disabled={disabled}>
       <legend>{t('booklet.pages')}</legend>
       <p>{t('booklet.guidance')}</p>
+      <p>{t('booklet.importGuidance')}</p>
       <div className="booklet-editor-actions">
+        <label className="audio-upload">
+          <span>{t('booklet.importAll')}</span>
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label={t('booklet.importAll')} onChange={(event) => {
+            onImport([...event.target.files ?? []])
+            event.target.value = ''
+          }} />
+        </label>
         <label className="audio-upload">
           <span>{t('booklet.uploadPages')}</span>
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple aria-label={t('booklet.uploadPages')} onChange={(event) => {

@@ -25,5 +25,6 @@
 .artwork-reader nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .artwork-reader nav > span { min-width: 0; text-align: center; overflow-wrap: anywhere; font-size: 12px; }
 .artwork-reader nav small { display: block; color: #78836b; margin-top: 5px; }
+.artwork-reader nav select { max-width: 100%; width: 100%; border: 1px solid #a9af9d; background: #f5f3ec; color: inherit; padding: 6px; font-size: 11px; }
 .artwork-reader nav button { flex-shrink: 0; }
 @media (max-width: 700px) { .artwork-reader { padding: 14px; } .artwork-reader nav button { padding: 8px; font-size: 11px; } }

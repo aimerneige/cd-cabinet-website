@@ -187,6 +187,22 @@ export function AlbumEditor({
     }))]))
   }
 
+  function importBooklet(files: File[]) {
+    if (!files.length || loading || saving) return
+    if (files.length < 2) {
+      setArtworkAlert({ message: t('booklet.needCovers'), returnFocus: document.activeElement as HTMLElement | null })
+      return
+    }
+    void readImages(files, 'page', (results) => {
+      setCover(results[0].source)
+      setBookletBack(results[results.length - 1].source)
+      setBookletPages(results.slice(1, -1).map((result, index) => ({
+        id: crypto.randomUUID?.() ?? `page-${crypto.getRandomValues(new Uint32Array(2)).join('-')}`,
+        title: files[index + 1].name.replace(/\.[^.]+$/, ''), text: '', imageUrl: result.source,
+      })))
+    })
+  }
+
   async function uploadAudio(files: File[], trackId?: string) {
     if (!files.length || loading || saving) return
     const discId = discs[editingDisc].id
@@ -363,6 +379,7 @@ export function AlbumEditor({
           <ArtworkInput label={t('editor.bookletBackArtwork')} src={getInnerArtwork(previewAlbum, 'booklet')} alt={t('editor.bookletBackPreview')}
             uploadLabel={t('editor.uploadBookletBack')} resetLabel={t('editor.useGeneratedBookletBack')} custom={!!bookletBack} disabled={loading || saving}
             onUpload={(file) => upload(file, 'bookletBack')} onReset={() => setBookletBack('')} />
+          <BookletPagesEditor pages={bookletPages} onChange={setBookletPages} onUpload={uploadPages} onImport={importBooklet} disabled={loading || saving} />
           <ArtworkInput label={t('editor.spineArtwork')} src={getSpineArtwork(previewAlbum, 'left')} alt={t('editor.spinePreviewAlt')}
             uploadLabel={t('editor.uploadSpineAria')} resetLabel={t('editor.useGeneratedSpine')} custom={!!spine} disabled={loading || saving} variant="spine"
             onUpload={(file) => upload(file, 'spine')} onReset={() => { setSpine(''); if (!rightSpine) setSpineWidthMm(undefined) }} />
@@ -486,7 +503,6 @@ export function AlbumEditor({
             </label>
           </div>
         </fieldset>
-        <BookletPagesEditor pages={bookletPages} onChange={setBookletPages} onUpload={uploadPages} disabled={loading || saving} />
         <fieldset className="editor-audio" disabled={loading || saving}>
           <legend>{t('editor.audioHeading')}</legend>
           {discs.length > 1 && (
