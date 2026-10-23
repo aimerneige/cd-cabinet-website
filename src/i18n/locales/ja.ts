@@ -170,6 +170,12 @@ export const ja: Record<keyof typeof en, string> = {
   'editor.saving': '保存中…',
   'editor.saveChanges': '変更を保存',
   'editor.addRecording': 'アルバムを追加',
+  'deleteAlbum.action': 'アルバムを削除',
+  'deleteAlbum.title': 'アルバムを削除しますか？',
+  'deleteAlbum.message': '「{title}」（{artist}）を削除しますか？このブラウザに保存された画像、ブックレット、音声も削除されます。この操作は元に戻せません。',
+  'deleteAlbum.confirm': '完全に削除',
+  'deleteAlbum.deleting': '削除中…',
+  'deleteAlbum.failed': 'アルバムを削除できませんでした。アルバムとファイルは保持されています。ブラウザのストレージを確認して再試行してください。',
   'editor.errorMissingCover':
     'アルバムを追加するにはジャケット画像をアップロードしてください。',
   'editor.errorMissingFields':

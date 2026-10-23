@@ -168,6 +168,12 @@ export const zh: Record<keyof typeof en, string> = {
   'editor.saving': '正在保存…',
   'editor.saveChanges': '保存修改',
   'editor.addRecording': '添加唱片',
+  'deleteAlbum.action': '删除专辑',
+  'deleteAlbum.title': '确认删除专辑？',
+  'deleteAlbum.message': '确定删除「{title}」（{artist}）吗？保存在此浏览器中的专辑图片、歌词本和音频也会一并删除，此操作无法撤销。',
+  'deleteAlbum.confirm': '确认删除',
+  'deleteAlbum.deleting': '正在删除…',
+  'deleteAlbum.failed': '无法删除专辑，专辑和文件均已保留。请检查浏览器存储空间并重试。',
   'editor.errorMissingCover': '请上传封面图片以添加唱片。',
   'editor.errorMissingFields': '请输入专辑名称与音乐人。',
   'editor.errorSaveFailed':

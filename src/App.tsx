@@ -267,6 +267,9 @@ export default function App() {
               ? undefined
               : albums.find((album) => album.id === editor)
           }
+          onDeleted={(id) => {
+            if (playback.album?.id === id) playback.eject()
+          }}
           onClose={() => {
             setEditor(null)
             setQuery('')

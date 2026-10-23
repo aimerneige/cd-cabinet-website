@@ -168,6 +168,12 @@ export const en = {
   'editor.saving': 'Saving…',
   'editor.saveChanges': 'Save changes',
   'editor.addRecording': 'Add recording',
+  'deleteAlbum.action': 'Delete recording',
+  'deleteAlbum.title': 'Delete recording?',
+  'deleteAlbum.message': 'Delete “{title}” by {artist}? Its artwork, booklet and audio saved in this browser will also be removed. This cannot be undone.',
+  'deleteAlbum.confirm': 'Delete permanently',
+  'deleteAlbum.deleting': 'Deleting…',
+  'deleteAlbum.failed': 'The recording could not be deleted. Your recording and files have been kept. Check browser storage and try again.',
   'editor.errorMissingCover': 'Upload a cover image to add this recording.',
   'editor.errorMissingFields': 'Enter an album title and artist.',
   'editor.errorSaveFailed':

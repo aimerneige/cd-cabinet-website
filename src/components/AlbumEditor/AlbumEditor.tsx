@@ -14,14 +14,17 @@ import { ArtworkInput } from './ArtworkInput'
 import { BookletPagesEditor } from './BookletPagesEditor'
 import { ArtworkCropper } from './ArtworkCropper'
 import { ArtworkAlert } from './ArtworkAlert'
+import { DeleteAlbumDialog } from './DeleteAlbumDialog'
 import './AlbumEditor.css'
 
 export function AlbumEditor({
   album,
   onClose,
+  onDeleted,
 }: {
   album?: Album
   onClose: () => void
+  onDeleted: (id: string) => void
 }) {
   const { t } = useTranslation()
   const dialog = useRef<HTMLDialogElement>(null)
@@ -74,12 +77,14 @@ export function AlbumEditor({
   const [loading, setLoading] = useState(false)
   const [readingAudio, setReadingAudio] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const pendingUploads = useRef(0)
   const cropSequence = useRef(0)
   const cropResolver = useRef<((result: ArtworkCropResult | null) => void) | null>(null)
   const [cropRequest, setCropRequest] = useState<{ id: number; source: string; profile: ArtworkCrop; resizeWidth: boolean; obi?: Pick<Album, 'discs' | 'spineWidthMm' | 'obiDimensions'>; name: string; current: number; total: number } | null>(null)
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
+  const deleteAlbum = useCollection((state) => state.deleteAlbum)
   const artworkDetails = {
     title: title.trim() || t('editor.albumTitle'),
     artist: artist.trim() || t('editor.artist'),
@@ -110,7 +115,10 @@ export function AlbumEditor({
       cropResolver.current?.(null)
       cropResolver.current = null
       document.body.style.overflow = overflow
-      requestAnimationFrame(() => previous?.focus({ preventScroll: true }))
+      requestAnimationFrame(() => {
+        const target = previous?.isConnected ? previous : document.querySelector<HTMLButtonElement>('.add-recording')
+        target?.focus({ preventScroll: true })
+      })
     }
   }, [])
 
@@ -612,7 +620,13 @@ export function AlbumEditor({
             </button>
           </div>
         </div>
+        {album && <button type="button" className="delete-recording" disabled={loading || readingAudio || saving} onClick={() => setConfirmDelete(true)}>{t('deleteAlbum.action')}</button>}
       </form>
+      {confirmDelete && album && <DeleteAlbumDialog album={album} onCancel={() => setConfirmDelete(false)} onConfirm={async () => {
+        await deleteAlbum(album.id)
+        onDeleted(album.id)
+        onClose()
+      }} />}
       {cropRequest && <ArtworkCropper key={cropRequest.id} {...cropRequest} onComplete={finishCrop} />}
       {artworkAlert && <ArtworkAlert {...artworkAlert} onClose={() => setArtworkAlert(null)} />}
     </dialog>

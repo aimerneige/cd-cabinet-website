@@ -13,6 +13,7 @@ interface CollectionState {
   loadFailed: boolean
   initialize: () => Promise<void>
   saveAlbum: (album: Album) => Promise<void>
+  deleteAlbum: (id: string) => Promise<void>
   retrySave: () => Promise<void>
   openAlbum: (id: string) => void
   closeAlbum: () => void
@@ -88,6 +89,20 @@ export const useCollection = create<CollectionState>((set, get) => ({
       : [...current, album]
     await persist(next)
     set({ albums: next })
+  },
+  deleteAlbum: async (id) => {
+    if (get().loadFailed)
+      throw new Error('Load your saved collection before making changes.')
+    const current = get().albums
+    const removed = current.find((album) => album.id === id)
+    if (!removed) return
+    const next = current.filter((album) => album.id !== id).map((album) =>
+      album.shelfId === removed.shelfId && album.order > removed.order
+        ? { ...album, order: album.order - 1 }
+        : album,
+    )
+    await persist(next)
+    set((state) => ({ albums: next, activeAlbumId: state.activeAlbumId === id ? null : state.activeAlbumId }))
   },
   retrySave: () => {
     if (get().loadFailed) {
