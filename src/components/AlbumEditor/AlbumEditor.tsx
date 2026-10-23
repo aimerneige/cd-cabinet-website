@@ -13,6 +13,7 @@ import { getGenreOptions } from '../../data/genres'
 import { ArtworkInput } from './ArtworkInput'
 import { BookletPagesEditor } from './BookletPagesEditor'
 import { ArtworkCropper } from './ArtworkCropper'
+import { ArtworkAlert } from './ArtworkAlert'
 import './AlbumEditor.css'
 
 export function AlbumEditor({
@@ -67,6 +68,7 @@ export function AlbumEditor({
   const [bookletPages, setBookletPages] = useState<BookletPage[]>(album?.bookletPages ?? [])
   const [obi, setObi] = useState(album?.obiUrl ?? '')
   const [error, setError] = useState('')
+  const [artworkAlert, setArtworkAlert] = useState<{ message: string; returnFocus: HTMLElement | null } | null>(null)
   const [loading, setLoading] = useState(false)
   const [readingAudio, setReadingAudio] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -142,11 +144,12 @@ export function AlbumEditor({
       if (alive.current) await apply(cropped)
     } catch (cause) {
       if (alive.current)
-        setError(
-          cause instanceof Error
+        setArtworkAlert({
+          message: cause instanceof Error
             ? cause.message
             : t('artworkErrors.readFailed'),
-        )
+          returnFocus: previous,
+        })
     } finally {
       pendingUploads.current -= 1
       if (alive.current) {
@@ -569,6 +572,7 @@ export function AlbumEditor({
         </div>
       </form>
       {cropRequest && <ArtworkCropper key={cropRequest.id} {...cropRequest} onComplete={finishCrop} />}
+      {artworkAlert && <ArtworkAlert {...artworkAlert} onClose={() => setArtworkAlert(null)} />}
     </dialog>
   )
 }

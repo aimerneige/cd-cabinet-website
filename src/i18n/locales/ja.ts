@@ -141,7 +141,7 @@ export const ja: Record<keyof typeof en, string> = {
   'editor.useGeneratedObi': '自動生成の帯を使用',
   'editor.obiUploadGuidance':
     'アルバム情報と配色から自動生成します。お好みの画像を使う場合は、裏面、背、表面の順に左から右へ展開した帯をアップロードしてください。',
-  'editor.uploadGuidance': 'JPG、PNG、WebP · 1ファイルにつき最大 5 MB',
+  'editor.uploadGuidance': 'JPG、PNG、WebP · 1ファイルにつき最大 64 MB',
   'editor.albumTitle': 'アルバム名',
   'editor.artist': 'アーティスト',
   'editor.artistNumber': 'アーティスト {number}',
@@ -219,9 +219,11 @@ export const ja: Record<keyof typeof en, string> = {
   'crop.failed': '画像を切り抜けませんでした。もう一度試すか別の画像を選んでください。',
 
   // Artwork Errors
+  'artworkErrors.title': '画像のアップロードに失敗しました',
+  'artworkErrors.dismiss': '確認',
   'artworkErrors.invalidType':
     'JPG、PNG、またはWebP画像を選択してください。',
-  'artworkErrors.tooLarge': '5MB以下の画像を選択してください。',
+  'artworkErrors.tooLarge': '64MB以下の画像を選択してください。',
   'artworkErrors.readFailed':
     '画像を読み込めませんでした。もう一度お試しください。',
   'artworkErrors.interrupted': '画像の読み込みが中断されました。',

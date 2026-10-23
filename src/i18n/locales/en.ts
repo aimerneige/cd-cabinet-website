@@ -139,7 +139,7 @@ export const en = {
   'editor.useGeneratedObi': 'Use generated OBI',
   'editor.obiUploadGuidance':
     'Generated from your album details and colors. To use your own image, upload the entire unfolded strip: back flap, spine and front flap from left to right.',
-  'editor.uploadGuidance': 'JPG, PNG or WebP · Up to 5 MB per image',
+  'editor.uploadGuidance': 'JPG, PNG or WebP · Up to 64 MB per image',
   'editor.albumTitle': 'Album title',
   'editor.artist': 'Artist',
   'editor.artistNumber': 'Artist {number}',
@@ -215,8 +215,10 @@ export const en = {
   'crop.failed': 'The image could not be cropped. Try again or choose another image.',
 
   // Artwork Errors
+  'artworkErrors.title': 'Image upload failed',
+  'artworkErrors.dismiss': 'OK',
   'artworkErrors.invalidType': 'Choose a JPG, PNG or WebP image.',
-  'artworkErrors.tooLarge': 'Choose an image smaller than 5 MB.',
+  'artworkErrors.tooLarge': 'Choose an image no larger than 64 MB.',
   'artworkErrors.readFailed': 'The image could not be read. Please try again.',
   'artworkErrors.interrupted': 'Image loading was interrupted.',
   'artworkErrors.decodeFailed': 'This file could not be opened as an image.',

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { confirmCrop } from './helpers/artwork'
+import { confirmCrop, dismissArtworkAlert } from './helpers/artwork'
 
 async function image(page: Page, color: string) {
   const source = await page.evaluate((fill) => {
@@ -158,7 +158,7 @@ test('invalid booklet image batches and failed saves leave no partial pages or d
   await page.getByLabel('Upload booklet pages', { exact: true }).setInputFiles([
     scan.file, { name: 'invalid.txt', mimeType: 'text/plain', buffer: Buffer.from('invalid') },
   ])
-  await expect(page.locator('.editor-error')).toContainText('Choose a JPG, PNG or WebP image.')
+  await dismissArtworkAlert(page, 'Choose a JPG, PNG or WebP image.')
   await expect(page.locator('.booklet-pages-editor li')).toHaveCount(0)
   await upload(page, 'Upload disc artwork', '#779999')
   await upload(page, 'Upload booklet back cover', '#997799')

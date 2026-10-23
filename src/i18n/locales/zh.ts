@@ -139,7 +139,7 @@ export const zh: Record<keyof typeof en, string> = {
   'editor.useGeneratedObi': '使用自动生成的侧标',
   'editor.obiUploadGuidance':
     '默认根据专辑信息与配色生成。若自行上传，请使用完整展开的纸带，从左到右依次为后折页、侧脊和前折页。',
-  'editor.uploadGuidance': 'JPG、PNG 或 WebP · 每张图片不超过 5 MB',
+  'editor.uploadGuidance': 'JPG、PNG 或 WebP · 每张图片不超过 64 MB',
   'editor.albumTitle': '专辑名称',
   'editor.artist': '音乐人',
   'editor.artistNumber': '音乐人 {number}',
@@ -215,8 +215,10 @@ export const zh: Record<keyof typeof en, string> = {
   'crop.failed': '无法裁剪此图片，请重试或选择其他图片。',
 
   // Artwork Errors
+  'artworkErrors.title': '图片上传失败',
+  'artworkErrors.dismiss': '确定',
   'artworkErrors.invalidType': '请选择 JPG、PNG 或 WebP 格式的图片。',
-  'artworkErrors.tooLarge': '请选择小于 5 MB 的图片。',
+  'artworkErrors.tooLarge': '请选择不超过 64 MB 的图片。',
   'artworkErrors.readFailed': '无法读取图片，请重试。',
   'artworkErrors.interrupted': '图片加载被中断。',
   'artworkErrors.decodeFailed': '无法将此文件作为图片打开。',

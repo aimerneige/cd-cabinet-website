@@ -221,6 +221,12 @@
   font-size: 11px;
   line-height: 1.7;
 }
+.artwork-alert { width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 24px; border: 1px solid #b6bbac; background: #eeece5; color: #384033; }
+.artwork-alert::backdrop { background: #302e2788; backdrop-filter: blur(4px); }
+.artwork-alert h2 { margin: 0; font: 30px/1.2 'Libre Caslon Display', Georgia, serif; }
+.artwork-alert p { margin: 16px 0 24px; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.artwork-alert > div { display: flex; justify-content: flex-end; }
+.artwork-alert button { padding: 8px 20px; border: 1px solid #66745c; background: #66745c; color: #fff; font-size: 12px; }
 .album-editor .editor-audio { margin-top: 26px; padding-top: 18px; border-top: 1px solid #d2d5c6; }
 .editor-audio legend { padding: 0 10px 0 0; font-size: 13px; }
 .audio-upload { position: relative; display: inline-block; padding: 9px 12px; border: 1px solid #aab49b; color: #58664a; font-size: 11px; cursor: pointer; }

@@ -1,5 +1,5 @@
 import { test, expect, type Locator, type Page } from '@playwright/test'
-import { confirmCrop } from './helpers/artwork'
+import { confirmCrop, dismissArtworkAlert } from './helpers/artwork'
 
 async function draft(page: Page) {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -356,7 +356,7 @@ test('a failed automatic recrop preserves both images and the existing thickness
   await page.getByLabel('Upload right spine artwork', { exact: true }).setInputFiles(await spineImage(page, true))
   await setSpineWidth(page, 6)
   await confirmCrop(page)
-  await expect(page.getByRole('alert')).toHaveText('This file could not be opened as an image.')
+  await dismissArtworkAlert(page, 'This file could not be opened as an image.')
   await expect(preview).toHaveAttribute('src', source)
   await expect(page.getByRole('img', { name: 'Right spine preview', exact: true })).toHaveAttribute('src', /^data:image\/svg\+xml/)
   const dimensions = (await preview.locator('..').boundingBox())!

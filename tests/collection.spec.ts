@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { confirmCrop } from './helpers/artwork'
+import { confirmCrop, dismissArtworkAlert } from './helpers/artwork'
 
 test('opens the case, reverses it, restores focus and the original slot', async ({
   page,
@@ -552,31 +552,43 @@ test('invalid uploads explain the problem and preserve the default cover', async
   await page.goto('/')
   await page.getByRole('button', { name: 'Add recording' }).click()
   const defaultCover = await page.getByRole('img', { name: 'Cover preview', exact: true }).getAttribute('src')
+  await page.setViewportSize({ width: 390, height: 844 })
   const input = page.getByLabel('Upload cover artwork')
+  await input.focus()
   await input.setInputFiles({
     name: 'notes.txt',
     mimeType: 'text/plain',
     buffer: Buffer.from('not an image'),
   })
-  await expect(page.getByRole('alert')).toHaveText(
-    'Choose a JPG, PNG or WebP image.',
-  )
-  await input.setInputFiles({
-    name: 'large.png',
-    mimeType: 'image/png',
-    buffer: Buffer.alloc(5 * 1024 * 1024 + 1),
+  const warning = page.getByRole('alertdialog', { name: 'Image upload failed', exact: true })
+  await expect(warning).toBeVisible()
+  await expect(warning.locator('p')).toHaveText('Choose a JPG, PNG or WebP image.')
+  await expect(warning.getByRole('button', { name: 'OK', exact: true })).toBeFocused()
+  const box = (await warning.boundingBox())!
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.y).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(390)
+  expect(box.y + box.height).toBeLessThanOrEqual(844)
+  await page.screenshot({ path: 'test-results/artwork-warning-mobile.png' })
+  await page.keyboard.press('Escape')
+  await expect(warning).toHaveCount(0)
+  await expect(page.locator('.album-editor')).toBeVisible()
+  await expect(input).toBeFocused()
+  await input.evaluate((element) => {
+    const transfer = new DataTransfer()
+    transfer.items.add(new File([new Uint8Array(64 * 1024 * 1024 + 1)], 'large.png', { type: 'image/png' }))
+    const upload = element as HTMLInputElement
+    upload.files = transfer.files
+    upload.dispatchEvent(new Event('change', { bubbles: true }))
   })
-  await expect(page.getByRole('alert')).toHaveText(
-    'Choose an image smaller than 5 MB.',
-  )
+  await dismissArtworkAlert(page, 'Choose an image no larger than 64 MB.')
+  await expect(input).toBeFocused()
   await input.setInputFiles({
     name: 'corrupt.png',
     mimeType: 'image/png',
     buffer: Buffer.from('not a real PNG'),
   })
-  await expect(page.getByRole('alert')).toHaveText(
-    'This file could not be opened as an image.',
-  )
+  await dismissArtworkAlert(page, 'This file could not be opened as an image.')
   await expect(page.getByRole('img', { name: 'Cover preview', exact: true })).toHaveAttribute('src', defaultCover!)
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
   await page
@@ -591,6 +603,40 @@ test('invalid uploads explain the problem and preserve the default cover', async
   await page.reload()
   await page.getByRole('button', { name: 'Open Default artwork by Local Artist', exact: true }).click()
   await expect(page.getByRole('img', { name: 'Default artwork cover artwork' })).toHaveAttribute('src', /^data:image\/svg\+xml/)
+})
+
+test('an image exactly 64 MB can be cropped, saved and reloaded', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Large artwork')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
+  await expect(page.locator('.upload-guidance')).toHaveText('JPG, PNG or WebP · Up to 64 MB per image')
+  await page.getByLabel('Upload cover artwork').evaluate(async (element) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 32
+    const context = canvas.getContext('2d')!
+    context.fillStyle = '#00ff00'
+    context.fillRect(0, 0, 32, 32)
+    const png = await new Promise<Blob>((resolve) => canvas.toBlob((blob) => resolve(blob!), 'image/png'))
+    // PNG 允许结束标记后的填充，验证真实文件大小边界而不分配超大位图。
+    const file = new File([png, new Uint8Array(64 * 1024 * 1024 - png.size)], 'large.png', { type: 'image/png' })
+    const transfer = new DataTransfer()
+    transfer.items.add(file)
+    const upload = element as HTMLInputElement
+    upload.files = transfer.files
+    upload.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+  await confirmCrop(page)
+  await expect(page.getByRole('alertdialog')).toHaveCount(0)
+  const preview = page.getByRole('img', { name: 'Cover preview', exact: true })
+  await expect(preview).toHaveAttribute('src', /^data:image\/png/)
+  const source = (await preview.getAttribute('src'))!
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Large artwork by Local Artist', exact: true }).click()
+  await expect(page.locator('.lid-front img')).toHaveAttribute('src', source)
 })
 
 test('a storage read failure can be retried without overwriting the saved collection', async ({

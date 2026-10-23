@@ -11,3 +11,12 @@ export async function confirmCrop(page: Page, total = 1) {
   }
   await expect(page.locator('.artwork-cropper')).toHaveCount(0)
 }
+
+export async function dismissArtworkAlert(page: Page, message: string) {
+  const dialog = page.getByRole('alertdialog', { name: 'Image upload failed', exact: true })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.locator('p')).toHaveText(message)
+  await expect(dialog.getByRole('button', { name: 'OK', exact: true })).toBeFocused()
+  await dialog.getByRole('button', { name: 'OK', exact: true }).click()
+  await expect(dialog).toHaveCount(0)
+}
