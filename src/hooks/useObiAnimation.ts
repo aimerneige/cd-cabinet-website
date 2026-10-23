@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import gsap from 'gsap'
+import type { ObiLayout } from '../lib/obi'
 
 export type ObiMode = 'attached' | 'hidden' | 'flat'
 
 export function useObiAnimation(
   caseRef: RefObject<HTMLDivElement | null>,
-  depth: number,
+  layout: ObiLayout,
 ) {
+  const depth = layout.depth
   const paperRef = useRef<HTMLDivElement>(null)
   const animation = useRef<gsap.core.Timeline | null>(null)
   const closing = useRef(false)
@@ -44,7 +46,7 @@ export function useObiAnimation(
           gsap.set(paper, {
             x: 0,
             y: 0,
-            z: depth / 2 + 4,
+            z: depth / 2,
             rotationY: 0,
             rotationZ: 0,
             scale: 1,
@@ -60,7 +62,7 @@ export function useObiAnimation(
     if (next === 'flat') {
       tl.to(paper, {
         autoAlpha: 1,
-        x: reversed ? centered - (depth + 8) * 0.6 : centered + (depth + 8) * 0.6,
+        x: centered + (reversed ? -1 : 1) * (layout.backWidth + depth - layout.frontWidth) * 0.6,
         y: -25,
         scale: 1.2,
         z: reversed ? -90 : 90,
@@ -100,7 +102,7 @@ export function useObiAnimation(
           autoAlpha: 1,
           x: 0,
           y: 0,
-          z: depth / 2 + 4,
+          z: depth / 2,
           rotationY: 0,
           rotationZ: 0,
           scale: 1,
@@ -143,7 +145,7 @@ export function useObiAnimation(
       .to(paper, {
         x: 0,
         y: 0,
-        z: depth / 2 + 4,
+        z: depth / 2,
         rotationY: 0,
         rotationZ: 0,
         scale: 1,

@@ -133,7 +133,8 @@ test('fixed ratios follow case thickness and the disc has a circular guide on mo
       await expect(slider).toHaveValue(count === '1' ? '9.4' : '22.8')
       const frame = (await dialog.locator('.reactEasyCrop_CropArea').boundingBox())!
       expect(frame.width / frame.height).toBeCloseTo(Number(await slider.inputValue()) / 118, 3)
-    } else await expect(dialog).toContainText(`Fixed ratio ${ratio}`)
+    } else if (upload === 'Upload OBI paper strip') await expect(dialog).toContainText('OBI size')
+    else await expect(dialog).toContainText(`Fixed ratio ${ratio}`)
     await expect(dialog.getByRole('button', { name: 'Use crop', exact: true })).toBeEnabled()
     const box = (await dialog.boundingBox())!
     expect(box.x).toBeGreaterThanOrEqual(0)

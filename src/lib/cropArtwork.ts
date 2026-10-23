@@ -1,6 +1,7 @@
 import type { Area } from 'react-easy-crop'
 import type { Album } from '../types/album'
 import { clampSpineWidthMm, getCaseDepth, isSpineWidthMm, SPINE_HEIGHT_MM } from './album'
+import { getObiLayout } from './obi'
 
 export type ArtworkKind = 'cover' | 'bookletBack' | 'spine' | 'rightSpine' | 'back' | 'backInside' | 'obi' | 'disc' | 'page'
 export interface ArtworkCrop {
@@ -13,18 +14,16 @@ export interface ArtworkCropResult {
   spineWidthMm?: number
 }
 
-export function getArtworkCrop(kind: ArtworkKind, album: Pick<Album, 'discs' | 'spineWidthMm'>): ArtworkCrop {
+export function getArtworkCrop(kind: ArtworkKind, album: Pick<Album, 'discs' | 'spineWidthMm' | 'obiDimensions'>): ArtworkCrop {
   const depth = getCaseDepth(album)
   const customWidth = isSpineWidthMm(album.spineWidthMm) ? album.spineWidthMm : undefined
+  const obi = kind === 'obi' ? getObiLayout(album) : undefined
   let [width, height] = kind === 'spine' || kind === 'rightSpine' ? [depth, 300]
-    : kind === 'obi' ? [92 + depth + 8, 304]
+    : obi ? [Math.round(obi.width * 1e9), Math.round(obi.height * 1e9)]
     : kind === 'back' || kind === 'backInside' ? [138, 118] : [1, 1]
   if (customWidth !== undefined && (kind === 'spine' || kind === 'rightSpine')) {
     width = Math.round(customWidth * 10)
     height = SPINE_HEIGHT_MM * 10
-  } else if (customWidth !== undefined && kind === 'obi') {
-    width = Math.round(100 * SPINE_HEIGHT_MM + customWidth * 300)
-    height = 304 * SPINE_HEIGHT_MM
   }
   let divisor = width
   let remainder = height

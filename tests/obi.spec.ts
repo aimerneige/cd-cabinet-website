@@ -140,3 +140,65 @@ test('uploaded artwork is painted on every fold through front, back and flat ani
   await expect(page.getByRole('button', { name: 'Lay flat', exact: true })).toHaveAttribute('aria-pressed', 'true')
   for (const count of Object.values(await visibleObiColors(page))) expect(count).toBeGreaterThan(100)
 })
+
+test('custom OBI dimensions drive generated artwork, crop guides, uploaded images and persisted folds', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Sized OBI')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Print Artist')
+  await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
+  for (const [name, minimum, target] of [['Front flap width (mm)', 5, 30], ['Back flap width (mm)', 5, 10], ['OBI height (mm)', 40, 90]] as const) {
+    const slider = page.getByRole('slider', { name, exact: true })
+    await slider.focus()
+    await page.keyboard.press('Home')
+    for (let step = 0; step < (target - minimum) * 10; step += 1) await page.keyboard.press('ArrowRight')
+    await expect(slider).toHaveValue(String(target))
+  }
+  const preview = page.getByRole('img', { name: 'OBI preview', exact: true })
+  const generated = decodeURIComponent((await preview.getAttribute('src'))!)
+  expect(generated).toContain('data-obi-panel="front"')
+  const source = await page.evaluate(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 800
+    canvas.height = 1200
+    const context = canvas.getContext('2d')!
+    context.fillStyle = '#00ffff'
+    context.fillRect(0, 0, 800, 1200)
+    return canvas.toDataURL('image/png')
+  })
+  await page.getByLabel('Upload OBI paper strip', { exact: true }).setInputFiles({ name: 'sized.png', mimeType: 'image/png', buffer: Buffer.from(source.split(',')[1], 'base64') })
+  const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
+  await expect(dialog).toContainText('OBI size 52.6 × 90.0 mm')
+  await expect(dialog.locator('.crop-obi-folds span')).toHaveCount(2)
+  await confirmCrop(page)
+  await page.getByRole('button', { name: 'Recrop OBI image', exact: true }).click()
+  await expect(dialog).toContainText('OBI size 52.6 × 90.0 mm')
+  await confirmCrop(page)
+  const cropped = (await preview.getAttribute('src'))!
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Sized OBI by Print Artist', exact: true }).click()
+  await page.getByRole('button', { name: 'Lay flat', exact: true }).click()
+  const layout = await page.locator('.obi-strip').evaluate((element) => {
+    const style = getComputedStyle(element)
+    return ['--obi-front-width', '--obi-back-width', '--obi-height', '--obi-depth'].map((key) => Number.parseFloat(style.getPropertyValue(key)))
+  })
+  expect(layout[0]).toBeCloseTo(30 * 300 / 118, 5)
+  expect(layout[1]).toBeCloseTo(10 * 300 / 118, 5)
+  expect(layout[2]).toBeCloseTo(90 * 300 / 118, 5)
+  expect(layout[3]).toBe(32)
+  for (const image of await page.locator('.obi-uploaded img').all()) {
+    await expect(image).toHaveAttribute('src', cropped)
+    await expect(image).toHaveCSS('object-fit', 'contain')
+  }
+  await page.screenshot({ path: 'test-results/custom-obi-mobile.png' })
+  await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
+  await expect(page.getByRole('slider', { name: 'Front flap width (mm)', exact: true })).toHaveValue('30')
+  await expect(page.getByRole('slider', { name: 'Back flap width (mm)', exact: true })).toHaveValue('10')
+  await expect(page.getByRole('slider', { name: 'OBI height (mm)', exact: true })).toHaveValue('90')
+  await page.getByRole('button', { name: 'Reset OBI size', exact: true }).click()
+  await expect(page.getByRole('slider', { name: 'Front flap width (mm)', exact: true })).toHaveValue('18.1')
+})

@@ -1,5 +1,6 @@
 import type { Album, AlbumDisc } from '../types/album'
 import { getCaseDepth } from './album'
+import { getObiLayout } from './obi'
 
 const styles = [
   { id: 'dusk', color: '#536f78', ink: '#f3eee0', accent: '#e4b88c' },
@@ -10,7 +11,7 @@ const styles = [
 ] as const
 
 export type CoverStyle = (typeof styles)[number]
-type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs' | 'spineWidthMm'>
+type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs' | 'spineWidthMm' | 'obiDimensions'>
 
 const prefix = 'data:image/svg+xml;charset=utf-8,'
 const opening = (style: CoverStyle) =>
@@ -151,14 +152,16 @@ export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): st
   const style = getGeneratedCoverStyle(album.coverUrl)
   const color = escapeXml(album.color)
   const ink = escapeXml(album.ink)
-  const depth = getCaseDepth(album) + 8
-  const width = 92 + depth
+  const layout = getObiLayout(album)
+  const depth = layout.depth
+  const width = layout.width
   const count = album.discs?.length || 1
   const discLabel = `${album.year} · ${count} ${count === 1 ? 'CD' : 'CDs'}`
   const panel = (side: 'back' | 'spine' | 'front', x: number, panelWidth: number) => {
     const spine = side === 'spine'
+    const fontScale = spine ? 1 : Math.min(1, panelWidth / 46)
     const paper = side === 'back' ? '#e9e0c8' : spine ? '#e2d8bd' : '#eee6cd'
-    return `<g data-obi-panel="${side}" transform="translate(${x} 0)">
+    return `<g data-obi-panel="${side}" transform="translate(${x} 0)${layout.height === 304 ? '' : ` scale(1 ${layout.height / 304})`}">
       <rect width="${panelWidth}" height="304" fill="${paper}"/>
       <rect y="24" width="${panelWidth}" height="17" fill="${color}"/>
       <g transform="translate(${panelWidth / 2} 0)" text-anchor="middle">
@@ -171,21 +174,21 @@ export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): st
         </g>
       </g>
       <g fill="${color}" text-anchor="middle" writing-mode="vertical-rl" style="text-orientation:mixed">
-        <g transform="translate(${spine ? panelWidth / 2 : 16} 0)">
-          ${centeredText(side === 'back' ? album.artist : album.title, 150, spine ? 12 : 15, 188, 'Georgia, serif')}
+        <g transform="translate(${spine ? panelWidth / 2 : panelWidth * 16 / 46} 0)">
+          ${centeredText(side === 'back' ? album.artist : album.title, 150, (spine ? 12 : 15) * fontScale, 188, 'Georgia, serif')}
         </g>
-        ${spine ? '' : `<g transform="translate(36 0)">${centeredText(side === 'front' ? album.artist : discLabel, 150, 7, 188)}</g>`}
+        ${spine ? '' : `<g transform="translate(${panelWidth * 36 / 46} 0)">${centeredText(side === 'front' ? album.artist : discLabel, 150, 7 * fontScale, 188)}</g>`}
       </g>
       <circle cx="${panelWidth / 2}" cy="250" r="4" fill="${style?.accent ?? color}"/>
       <path d="M4 263H${panelWidth - 4}" stroke="${color}" opacity=".45"/>
     </g>`
   }
   // 展开图按后折页、侧脊、前折页排列，使用与 3D 纸带一致的实际尺寸。
-  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-obi="${style?.id ?? 'custom'}" width="${width * 3}" height="912" viewBox="0 0 ${width} 304">
-    ${panel('back', 0, 46)}
-    ${panel('spine', 46, depth)}
-    ${panel('front', 46 + depth, 46)}
-    <path d="M46 0V304M${46 + depth} 0V304" fill="none" stroke="${color}" stroke-dasharray="2 3" opacity=".25"/>
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-obi="${style?.id ?? 'custom'}" width="${width * 3}" height="${layout.height * 3}" viewBox="0 0 ${width} ${layout.height}">
+    ${panel('back', 0, layout.backWidth)}
+    ${panel('spine', layout.backWidth, depth)}
+    ${panel('front', layout.backWidth + depth, layout.frontWidth)}
+    <path d="M${layout.backWidth} 0V${layout.height}M${layout.backWidth + depth} 0V${layout.height}" fill="none" stroke="${color}" stroke-dasharray="2 3" opacity=".25"/>
   </svg>`)
 }
 

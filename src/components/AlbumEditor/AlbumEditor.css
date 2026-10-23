@@ -83,6 +83,13 @@
 }
 .obi-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 12px; }
 .obi-toggle input { accent-color: #66745c; }
+.album-editor .obi-size-controls { margin-top: 16px; padding-top: 10px; border-top: 1px solid #c5cab9; }
+.obi-size-controls legend { font-size: 12px; }
+.obi-size-controls label { display: block; margin: 10px 0; font-size: 10px; }
+.obi-size-controls label > span { display: flex; justify-content: space-between; gap: 10px; }
+.obi-size-controls small { color: #78836b; white-space: nowrap; }
+.obi-size-controls input { width: 100%; margin-top: 6px; accent-color: #66745c; }
+.obi-size-controls button { border: 1px solid #aab49b; padding: 6px 9px; color: #58664a; background: transparent; font-size: 10px; }
 .artwork-upload {
   display: block;
   position: relative;

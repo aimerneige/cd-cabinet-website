@@ -1,9 +1,9 @@
 .obi-strip {
   position: absolute;
   left: 0;
-  top: -2px;
-  width: 46px;
-  height: 304px;
+  top: calc((300px - var(--obi-height)) / 2);
+  width: var(--obi-front-width);
+  height: var(--obi-height);
   transform: translateZ(calc(var(--obi-depth) / 2));
   transform-origin: left center;
   transform-style: preserve-3d;
@@ -18,7 +18,7 @@
   transform-style: preserve-3d;
 }
 .obi-front {
-  width: 46px;
+  width: var(--obi-front-width);
 }
 .obi-spine-fold {
   right: 100%;
@@ -28,7 +28,7 @@
 }
 .obi-back-fold {
   right: 100%;
-  width: 46px;
+  width: var(--obi-back-width);
   transform-origin: right center;
   transform: rotateY(-90deg);
 }
@@ -63,20 +63,20 @@
 }
 .obi-artwork {
   background-image: var(--obi-image);
-  background-size: var(--obi-width) 304px;
+  background-size: var(--obi-width) var(--obi-height);
   background-repeat: no-repeat;
 }
 .obi-print-front.obi-artwork {
-  background-position: calc(-46px - var(--obi-depth)) 0;
+  background-position: calc(0px - var(--obi-back-width) - var(--obi-depth)) 0;
 }
 .obi-print-spine.obi-artwork {
-  background-position: -46px 0;
+  background-position: calc(0px - var(--obi-back-width)) 0;
 }
 .obi-print-back.obi-artwork {
   background-position: 0 0;
 }
 .obi-uploaded { background-image: none; }
-.obi-uploaded > img { position: absolute; top: 0; max-width: none; display: block; object-fit: fill; pointer-events: none; }
+.obi-uploaded > img { position: absolute; top: 0; max-width: none; display: block; object-fit: contain; pointer-events: none; }
 .has-flat-obi .case-body > :not(.obi-strip) {
   opacity: 0.2;
 }

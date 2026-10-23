@@ -1,6 +1,6 @@
 import type { CSSProperties, RefObject } from 'react'
 import type { Album } from '../../types/album'
-import { getCaseDepth } from '../../lib/album'
+import { getObiLayout } from '../../lib/obi'
 import { getObiArtwork } from '../../lib/generatedCover'
 import { useTranslation } from '../../i18n'
 
@@ -14,10 +14,13 @@ export function ObiStrip({
   hidden: boolean
 }) {
   const { t } = useTranslation()
-  const depth = getCaseDepth(album) + 8
+  const layout = getObiLayout(album)
   const style = {
-    '--obi-depth': `${depth}px`,
-    '--obi-width': `${92 + depth}px`,
+    '--obi-depth': `${layout.depth}px`,
+    '--obi-width': `${layout.width}px`,
+    '--obi-front-width': `${layout.frontWidth}px`,
+    '--obi-back-width': `${layout.backWidth}px`,
+    '--obi-height': `${layout.height}px`,
     '--obi-image': `url(${getObiArtwork(album)})`,
   } as CSSProperties
   const print = (side: 'back' | 'spine' | 'front') => (
@@ -25,7 +28,7 @@ export function ObiStrip({
       className={`obi-print obi-print-${side} obi-artwork${album.obiUrl ? ' obi-uploaded' : ''}`}
     >
       {album.obiUrl && <img src={album.obiUrl} alt="" draggable={false} loading="eager" decoding="sync"
-        style={{ left: side === 'front' ? -46 - depth : side === 'spine' ? -46 : 0, width: 92 + depth, height: 304 }} />}
+        style={{ left: side === 'front' ? -layout.backWidth - layout.depth : side === 'spine' ? -layout.backWidth : 0, width: layout.width, height: layout.height }} />}
     </div>
   )
   return (

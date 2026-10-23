@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import Cropper, { type Area, type Size } from 'react-easy-crop'
 import { cropArtwork, getSpineCrop, type ArtworkCrop, type ArtworkCropResult } from '../../lib/cropArtwork'
 import { clampSpineWidthMm, MAX_SPINE_WIDTH_MM, MIN_SPINE_WIDTH_MM, SPINE_HEIGHT_MM } from '../../lib/album'
+import type { ObiLayout } from '../../lib/obi'
 import { useTranslation } from '../../i18n'
 import 'react-easy-crop/react-easy-crop.css'
 import './ArtworkCropper.css'
 
-export function ArtworkCropper({ source, profile, resizeWidth, name, current, total, onComplete }: {
+export function ArtworkCropper({ source, profile, resizeWidth, obiLayout, name, current, total, onComplete }: {
   source: string
   profile: ArtworkCrop
   resizeWidth: boolean
+  obiLayout?: ObiLayout
   name: string
   current: number
   total: number
@@ -56,6 +58,7 @@ export function ArtworkCropper({ source, profile, resizeWidth, name, current, to
       </header>
       <div className="crop-information"><span>{resizeWidth
         ? t('crop.spineRange', { min: MIN_SPINE_WIDTH_MM, max: MAX_SPINE_WIDTH_MM })
+        : obiLayout ? t('obi.cropSize', { width: (obiLayout.width * SPINE_HEIGHT_MM / 300).toFixed(1), height: (obiLayout.height * SPINE_HEIGHT_MM / 300).toFixed(1) })
         : t('crop.ratio', { ratio: `${profile.width}:${profile.height}` })}</span>
         {total > 1 && <span role="status">{t('crop.progress', { current, total })}</span>}
       </div>
@@ -69,8 +72,12 @@ export function ArtworkCropper({ source, profile, resizeWidth, name, current, to
           mediaProps={{ alt: t('crop.source'), onError: () => { setReady(false); setError(t('crop.failed')) } }}
           cropperProps={{ 'aria-label': t('crop.position') }} />}
         {profile.round && size && <div className="crop-disc-hole" aria-hidden="true" style={{ width: size.width * 0.21, height: size.height * 0.21 }} />}
+        {obiLayout && size && <div className="crop-obi-folds" aria-hidden="true" style={{ width: size.width, height: size.height }}>
+          <span style={{ left: `${obiLayout.backWidth / obiLayout.width * 100}%` }} />
+          <span style={{ left: `${(obiLayout.backWidth + obiLayout.depth) / obiLayout.width * 100}%` }} />
+        </div>}
       </div>
-      <p className="crop-guidance">{t(resizeWidth ? 'crop.spineGuidance' : 'crop.guidance')}</p>
+      <p className="crop-guidance">{t(resizeWidth ? 'crop.spineGuidance' : obiLayout ? 'obi.cropGuidance' : 'crop.guidance')}</p>
       {resizeWidth && <label className="crop-zoom">{t('crop.spineWidth', { width: widthMm.toFixed(1) })}
         <input type="range" aria-label={t('crop.spineWidthLabel')} aria-valuetext={`${widthMm.toFixed(1)} mm`} min={MIN_SPINE_WIDTH_MM} max={MAX_SPINE_WIDTH_MM} step="0.1" value={widthMm}
           onChange={(event) => setWidthMm(clampSpineWidthMm(Number(event.target.value)))} /></label>}

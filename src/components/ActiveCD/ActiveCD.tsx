@@ -7,6 +7,7 @@ import type { Origin } from '../../hooks/useAlbumAnimation'
 import { CDCase } from '../CDCase/CDCase'
 import { AlbumDetails } from '../AlbumDetails/AlbumDetails'
 import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
+import { getObiLayout } from '../../lib/obi'
 import { getDiscArtwork } from '../../lib/generatedCover'
 import { useObiAnimation } from '../../hooks/useObiAnimation'
 import { useTranslation } from '../../i18n'
@@ -68,7 +69,7 @@ export function ActiveCD({
     isMoving,
     selectMode,
     resetObi,
-  } = useObiAnimation(caseRef, getCaseDepth(album))
+  } = useObiAnimation(caseRef, getObiLayout(album))
   const closeViewer = () => {
     closeCase((onFolded) => resetObi(() => resetTray(onFolded)))
   }
