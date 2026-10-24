@@ -305,10 +305,14 @@ fieldset:disabled .audio-upload { opacity: .5; cursor: default; }
 }
 .recording-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   padding-top: 12px;
 }
 .add-recording {
+  margin-left: auto;
   border: 1px solid #bdbeb0;
   background: transparent;
   padding: 8px 12px;

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { albums } from '../data/albums'
 import type { Album } from '../types/album'
 import { loadCollection, saveCollection } from '../lib/collectionStorage'
+import { isSampleAlbum, withoutSampleAlbums, withMissingSampleAlbums } from '../lib/sampleAlbums'
 
 interface CollectionState {
   albums: Album[]
@@ -14,6 +15,8 @@ interface CollectionState {
   initialize: () => Promise<void>
   saveAlbum: (album: Album) => Promise<void>
   deleteAlbum: (id: string) => Promise<void>
+  clearSampleAlbums: () => Promise<void>
+  restoreSampleAlbums: () => Promise<void>
   retrySave: () => Promise<void>
   openAlbum: (id: string) => void
   closeAlbum: () => void
@@ -103,6 +106,24 @@ export const useCollection = create<CollectionState>((set, get) => ({
     )
     await persist(next)
     set((state) => ({ albums: next, activeAlbumId: state.activeAlbumId === id ? null : state.activeAlbumId }))
+  },
+  clearSampleAlbums: async () => {
+    if (get().loadFailed)
+      throw new Error('Load your saved collection before making changes.')
+    const current = get().albums
+    const next = withoutSampleAlbums(current)
+    if (next === current) return
+    await persist(next)
+    set((state) => ({ albums: next, activeAlbumId: state.activeAlbumId && isSampleAlbum({ id: state.activeAlbumId }) ? null : state.activeAlbumId }))
+  },
+  restoreSampleAlbums: async () => {
+    if (get().loadFailed)
+      throw new Error('Load your saved collection before making changes.')
+    const current = get().albums
+    const next = withMissingSampleAlbums(current)
+    if (next === current) return
+    await persist(next)
+    set({ albums: next })
   },
   retrySave: () => {
     if (get().loadFailed) {

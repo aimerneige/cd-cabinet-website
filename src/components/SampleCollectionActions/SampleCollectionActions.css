@@ -1,0 +1,4 @@
+.sample-collection-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 100%; }
+.sample-collection-actions > button { border: 1px solid #bdbeb0; background: transparent; padding: 8px 12px; color: #59634e; font-size: 10px; }
+.sample-collection-actions > .clear-samples { color: #934b37; border-color: #bc978b; }
+.sample-actions-error { flex-basis: 100%; max-width: 40em; margin: 4px 0 0; font-size: 11px; line-height: 1.7; color: #934b37; }

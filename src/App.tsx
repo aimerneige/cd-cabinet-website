@@ -10,6 +10,9 @@ import { LanguageSwitcher } from './components/LanguageSwitcher/LanguageSwitcher
 import { useAudioPlayback } from './hooks/useAudioPlayback'
 import { CompactPlayer } from './components/CDPlayer/CDPlayer'
 import { getGenreOptions } from './data/genres'
+import { albums as sampleAlbums } from './data/albums'
+import { isSampleAlbum } from './lib/sampleAlbums'
+import { SampleCollectionActions } from './components/SampleCollectionActions/SampleCollectionActions'
 
 export default function App() {
   const { t } = useTranslation()
@@ -27,6 +30,8 @@ export default function App() {
     loadFailed,
     initialize,
     retrySave,
+    clearSampleAlbums,
+    restoreSampleAlbums,
   } = useCollection()
   const [editor, setEditor] = useState<string | null>(null)
   const pendingEditor = useRef<string | null>(null)
@@ -64,6 +69,7 @@ export default function App() {
     [albums, query, genre, sort],
   )
   const active = albums.find((a) => a.id === activeAlbumId)
+  const sampleCount = albums.filter(isSampleAlbum).length
   function handleOpen(album: Album, element: HTMLButtonElement) {
     if (activeAlbumId) return
     const rect = element.getBoundingClientRect()
@@ -170,6 +176,7 @@ export default function App() {
             </label>
             <button
               className={`edit-button ${editMode ? 'editing' : ''}`}
+              disabled={!ready || loadFailed || saving}
               onClick={handleEdit}
             >
               <span aria-hidden="true">{editMode ? '✓' : '↔'}</span>
@@ -178,9 +185,21 @@ export default function App() {
           </div>
         </div>
         <div className="recording-actions">
+          <SampleCollectionActions count={sampleCount} missingCount={sampleAlbums.length - sampleCount} disabled={!ready || loadFailed || saving || editMode}
+            onClear={async () => {
+              await clearSampleAlbums()
+              if (playback.album && isSampleAlbum(playback.album)) playback.eject()
+              setQuery('')
+              setGenre('')
+            }}
+            onRestore={async () => {
+              await restoreSampleAlbums()
+              setQuery('')
+              setGenre('')
+            }} />
           <button
             className="add-recording"
-            disabled={!ready || loadFailed}
+            disabled={!ready || loadFailed || saving}
             onClick={() => setEditor('new')}
           >
             {t('toolbar.addRecording')}

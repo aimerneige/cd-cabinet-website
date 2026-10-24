@@ -60,6 +60,14 @@ export const zh: Record<keyof typeof en, string> = {
   'toolbar.editShelf': '整理唱片架',
   'toolbar.doneArranging': '完成整理',
   'toolbar.addRecording': '＋ 添加唱片',
+  'samples.clear': '清空样例 CD',
+  'samples.restore': '恢复样例 CD',
+  'samples.clearing': '正在清空…',
+  'samples.restoring': '正在恢复…',
+  'samples.clearTitle': '确认清空样例 CD？',
+  'samples.clearMessage': '确定删除全部 {count} 张内置样例 CD 吗？对这些样例的修改和上传文件也会删除，自行添加的专辑会保留。之后可恢复缺失的样例，但无法找回这些修改。',
+  'samples.clearFailed': '无法清空样例 CD，收藏和文件均已保留，请重试。',
+  'samples.restoreFailed': '无法恢复样例 CD，收藏未发生变化，请重试。',
 
   // Shelf Caption & States
   'shelf.arrangingTitle': '正在调整唱片架',

@@ -59,6 +59,14 @@ export const en = {
   'toolbar.editShelf': 'Edit shelf',
   'toolbar.doneArranging': 'Done arranging',
   'toolbar.addRecording': '＋ Add recording',
+  'samples.clear': 'Clear sample CDs',
+  'samples.restore': 'Restore sample CDs',
+  'samples.clearing': 'Clearing…',
+  'samples.restoring': 'Restoring…',
+  'samples.clearTitle': 'Clear sample CDs?',
+  'samples.clearMessage': 'Remove all {count} built-in sample CDs, including their edits and uploaded files? Recordings you added yourself will be kept. Missing samples can be restored later, but their edits cannot be recovered.',
+  'samples.clearFailed': 'Sample CDs could not be cleared. Your collection and files have been kept. Please try again.',
+  'samples.restoreFailed': 'Sample CDs could not be restored. Your collection has not changed. Please try again.',
 
   // Shelf Caption & States
   'shelf.arrangingTitle': 'ARRANGING YOUR COLLECTION',

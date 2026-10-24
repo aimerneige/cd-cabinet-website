@@ -60,6 +60,14 @@ export const ja: Record<keyof typeof en, string> = {
   'toolbar.editShelf': '棚を整理',
   'toolbar.doneArranging': '整理を完了',
   'toolbar.addRecording': '＋ アルバムを追加',
+  'samples.clear': 'サンプル CD を削除',
+  'samples.restore': 'サンプル CD を復元',
+  'samples.clearing': '削除中…',
+  'samples.restoring': '復元中…',
+  'samples.clearTitle': 'サンプル CD を削除しますか？',
+  'samples.clearMessage': '内蔵サンプル CD 全 {count} 枚を、編集内容やアップロードしたファイルも含めて削除しますか？自分で追加したアルバムは保持されます。後からサンプルは復元できますが、編集内容は戻せません。',
+  'samples.clearFailed': 'サンプル CD を削除できませんでした。コレクションとファイルは保持されています。再試行してください。',
+  'samples.restoreFailed': 'サンプル CD を復元できませんでした。コレクションは変更されていません。再試行してください。',
 
   // Shelf Caption & States
   'shelf.arrangingTitle': 'コレクションの並び替え中',
