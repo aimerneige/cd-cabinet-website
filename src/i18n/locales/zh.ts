@@ -101,6 +101,8 @@ export const zh: Record<keyof typeof en, string> = {
   'viewer.editRecording': '编辑唱片',
   'viewer.close': '关闭',
   'viewer.closeAlbumAria': '合上专辑',
+  'viewer.closeCaseAria': '合上唱片盒',
+  'viewer.openCaseAria': '展开唱片盒',
   'viewer.fromCollection': '来自你的收藏',
   'viewer.singleDisc': '单碟 CD',
   'viewer.multipleDiscs': '{count} 张 CD',

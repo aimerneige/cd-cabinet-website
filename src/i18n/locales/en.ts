@@ -101,6 +101,8 @@ export const en = {
   'viewer.editRecording': 'Edit recording',
   'viewer.close': 'Close',
   'viewer.closeAlbumAria': 'Close album',
+  'viewer.closeCaseAria': 'Close case',
+  'viewer.openCaseAria': 'Open case',
   'viewer.fromCollection': 'FROM YOUR COLLECTION',
   'viewer.singleDisc': 'Compact disc',
   'viewer.multipleDiscs': '{count} CDs',

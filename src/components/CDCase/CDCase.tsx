@@ -16,6 +16,8 @@ export const CDCase = forwardRef<
     disc?: AlbumDisc
     trayRefs: RefObject<(HTMLDivElement | null)[]>
     view: CaseView
+    isOpen: boolean
+    onToggleLid?: () => void
     paperRef: RefObject<HTMLDivElement | null>
     obiMode: ObiMode
     onPlayDisc: () => void
@@ -23,7 +25,7 @@ export const CDCase = forwardRef<
     ejectedDiscId?: string
   }
 >(function CDCase(
-  { album, disc, trayRefs, view, paperRef, obiMode, onPlayDisc, canPlayDisc, ejectedDiscId },
+  { album, disc, trayRefs, view, isOpen, onToggleLid, paperRef, obiMode, onPlayDisc, canPlayDisc, ejectedDiscId },
   ref,
 ) {
   const { t } = useTranslation()
@@ -88,7 +90,20 @@ export const CDCase = forwardRef<
           {bookletTabPositions.map((position) => <span key={position} className={`booklet-recess booklet-${position}`} />)}
         </div>
         <div className="case-hinge" aria-hidden="true" />
-        <div className="case-lid">
+        <div
+          className={`case-lid${isOpen ? ' is-open' : ''}`}
+          role="button"
+          tabIndex={onToggleLid ? 0 : -1}
+          aria-label={t(isOpen ? 'viewer.closeCaseAria' : 'viewer.openCaseAria')}
+          aria-disabled={!onToggleLid}
+          onClick={onToggleLid}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              onToggleLid?.()
+            }
+          }}
+        >
           <div className="lid-front">
             <img
               src={album.coverUrl}

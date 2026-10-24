@@ -74,6 +74,10 @@
   transform: translateZ(calc(var(--case-depth) / 2));
   pointer-events: none;
 }
+.case-lid.is-open {
+  /* 翻开的托盘叠在盒盖上，优先将点击交给托盘和光盘。 */
+  z-index: -1;
+}
 .case-lid::before {
   content: '';
   position: absolute;
@@ -83,8 +87,17 @@
     linear-gradient(#f0f5ea73, #8fa4a14d) top / 100% 4px no-repeat,
     linear-gradient(#e3ecde66, #82999552) bottom / 100% 4px no-repeat;
 }
-.lid-front {
+.lid-front,
+.lid-inside {
   pointer-events: auto;
+}
+.case-lid[aria-disabled='false'] {
+  cursor: pointer;
+}
+.case-lid:focus-visible .lid-front,
+.case-lid:focus-visible .lid-inside {
+  outline: 2px solid #668064;
+  outline-offset: -5px;
 }
 .booklet-tabs,
 .case-recesses {

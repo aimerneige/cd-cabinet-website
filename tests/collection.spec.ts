@@ -43,6 +43,44 @@ test('opens the case, reverses it, restores focus and the original slot', async 
   expect(errors).toEqual([])
 })
 
+for (const reducedMotion of ['reduce', 'no-preference'] as const) {
+  test(`the lid closes and reopens the case without returning it with ${reducedMotion} motion`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion })
+    if (reducedMotion === 'reduce') await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    const source = page.locator('[data-album-id="album-3"]')
+    await source.click()
+    const lid = page.locator('.case-lid')
+    await expect(lid).toBeEnabled()
+    await page.locator('.lid-inside').click()
+    await expect(page.getByRole('button', { name: 'Front', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(source).toBeHidden()
+    await expect(page.getByRole('button', { name: 'Open case', exact: true })).toBeEnabled()
+    await page.getByRole('button', { name: 'Attached', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Attached', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await page.locator('.lid-front').click()
+    await expect(page.getByRole('button', { name: 'Inside', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('.obi-strip')).toHaveCSS('visibility', 'hidden')
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await page.getByRole('button', { name: 'Disc 2', exact: true }).click()
+    await expect(page.locator('.selected-disc-label')).toHaveText('DISC 2 / 2')
+    const spread = await page.locator('.tray-leaf').evaluate((element) => getComputedStyle(element).transform)
+    await lid.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('button', { name: 'Front', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: 'Open case', exact: true })).toBeFocused()
+    await page.keyboard.press('Space')
+    await expect(page.getByRole('button', { name: 'Inside', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: 'Close case', exact: true })).toBeFocused()
+    await expect(page.locator('.selected-disc-label')).toHaveText('DISC 2 / 2')
+    await expect(page.locator('.tray-leaf')).toHaveCSS('transform', spread)
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(source).toBeFocused()
+  })
+}
+
 test('search, filtering and keyboard sorting work', async ({ page }) => {
   await page.goto('/')
   await page
@@ -107,6 +145,8 @@ test('standard double cases flip their tray and each disc has its own track list
   await expect(
     page.getByRole('button', { name: 'Play disc 1 from the beginning' }),
   ).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('button', { name: 'Close case', exact: true })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(
     page.getByRole('button', { name: 'Disc 1', exact: true }),

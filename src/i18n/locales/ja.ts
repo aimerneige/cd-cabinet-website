@@ -103,6 +103,8 @@ export const ja: Record<keyof typeof en, string> = {
   'viewer.editRecording': 'アルバムを編集',
   'viewer.close': '閉じる',
   'viewer.closeAlbumAria': 'アルバムを閉じる',
+  'viewer.closeCaseAria': 'ケースを閉じる',
+  'viewer.openCaseAria': 'ケースを開く',
   'viewer.fromCollection': 'コレクションより',
   'viewer.singleDisc': 'コンパクトディスク',
   'viewer.multipleDiscs': '{count}枚組 CD',

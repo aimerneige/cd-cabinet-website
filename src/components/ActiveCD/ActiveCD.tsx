@@ -3,7 +3,7 @@ import gsap from 'gsap'
 import { useDiscAnimation } from '../../hooks/useDiscAnimation'
 import type { Album, AlbumDisc } from '../../types/album'
 import { useAlbumAnimation } from '../../hooks/useAlbumAnimation'
-import type { Origin } from '../../hooks/useAlbumAnimation'
+import type { CaseView, Origin } from '../../hooks/useAlbumAnimation'
 import { CDCase } from '../CDCase/CDCase'
 import { AlbumDetails } from '../AlbumDetails/AlbumDetails'
 import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
@@ -70,6 +70,10 @@ export function ActiveCD({
     selectMode,
     resetObi,
   } = useObiAnimation(caseRef, getObiLayout(album))
+  const selectCaseView = (next: CaseView) => {
+    if (next === 'inside') selectMode('hidden', () => selectView(next))
+    else selectView(next)
+  }
   const closeViewer = () => {
     closeCase((onFolded) => resetObi(() => resetTray(onFolded)))
   }
@@ -330,6 +334,10 @@ export function ActiveCD({
         trayRefs={trayRefs}
         ref={caseRef}
         view={view}
+        isOpen={isOpen}
+        onToggleLid={!isTurning && !isChangingView && !isMoving && !playerOpen && obiMode !== 'flat'
+          ? () => selectCaseView(isOpen ? 'front' : 'inside')
+          : undefined}
         paperRef={paperRef}
         obiMode={obiMode}
         onPlayDisc={() => playTrack(0)}
@@ -372,10 +380,7 @@ export function ActiveCD({
         onPlayTrack={playTrack}
         currentTrackId={playerOpen ? playback.disc?.tracks[playback.trackIndex]?.id : undefined}
         view={view}
-        onSelectView={(next) => {
-          if (next === 'inside') selectMode('hidden', () => selectView(next))
-          else selectView(next)
-        }}
+        onSelectView={selectCaseView}
         isOpen={isOpen}
         obiMode={obiMode}
         onSelectObi={selectMode}
