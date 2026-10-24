@@ -4,13 +4,12 @@ export const MIN_SPINE_WIDTH_MM = 2
 export const MAX_SPINE_WIDTH_MM = 40
 export const SPINE_HEIGHT_MM = 118
 export const DEFAULT_SPINE_WIDTH_MM = 6.5
-export const MIN_CASE_THICKNESS_MM = 2
-export const MAX_CASE_THICKNESS_MM = 45
+export const STANDARD_CASE_THICKNESS_MM = 10.4
 // 纸张的 118 mm 对应 300 场景单位，盒体和内部纸张共用此换算比例。
 export const SCENE_UNITS_PER_MM = 300 / SPINE_HEIGHT_MM
 export const CASE_WIDTH = 142 * SCENE_UNITS_PER_MM
 export const CASE_HEIGHT = 125 * SCENE_UNITS_PER_MM
-export const STANDARD_CASE_DEPTH = 10.4 * SCENE_UNITS_PER_MM
+export const STANDARD_CASE_DEPTH = STANDARD_CASE_THICKNESS_MM * SCENE_UNITS_PER_MM
 
 export function hasObi(album: Pick<Album, 'obiEnabled' | 'obiUrl'>): boolean {
   return album.obiEnabled ?? Boolean(album.obiUrl)
@@ -30,10 +29,9 @@ export function getAlbumDiscs(album: Album): AlbumDisc[] {
     : [{ id: `${album.id}-disc-1`, tracks: album.tracks }]
 }
 
-export function getCaseThicknessMm(album: Pick<Album, 'discs' | 'caseThicknessMm'>): number {
-  const thickness = album.caseThicknessMm
-  if (typeof thickness === 'number' && Number.isFinite(thickness) && thickness >= MIN_CASE_THICKNESS_MM && thickness <= MAX_CASE_THICKNESS_MM) return thickness
-  return (album.discs?.length || 1) <= 3 ? 10.4 : 24
+export function getCaseThicknessMm(_album: Pick<Album, 'discs' | 'caseThicknessMm'>): number {
+  // 外盒统一使用常规 CD 厚度，忽略旧数据中的自定义值和光盘数量。
+  return STANDARD_CASE_THICKNESS_MM
 }
 
 export function getCaseDepth(album: Pick<Album, 'discs' | 'caseThicknessMm'>): number {

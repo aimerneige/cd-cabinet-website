@@ -140,7 +140,7 @@ test('paper ratios stay independent of outer thickness and the disc has a circul
     ['1', 'Upload back cover artwork', '69:59', 'Back cover preview'],
     ['4', 'Upload inside back cover', '69:59', 'Back cover inside preview'],
     ['4', 'Upload right spine artwork', '13:236', 'Right spine preview'],
-    ['4', 'Upload OBI paper strip', '153.016949:317.79661', 'OBI preview'],
+    ['4', 'Upload OBI paper strip', '118.440678:317.79661', 'OBI preview'],
     ['4', 'Upload disc artwork', '1:1', 'Disc preview'],
   ]) {
     await page.getByLabel('Number of discs').selectOption(count)
@@ -156,7 +156,8 @@ test('paper ratios stay independent of outer thickness and the disc has a circul
     else await expect(dialog).toContainText(`Fixed ratio ${ratio}`)
     if (upload === 'Upload OBI paper strip' && count === '4') {
       const thickness = dialog.getByRole('slider', { name: 'Side / outer case thickness (mm)', exact: true })
-      await thickness.fill('24')
+      await expect(thickness).toHaveValue('10.4')
+      await expect(thickness).toBeDisabled()
     }
     await expect(dialog.getByRole('button', { name: 'Use crop', exact: true })).toBeEnabled()
     const box = (await dialog.boundingBox())!
@@ -349,7 +350,7 @@ test('the paper width slider spans its bounds and persists without changing oute
   await page.keyboard.press('Escape')
 })
 
-test('right spine crops use paper width in fatboxes and keep narrow scans filled when widened', async ({ page }) => {
+test('right spine crops use paper width in multi-disc cases and keep narrow scans filled when widened', async ({ page }) => {
   await draft(page)
   await page.getByLabel('Number of discs').selectOption('4')
   const source = await page.evaluate(() => {

@@ -164,7 +164,7 @@ describe('generated packaging', () => {
     }
   })
 
-  it('sizes the unfolded OBI to standard and thicker cases', () => {
+  it('sizes the unfolded OBI to standard cases for every disc count', () => {
     const album = { ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png' }
     for (const count of [0, 1, 3, 4, 6]) {
       const discs = Array.from({ length: count }, (_, index) => ({ id: `disc-${index}`, tracks: [] }))

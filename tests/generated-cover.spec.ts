@@ -142,7 +142,7 @@ test('disc text stays inside its printable ring with long multilingual details a
   expect(decodeURIComponent((await page.getByRole('img', { name: 'Back cover preview', exact: true }).getAttribute('src'))!)).toContain('1 CD')
 })
 
-test('generated OBI fits every fold and follows thicker cases on mobile', async ({ page }) => {
+test('generated OBI fits every fold at standard case thickness for all disc counts on mobile', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
@@ -155,7 +155,7 @@ test('generated OBI fits every fold and follows thicker cases on mobile', async 
   await expect(preview).toHaveCSS('object-fit', 'contain')
   for (const count of [1, 3, 4, 6]) {
     await page.getByLabel('Number of discs').selectOption(String(count))
-    await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(count > 3 ? 459 : 355)
+    await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(355)
     const bounds = await preview.evaluate((image: HTMLImageElement) => {
       const parsed = new DOMParser().parseFromString(decodeURIComponent(image.src.split(',')[1]), 'image/svg+xml')
       const svg = document.importNode(parsed.documentElement, true)
@@ -197,15 +197,15 @@ test('generated OBI fits every fold and follows thicker cases on mobile', async 
     const style = getComputedStyle(element)
     return { depth: Number.parseFloat(style.getPropertyValue('--obi-depth')), width: Number.parseFloat(style.getPropertyValue('--obi-width')) }
   })
-  expect(layout.depth).toBeCloseTo(24 * 300 / 118, 5)
-  expect(layout.width).toBeCloseTo(92 + 24 * 300 / 118, 5)
+  expect(layout.depth).toBeCloseTo(10.4 * 300 / 118, 5)
+  expect(layout.width).toBeCloseTo(92 + 10.4 * 300 / 118, 5)
   for (const side of ['back', 'spine', 'front']) {
     await expect(page.locator(`.obi-print-${side}`)).toHaveCSS('background-image', `url("${source}")`)
-    await expect(page.locator(`.obi-print-${side}`)).toHaveCSS('background-size', '153.017px 317.797px')
+    await expect(page.locator(`.obi-print-${side}`)).toHaveCSS('background-size', '118.441px 317.797px')
   }
   await expect(page.locator('.obi-print-back')).toHaveCSS('background-position', '0px 0px')
   await expect(page.locator('.obi-print-spine')).toHaveCSS('background-position', '-46px 0px')
-  await expect(page.locator('.obi-print-front')).toHaveCSS('background-position', '-107.017px 0px')
+  await expect(page.locator('.obi-print-front')).toHaveCSS('background-position', '-72.4407px 0px')
 })
 
 test('uploads replace individual artwork and randomizing preserves other uploaded images', async ({ page }) => {

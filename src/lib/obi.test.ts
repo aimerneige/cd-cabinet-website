@@ -5,16 +5,16 @@ import { getObiArtwork } from './generatedCover'
 import { CASE_HEIGHT, getCaseDepth } from './album'
 
 describe('OBI dimensions', () => {
-  it('keeps standard dimensions and follows case thickness by default', () => {
+  it('keeps standard dimensions and ignores legacy custom case thickness', () => {
     const depth = getCaseDepth({})
     expect(getObiLayout({})).toEqual({ frontWidth: 46, backWidth: 46, height: CASE_HEIGHT, depth, width: 92 + depth })
     const album = { spineWidthMm: 2, caseThicknessMm: 14 }
-    expect(getObiLayout(album).depth).toBeCloseTo(14 * 300 / 118, 10)
+    expect(getObiLayout(album).depth).toBeCloseTo(10.4 * 300 / 118, 10)
     const widePaper = { ...album, spineWidthMm: 40 }
     expect(getObiLayout(album)).toEqual(getObiLayout(widePaper))
   })
 
-  it('fixes the front and height while applying the back width and outer thickness consistently', () => {
+  it('fixes the front, height and outer thickness while applying the back width consistently', () => {
     const album = {
       title: 'Custom OBI', artist: 'Artist', year: 2026, genre: 'Ambient', color: '#336644', ink: '#ffffff', coverUrl: '/cover.png',
       obiDimensions: { backWidthMm: 10 }, caseThicknessMm: 14,
@@ -23,7 +23,7 @@ describe('OBI dimensions', () => {
     expect(layout.frontWidth).toBe(46)
     expect(layout.backWidth).toBeCloseTo(10 * 300 / 118, 5)
     expect(layout.height).toBeCloseTo(125 * 300 / 118, 5)
-    expect(layout.depth).toBeCloseTo(14 * 300 / 118, 5)
+    expect(layout.depth).toBeCloseTo(10.4 * 300 / 118, 5)
     expect(layout.width).toBe(layout.backWidth + layout.depth + layout.frontWidth)
     const crop = getArtworkCrop('obi', album)
     expect(crop.width / crop.height).toBeCloseTo(layout.width / layout.height, 8)

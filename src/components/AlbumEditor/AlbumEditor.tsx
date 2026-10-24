@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme, BookletPage, ObiDimensions, Track } from '../../types/album'
-import { getAlbumDiscs, getCaseDepth, getCaseThicknessMm, getSpineDepth, hasObi, MAX_CASE_THICKNESS_MM, MIN_CASE_THICKNESS_MM, resizeDiscs, STANDARD_CASE_DEPTH } from '../../lib/album'
+import { getAlbumDiscs, getCaseDepth, getSpineDepth, hasObi, resizeDiscs, STANDARD_CASE_DEPTH, STANDARD_CASE_THICKNESS_MM } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
 import { readCoverPalette } from '../../lib/coverPalette'
 import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
@@ -60,8 +60,7 @@ export function AlbumEditor({
   )
   const discCount = discs.length
   const [spineWidthMm, setSpineWidthMm] = useState(album?.spineWidthMm)
-  const [caseThicknessInput, setCaseThicknessInput] = useState(album?.caseThicknessMm?.toString() ?? '')
-  const caseThicknessMm = caseThicknessInput ? Number(caseThicknessInput) : undefined
+  const caseThicknessMm = STANDARD_CASE_THICKNESS_MM
   const caseDepth = getCaseDepth({ discs, caseThicknessMm })
   const [editingDisc, setEditingDisc] = useState(0)
   const [coverStyle, setCoverStyle] = useState(
@@ -118,7 +117,7 @@ export function AlbumEditor({
   } : null
   const coverUrl = cover || (generatedStyle ? generateCover(artworkDetails, generatedStyle) : '')
   const previewAlbum = { ...artworkDetails, coverUrl, bookletBackUrl: bookletBack, backInsideUrl: backInside, spineUrl: spine, rightSpineUrl: rightSpine, backCoverUrl: backCover, obiUrl: obi }
-  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, caseThicknessInput, coverStyle, cover, coverPalette, artworkPalette, artworkTheme, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
+  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, coverStyle, cover, coverPalette, artworkPalette, artworkTheme, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
   const initialDraft = useRef(draftValues)
   // 比较不可变状态的引用，避免每次输入都重新序列化高清图片和音频。
   const dirty = draftValues.some((value, index) => !Object.is(value, initialDraft.current[index]))
@@ -224,7 +223,6 @@ export function AlbumEditor({
       if (kind === 'obi') {
         setObi(result.source)
         setObiDimensions(result.obiDimensions)
-        setCaseThicknessInput(result.caseThicknessMm?.toString() ?? '')
         return
       }
       const source = result.source
@@ -555,11 +553,9 @@ export function AlbumEditor({
             </label>
             <label>
               {t('editor.caseThickness')}
-              <input type="number" min={MIN_CASE_THICKNESS_MM} max={MAX_CASE_THICKNESS_MM} step="0.1"
-                aria-label={t('editor.caseThickness')} aria-describedby="case-thickness-guidance" disabled={!!obi}
-                value={caseThicknessInput} placeholder={getCaseThicknessMm({ discs }).toFixed(1)}
-                onChange={(event) => setCaseThicknessInput(event.target.value)} />
-              <small id="case-thickness-guidance">{t(obi ? 'editor.caseThicknessCropGuidance' : 'editor.caseThicknessGuidance')}</small>
+              <input type="number" aria-label={t('editor.caseThickness')} aria-describedby="case-thickness-guidance"
+                disabled value={caseThicknessMm} />
+              <small id="case-thickness-guidance">{t('editor.caseThicknessGuidance')}</small>
             </label>
           </div>
         </fieldset>

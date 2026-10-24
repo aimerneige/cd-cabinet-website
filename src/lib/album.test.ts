@@ -9,13 +9,13 @@ describe('multi-disc albums', () => {
     expect(hasObi({ obiUrl: '/scan.png' })).toBe(true)
     expect(hasObi({ obiEnabled: false, obiUrl: '/scan.png' })).toBe(false)
   })
-  it('uses standard flip cases for up to three discs and fatboxes for larger sets', () => {
+  it('uses standard CD thickness for every disc count', () => {
     expect(getAlbumDiscs(albums[0])[0].tracks).toEqual(albums[0].tracks)
     expect(getAlbumDiscs(albums[2])).toHaveLength(2)
     expect(getCaseDepth(albums[2])).toBe(getCaseDepth(albums[0]))
-    expect(getCaseThicknessMm(withDiscCount(albums[0], 3))).toBe(10.4)
-    expect(getCaseThicknessMm(withDiscCount(albums[0], 4))).toBe(24)
-    expect(getCaseThicknessMm(withDiscCount(albums[0], 6))).toBe(24)
+    for (const count of [1, 2, 3, 4, 5, 6]) {
+      expect(getCaseThicknessMm(withDiscCount(albums[0], count))).toBe(10.4)
+    }
   })
 
   it('adds empty discs without moving existing tracks', () => {
@@ -26,15 +26,15 @@ describe('multi-disc albums', () => {
     expect(changed.tracks).toEqual(albums[0].tracks)
   })
 
-  it('keeps outer thickness independent of inner paper and preserves custom thickness across disc counts', () => {
+  it('ignores legacy custom thickness and keeps outer thickness independent of inner paper', () => {
     const album = { ...albums[0], spineWidthMm: 6.5, caseThicknessMm: 14 }
-    expect(getCaseDepth(album)).toBeCloseTo(14 * SCENE_UNITS_PER_MM, 10)
+    expect(getCaseDepth(album)).toBeCloseTo(10.4 * SCENE_UNITS_PER_MM, 10)
     const narrowPaper = { ...album, spineWidthMm: 2 }
     expect(getCaseDepth(narrowPaper)).toBe(getCaseDepth(album))
     expect(getCaseDepth(withDiscCount(album, 6))).toBe(getCaseDepth(album))
-    for (const caseThicknessMm of [undefined, 0, -1, 46, NaN, Infinity]) {
+    for (const caseThicknessMm of [undefined, 2, 14, 24, 45, 0, -1, 46, NaN, Infinity]) {
       expect(getCaseThicknessMm({ ...album, caseThicknessMm })).toBe(10.4)
-      expect(getCaseThicknessMm({ ...withDiscCount(album, 4), caseThicknessMm })).toBe(24)
+      expect(getCaseThicknessMm({ ...withDiscCount(album, 4), caseThicknessMm })).toBe(10.4)
     }
     expect(getSpineWidthMm({})).toBe(6.5)
     expect(getSpineWidthMm(album)).toBe(6.5)

@@ -12,7 +12,6 @@ export interface ArtworkCrop {
 export interface ArtworkCropResult {
   source: string
   spineWidthMm?: number
-  caseThicknessMm?: number
   obiDimensions?: ObiDimensions
 }
 
