@@ -916,7 +916,7 @@ test('i18n allows switching between English, Chinese and Japanese and persists',
   await expect(
     page.getByRole('button', { name: '整理唱片架', exact: true }),
   ).toBeVisible()
-  await expect(page.getByRole('button', { name: '添加唱片' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '添加专辑' })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh')
 
   // Switch to Japanese
