@@ -51,9 +51,42 @@
   left: calc(var(--case-depth) / -2);
   width: var(--case-depth);
 }
+.case-hinge {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--case-width) - var(--case-height));
+  transform: translateZ(calc(var(--case-depth) / 2 + 1px));
+  backface-visibility: hidden;
+  border: 5px solid;
+  border-color: #f0f5eacc #8fa4a199 #829995aa #e3ecdecc;
+  background:
+    linear-gradient(135deg, #ffffff66, #b6c3c526 45%, #e9f1ea55),
+    repeating-linear-gradient(90deg, #ffffff55 0 1px, #6d858329 1px 3px, #c8d7cc66 3px 6px);
+  box-shadow:
+    inset 1px 1px 0 #ffffffee,
+    inset -1px -1px 0 #4c686580,
+    0 2px 0 #9aab9a99,
+    1px 5px 0 -1px #71857166,
+    3px 8px 10px #303f2f33;
+  pointer-events: none;
+}
+.lid-front,
+.lid-inside {
+  /* 左侧铰链条固定在盒体上，只有右侧方形盒盖参与开合。 */
+  left: calc(var(--case-width) - var(--case-height));
+}
 .case-lid {
   transform: translateZ(calc(var(--case-depth) / 2));
   pointer-events: none;
+}
+.case-lid::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--case-width) - var(--case-height));
+  background:
+    linear-gradient(#f0f5eacc, #8fa4a199) top / 100% 4px no-repeat,
+    linear-gradient(#e3ecdecc, #829995aa) bottom / 100% 4px no-repeat;
 }
 .lid-front {
   pointer-events: auto;
@@ -73,13 +106,8 @@
   transform: translateZ(2px);
 }
 .tray-back {
+  --disc-center-x: calc(50% - (var(--case-width) - var(--case-height)) / 2);
   transform: rotateY(180deg) translateZ(2px);
-  padding-left: 0;
-  padding-right: calc(var(--case-width) - var(--case-height));
-}
-.tray-back .tray-ring,
-.tray-back .tray-hub {
-  left: calc(50% - (var(--case-width) - var(--case-height)) / 2);
 }
 .tray-hub {
   pointer-events: none;
@@ -134,7 +162,7 @@
   bottom: 3px;
   right: 8px;
   font-size: 7px;
-  color: #d1d4c4;
+  color: #52635e;
   letter-spacing: 1px;
 }
 .disc-selector {

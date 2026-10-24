@@ -16,6 +16,8 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
         }
         return {
           box: size(element),
+          hinge: size(element.querySelector('.case-hinge')!),
+          lid: size(element.querySelector('.lid-front')!),
           booklet: size(element.querySelector('.lid-front img')!),
           bookletBack: size(element.querySelector('.lid-inside img')!),
           back: size(element.querySelector('.case-rear img')!),
@@ -33,6 +35,9 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
         expect(Math.abs(length - mm * unitsPerMm)).toBeLessThan(1 / 32)
       }
       expectLength(dimensions.box.width, 142)
+      expectLength(dimensions.hinge.width, 17)
+      expectLength(dimensions.hinge.height, 125)
+      expectLength(dimensions.lid.width, 125)
       for (const paper of [dimensions.booklet, dimensions.bookletBack, dimensions.disc]) {
         expect(paper.width / paper.height).toBeCloseTo(1, 4)
         expectLength(paper.height, 120)
@@ -55,7 +60,12 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
         }
         if (view === 'Front') {
           const booklet = (await page.locator('.lid-front img').boundingBox())!
+          const hinge = (await page.locator('.case-hinge').boundingBox())!
+          const lid = (await page.locator('.lid-front').boundingBox())!
+          expect(Math.abs(hinge.x + hinge.width - lid.x)).toBeLessThan(1)
+          expect(booklet.x).toBeGreaterThan(hinge.x + hinge.width)
           expect(booklet.width / booklet.height).toBeCloseTo(1, 3)
+          await page.screenshot({ path: `test-results/case-front-${viewport.width}-${reducedMotion}.png` })
         }
       }
       await page.screenshot({ path: `test-results/case-dimensions-${viewport.width}-${reducedMotion}.png` })

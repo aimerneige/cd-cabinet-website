@@ -82,6 +82,7 @@ export const CDCase = forwardRef<
             ? `DISC ${discs.findIndex((item) => item.id === selected.id) + 1} / ${discs.length}`
             : ''}
         </span>
+        <div className="case-hinge" aria-hidden="true" />
         <div className="case-lid">
           <div className="lid-front">
             <img
