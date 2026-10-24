@@ -807,7 +807,7 @@ footer i {
   position: absolute;
   inset: 0;
   transform: translateZ(7px);
-  transform-origin: left center;
+  transform-origin: calc((var(--case-width) - var(--case-height)) / 2) center;
   transform-style: preserve-3d;
   will-change: transform;
 }
