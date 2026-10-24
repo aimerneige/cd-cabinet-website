@@ -20,3 +20,27 @@ export async function dismissArtworkAlert(page: Page, message: string) {
   await dialog.getByRole('button', { name: 'OK', exact: true }).click()
   await expect(dialog).toHaveCount(0)
 }
+
+export async function selectBookletPage(page: Page, number: number) {
+  await page.getByRole('combobox', { name: 'Choose an inner page to edit', exact: true }).selectOption({ index: number - 1 })
+}
+
+export async function bookletImages(page: Page, count: number) {
+  const picker = page.getByRole('combobox', { name: 'Choose an inner page to edit', exact: true })
+  await expect(picker.locator('option')).toHaveCount(count)
+  const sources: string[] = []
+  for (let number = 1; number <= count; number += 1) {
+    await selectBookletPage(page, number)
+    await expect(page.locator('.booklet-pages-editor li')).toHaveCount(1)
+    sources.push((await page.locator('.booklet-pages-editor li img').getAttribute('src'))!)
+  }
+  return sources
+}
+
+export async function discardEditor(page: Page) {
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  const confirmation = page.getByRole('alertdialog', { name: 'Discard unsaved changes?', exact: true })
+  await expect(confirmation).toBeVisible()
+  await confirmation.getByRole('button', { name: 'Discard changes', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+}

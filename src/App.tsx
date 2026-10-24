@@ -99,7 +99,7 @@ export default function App() {
           </span>
         </div>
       </header>
-      <main>
+      <main hidden={!!editor}>
         <section className="collection-heading">
           <div>
             <span className="eyebrow">{t('hero.eyebrow')}</span>

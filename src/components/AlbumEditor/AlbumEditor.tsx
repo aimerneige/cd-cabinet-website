@@ -15,6 +15,7 @@ import { BookletPagesEditor } from './BookletPagesEditor'
 import { ArtworkCropper } from './ArtworkCropper'
 import { ArtworkAlert } from './ArtworkAlert'
 import { DeleteAlbumDialog } from './DeleteAlbumDialog'
+import { UnsavedChangesDialog } from './UnsavedChangesDialog'
 import './AlbumEditor.css'
 
 export function AlbumEditor({
@@ -27,7 +28,8 @@ export function AlbumEditor({
   onDeleted: (id: string) => void
 }) {
   const { t } = useTranslation()
-  const dialog = useRef<HTMLDialogElement>(null)
+  const initialScrollY = useRef(window.scrollY)
+  const returnFrame = useRef<number | null>(null)
   const [draftId] = useState(
     () => album?.id ?? crypto.randomUUID?.() ??
       `album-${crypto.getRandomValues(new Uint32Array(2)).join('-')}`,
@@ -78,6 +80,7 @@ export function AlbumEditor({
   const [readingAudio, setReadingAudio] = useState(false)
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmLeave, setConfirmLeave] = useState(false)
   const pendingUploads = useRef(0)
   const cropSequence = useRef(0)
   const cropResolver = useRef<((result: ArtworkCropResult | null) => void) | null>(null)
@@ -99,24 +102,44 @@ export function AlbumEditor({
   }
   const coverUrl = cover || (coverStyle ? generateCover(artworkDetails, coverStyle) : '')
   const previewAlbum = { ...artworkDetails, coverUrl, bookletBackUrl: bookletBack, backInsideUrl: backInside, spineUrl: spine, rightSpineUrl: rightSpine, backCoverUrl: backCover, obiUrl: obi }
+  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, coverStyle, cover, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
+  const initialDraft = useRef(draftValues)
+  // 比较不可变状态的引用，避免每次输入都重新序列化高清图片和音频。
+  const dirty = draftValues.some((value, index) => !Object.is(value, initialDraft.current[index]))
+
+  function requestClose() {
+    if (saving || loading) return
+    if (dirty) setConfirmLeave(true)
+    else onClose()
+  }
+
+  useEffect(() => {
+    if (!dirty && !loading) return
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', beforeUnload)
+    return () => window.removeEventListener('beforeunload', beforeUnload)
+  }, [dirty, loading])
 
   useEffect(() => {
     alive.current = true
+    if (returnFrame.current !== null) cancelAnimationFrame(returnFrame.current)
     const previous = album
       ? document.querySelector<HTMLButtonElement>(
           `[data-album-id="${album.id}"]`,
         )
-      : (document.activeElement as HTMLElement | null)
-    const overflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    dialog.current!.showModal()
+      : document.querySelector<HTMLButtonElement>('.add-recording')
+    const scrollY = initialScrollY.current
+    window.scrollTo(0, 0)
     return () => {
       alive.current = false
       cropResolver.current?.(null)
       cropResolver.current = null
-      document.body.style.overflow = overflow
-      requestAnimationFrame(() => {
+      returnFrame.current = requestAnimationFrame(() => {
         const target = previous?.isConnected ? previous : document.querySelector<HTMLButtonElement>('.add-recording')
+        window.scrollTo(0, scrollY)
         target?.focus({ preventScroll: true })
       })
     }
@@ -362,32 +385,26 @@ export function AlbumEditor({
   }
 
   return (
-    <dialog
-      ref={dialog}
+    <main
       className="album-editor"
       style={{ '--spine-preview-width': `${caseDepth / 2}px` } as CSSProperties}
       aria-labelledby="editor-title"
       onKeyDown={(event) => event.stopPropagation()}
-      onCancel={(event) => {
-        event.preventDefault()
-        if (!saving) onClose()
-      }}
     >
       <form onSubmit={submit}>
         <div className="editor-heading">
           <div>
             <span className="eyebrow">{t('editor.eyebrow')}</span>
-            <h2 id="editor-title">
+            <h1 id="editor-title">
               {album ? t('editor.editTitle') : t('editor.addTitle')}
-            </h2>
+            </h1>
           </div>
           <button
             type="button"
-            onClick={onClose}
-            disabled={saving}
-            aria-label={t('editor.closeAria')}
+            onClick={requestClose}
+            disabled={saving || loading}
           >
-            ×
+            <span aria-hidden="true">← </span>{t('editor.backToCollection')}
           </button>
         </div>
         <div className="random-cover-controls">
@@ -605,9 +622,9 @@ export function AlbumEditor({
           </p>
         )}
         <div className="editor-footer">
-          <span>{readingAudio ? t('editor.readingAudio') : loading ? t('editor.readingArtwork') : t('editor.savedNotice')}</span>
+          <span>{readingAudio ? t('editor.readingAudio') : loading ? t('editor.readingArtwork') : dirty || !album ? t('editor.unsavedNotice') : t('editor.savedNotice')}</span>
           <div>
-            <button type="button" onClick={onClose} disabled={saving}>
+            <button type="button" onClick={requestClose} disabled={saving || loading}>
               {t('editor.cancel')}
             </button>
             <button
@@ -625,6 +642,7 @@ export function AlbumEditor({
         </div>
         {album && <button type="button" className="delete-recording" disabled={loading || readingAudio || saving} onClick={() => setConfirmDelete(true)}>{t('deleteAlbum.action')}</button>}
       </form>
+      {confirmLeave && <UnsavedChangesDialog onKeepEditing={() => setConfirmLeave(false)} onDiscard={onClose} />}
       {confirmDelete && album && <DeleteAlbumDialog album={album} onCancel={() => setConfirmDelete(false)} onConfirm={async () => {
         await deleteAlbum(album.id)
         onDeleted(album.id)
@@ -632,6 +650,6 @@ export function AlbumEditor({
       }} />}
       {cropRequest && <ArtworkCropper key={cropRequest.id} {...cropRequest} onComplete={finishCrop} />}
       {artworkAlert && <ArtworkAlert {...artworkAlert} onClose={() => setArtworkAlert(null)} />}
-    </dialog>
+    </main>
   )
 }

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { confirmCrop, dismissArtworkAlert } from './helpers/artwork'
+import { bookletImages, confirmCrop, discardEditor, dismissArtworkAlert, selectBookletPage } from './helpers/artwork'
 
 async function image(page: Page, color: string) {
   const source = await page.evaluate((fill) => {
@@ -100,15 +100,16 @@ test('mixed booklet pages can be ordered, read on a phone and deleted without le
     { ...scan.file, name: 'First scan.png' }, { ...other.file, name: 'Second scan.png' },
   ])
   await confirmCrop(page, 2)
-  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(2)
-  const croppedScan = (await page.locator('.booklet-pages-editor li img').first().getAttribute('src'))!
+  const [croppedScan] = await bookletImages(page, 2)
   await page.getByRole('button', { name: 'Add text page', exact: true }).click()
   await page.getByRole('textbox', { name: 'Page 3 title', exact: true }).fill('Words')
   const lyrics = '<b>First line & 回声</b>\n\n' + '夜の音 — another verse\n'.repeat(100) + 'Last verse'
   await page.getByRole('textbox', { name: 'Page 3 text / lyrics', exact: true }).fill(lyrics)
   await page.getByRole('button', { name: 'Move page 3 up', exact: true }).click()
   await expect(page.getByRole('textbox', { name: 'Page 2 title', exact: true })).toHaveValue('Words')
+  await selectBookletPage(page, 3)
   await page.getByRole('button', { name: 'Remove page 3', exact: true }).click()
+  await selectBookletPage(page, 1)
   await page.getByRole('button', { name: 'Move page 1 down', exact: true }).click()
   await page.getByRole('button', { name: 'Add recording', exact: true }).click()
   await expect(page.locator('.album-editor')).toHaveCount(0)
@@ -137,6 +138,7 @@ test('mixed booklet pages can be ordered, read on a phone and deleted without le
   await expect(page.getByRole('button', { name: 'Read booklet', exact: true })).toBeFocused()
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await expect(page.getByRole('textbox', { name: 'Page 1 text / lyrics', exact: true })).toHaveValue(lyrics)
+  await selectBookletPage(page, 2)
   await page.getByRole('button', { name: 'Remove page 2', exact: true }).click()
   await page.getByRole('button', { name: 'Save changes', exact: true }).click()
   await expect(page.locator('.album-editor')).toHaveCount(0)
@@ -160,10 +162,10 @@ test('an entire booklet imports as ordered covers and inner pages with direct pa
   for (const color of ['#aa3344', '#339955', '#335599', '#ccaa44']) files.push((await image(page, color)).file)
   await page.getByLabel('Import entire booklet', { exact: true }).setInputFiles(files.map((file, index) => ({ ...file, name: `scan-${index + 1}.png` })))
   await confirmCrop(page, 4)
-  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(2)
+  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(1)
   const front = (await page.getByRole('img', { name: 'Cover preview', exact: true }).getAttribute('src'))!
   const back = (await page.getByRole('img', { name: 'Booklet reverse preview', exact: true }).getAttribute('src'))!
-  const inner = await page.locator('.booklet-pages-editor li img').evaluateAll((images) => images.map((image) => (image as HTMLImageElement).src))
+  const inner = await bookletImages(page, 2)
   expect(new Set([front, ...inner, back]).size).toBe(4)
   await page.getByLabel('Import entire booklet', { exact: true }).setInputFiles(files.slice(0, 2))
   await expect(page.getByRole('dialog', { name: 'Crop image', exact: true })).toBeVisible()
@@ -171,7 +173,7 @@ test('an entire booklet imports as ordered covers and inner pages with direct pa
   await expect(page.getByRole('dialog', { name: 'Crop image', exact: true }).getByRole('status')).toHaveText('Image 2 of 2')
   await page.keyboard.press('Escape')
   await expect(page.locator('.artwork-cropper')).toHaveCount(0)
-  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(2)
+  await expect(page.getByRole('combobox', { name: 'Choose an inner page to edit', exact: true }).locator('option')).toHaveCount(2)
   await expect(page.getByRole('img', { name: 'Cover preview', exact: true })).toHaveAttribute('src', front)
   await page.getByRole('button', { name: 'Add recording', exact: true }).click()
   await expect(page.locator('.album-editor')).toHaveCount(0)
@@ -202,13 +204,13 @@ test('the cover upload imports twelve booklet pages and thumbnails navigate ever
   }
   await coverUpload.setInputFiles(files)
   await confirmCrop(page, 12)
-  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(10)
+  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(1)
   await expect(page.locator('.booklet-page-count')).toHaveText('12 pages including the front and back covers')
   const frontPreview = page.getByRole('img', { name: 'Cover preview', exact: true })
   const backPreview = page.getByRole('img', { name: 'Booklet reverse preview', exact: true })
   const front = (await frontPreview.getAttribute('src'))!
   const back = (await backPreview.getAttribute('src'))!
-  const inner = await page.locator('.booklet-pages-editor li img').evaluateAll((images) => images.map((image) => (image as HTMLImageElement).src))
+  const inner = await bookletImages(page, 10)
   expect(new Set([front, ...inner, back]).size).toBe(12)
 
   await coverUpload.setInputFiles(files.slice(0, 2))
@@ -225,7 +227,7 @@ test('the cover upload imports twelve booklet pages and thumbnails navigate ever
   const replacement = (await frontPreview.getAttribute('src'))!
   expect(replacement).not.toBe(front)
   await expect(backPreview).toHaveAttribute('src', back)
-  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(10)
+  await expect(page.getByRole('combobox', { name: 'Choose an inner page to edit', exact: true }).locator('option')).toHaveCount(10)
   await page.getByRole('button', { name: 'Add recording', exact: true }).click()
   await expect(page.locator('.album-editor')).toHaveCount(0)
   await page.reload()
@@ -284,7 +286,7 @@ test('invalid booklet image batches and failed saves leave no partial pages or d
   })
   await page.getByRole('button', { name: 'Add recording', exact: true }).click()
   await expect(page.locator('.editor-error')).toContainText('could not be saved')
-  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await discardEditor(page)
   await page.reload()
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
   expect(await page.evaluate(() => new Promise<number>((resolve, reject) => {

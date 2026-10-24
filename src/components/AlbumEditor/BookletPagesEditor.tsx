@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { BookletPage } from '../../types/album'
 import { useTranslation } from '../../i18n'
 
@@ -9,6 +10,15 @@ export function BookletPagesEditor({ pages, onChange, onUpload, onImport, disabl
   disabled: boolean
 }) {
   const { t } = useTranslation()
+  const [activeId, setActiveId] = useState(pages[0]?.id ?? '')
+  const previousIds = useRef(new Set(pages.map((page) => page.id)))
+  const index = Math.max(0, pages.findIndex((page) => page.id === activeId))
+  const page = pages[index]
+  useEffect(() => {
+    const added = pages.find((item) => !previousIds.current.has(item.id))
+    if (added) setActiveId(added.id)
+    previousIds.current = new Set(pages.map((item) => item.id))
+  }, [pages])
   function move(index: number, direction: number) {
     const next = [...pages]
     const [page] = next.splice(index, 1)
@@ -38,21 +48,32 @@ export function BookletPagesEditor({ pages, onChange, onUpload, onImport, disabl
         </label>
         <button type="button" onClick={() => onChange([...pages, { id: crypto.randomUUID?.() ?? `page-${crypto.getRandomValues(new Uint32Array(2)).join('-')}`, title: '', text: '' }])}>{t('booklet.addTextPage')}</button>
       </div>
-      <ol>
-        {pages.map((page, index) => (
+      {page ? <>
+        <nav className="booklet-edit-navigation" aria-label={t('booklet.editNavigation')}>
+          <button type="button" disabled={disabled || index === 0} onClick={() => setActiveId(pages[index - 1].id)}>{t('booklet.previous')}</button>
+          <label>{t('booklet.chooseEditPage')}<select aria-label={t('booklet.chooseEditPage')} value={page.id} onChange={(event) => setActiveId(event.target.value)}>
+            {pages.map((item, number) => <option key={item.id} value={item.id}>{number + 1} · {item.title || t('booklet.pageNumber', { number: number + 1 })}</option>)}
+          </select><small aria-live="polite">{index + 1} / {pages.length}</small></label>
+          <button type="button" disabled={disabled || index === pages.length - 1} onClick={() => setActiveId(pages[index + 1].id)}>{t('booklet.next')}</button>
+        </nav>
+        <ol start={index + 1}>
           <li key={page.id}>
             <div className="booklet-page-actions">
               <strong>{t('booklet.pageNumber', { number: index + 1 })}</strong>
               <button type="button" disabled={disabled || index === 0} aria-label={t('booklet.moveUp', { number: index + 1 })} onClick={() => move(index, -1)}>↑</button>
               <button type="button" disabled={disabled || index === pages.length - 1} aria-label={t('booklet.moveDown', { number: index + 1 })} onClick={() => move(index, 1)}>↓</button>
-              <button type="button" aria-label={t('booklet.removePage', { number: index + 1 })} onClick={() => onChange(pages.filter((item) => item.id !== page.id))}>×</button>
+              <button type="button" aria-label={t('booklet.removePage', { number: index + 1 })} onClick={() => {
+                const next = pages.filter((item) => item.id !== page.id)
+                setActiveId(next[Math.min(index, next.length - 1)]?.id ?? '')
+                onChange(next)
+              }}>×</button>
             </div>
             {page.imageUrl && <img src={page.imageUrl} alt={t('booklet.pageNumber', { number: index + 1 })} />}
             <label>{t('booklet.pageTitle', { number: index + 1 })}<input maxLength={100} value={page.title} onChange={(event) => onChange(pages.map((item) => item.id === page.id ? { ...item, title: event.target.value } : item))} /></label>
             <label>{t('booklet.pageText', { number: index + 1 })}<textarea rows={6} value={page.text} onChange={(event) => onChange(pages.map((item) => item.id === page.id ? { ...item, text: event.target.value } : item))} /></label>
           </li>
-        ))}
-      </ol>
+        </ol>
+      </> : <p>{t('booklet.emptyPages')}</p>}
     </fieldset>
   )
 }

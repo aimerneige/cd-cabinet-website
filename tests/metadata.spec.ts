@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { discardEditor } from './helpers/artwork'
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -90,7 +91,7 @@ test('mainstream genres are available and custom genres persist, filter and can 
   await page.getByRole('button', { name: 'Add recording' }).click()
   await page.getByRole('button', { name: 'Add custom genre' }).click()
   await page.getByRole('textbox', { name: 'Custom genre', exact: true }).fill('Unsaved Genre')
-  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await discardEditor(page)
   await page.getByRole('button', { name: 'Add recording' }).click()
   await expect(genre.getByRole('option', { name: 'Unsaved Genre', exact: true })).toHaveCount(0)
 })

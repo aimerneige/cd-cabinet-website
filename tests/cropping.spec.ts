@@ -1,5 +1,5 @@
 import { test, expect, type Locator, type Page } from '@playwright/test'
-import { confirmCrop, dismissArtworkAlert } from './helpers/artwork'
+import { confirmCrop, dismissArtworkAlert, selectBookletPage } from './helpers/artwork'
 
 async function draft(page: Page) {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -182,9 +182,10 @@ test('booklet crops are confirmed individually and cancelling a batch preserves 
   await expect(page.getByRole('textbox', { name: 'Page 1 title', exact: true })).toHaveValue('Existing lyrics')
   await page.getByLabel('Upload booklet pages', { exact: true }).setInputFiles(files)
   await confirmCrop(page, 2)
-  await expect(page.locator('.booklet-pages-editor li')).toHaveCount(3)
-  for (const image of await page.locator('.booklet-pages-editor li img').all()) {
-    const result = await pixels(image)
+  await expect(page.getByRole('combobox', { name: 'Choose an inner page to edit', exact: true }).locator('option')).toHaveCount(3)
+  for (const number of [2, 3]) {
+    await selectBookletPage(page, number)
+    const result = await pixels(page.locator('.booklet-pages-editor li img'))
     expect(result.width).toBe(result.height)
   }
 })

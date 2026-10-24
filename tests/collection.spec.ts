@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { confirmCrop, dismissArtworkAlert } from './helpers/artwork'
+import { confirmCrop, discardEditor, dismissArtworkAlert } from './helpers/artwork'
 
 test('opens the case, reverses it, restores focus and the original slot', async ({
   page,
@@ -329,7 +329,7 @@ test('uploaded artwork, multi-disc additions and edits survive a reload', async 
     .getByRole('button', { name: 'Edit recording', exact: true })
     .click()
   await expect(
-    page.getByRole('dialog', { name: 'Edit recording', exact: true }),
+    page.getByRole('main', { name: 'Edit recording', exact: true }),
   ).toBeVisible()
   await page
     .getByRole('textbox', { name: 'Album title', exact: true })
@@ -721,7 +721,7 @@ test('a failed save reports the error and rolls back uploaded artwork', async ({
   await expect(page.locator('.editor-error')).toContainText('could not be saved')
   await expect(page.locator('.collection-storage-note')).toContainText('could not be saved')
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
-  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await discardEditor(page)
   await page.reload()
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
   expect(await page.evaluate(() => new Promise<number>((resolve, reject) => {
@@ -749,7 +749,7 @@ test('the artwork editor fits a phone and restores focus on cancel', async ({
   await page
     .getByRole('button', { name: 'Edit recording', exact: true })
     .click()
-  const editor = page.getByRole('dialog', {
+  const editor = page.getByRole('main', {
     name: 'Edit recording',
     exact: true,
   })

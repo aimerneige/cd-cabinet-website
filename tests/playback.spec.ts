@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import type { Page } from '@playwright/test'
+import { discardEditor } from './helpers/artwork'
 
 function wave(seconds: number) {
   const sampleRate = 8000
@@ -203,7 +204,7 @@ test('invalid audio batches are rejected together and cancelling does not save f
   await page.locator('.editor-audio').scrollIntoViewIfNeeded()
   await page.screenshot({ path: 'test-results/audio-editor-mobile.png' })
   expect(await page.locator('.album-editor').evaluate((dialog) => dialog.scrollWidth <= dialog.clientWidth)).toBe(true)
-  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await discardEditor(page)
   await page.reload()
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
 })
@@ -221,7 +222,7 @@ test('a failed save rolls back uploaded audio and the collection together', asyn
   })
   await page.getByRole('button', { name: 'Add recording', exact: true }).click()
   await expect(page.locator('.editor-error')).toContainText('could not be saved')
-  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await discardEditor(page)
   await page.reload()
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
   expect(await page.evaluate(() => new Promise<number>((resolve, reject) => {
