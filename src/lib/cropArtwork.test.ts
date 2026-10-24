@@ -1,10 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import { albums } from '../data/albums'
 import { withDiscCount } from './album'
-import { getArtworkCrop, getCropOutputSize, getSpineCrop, type ArtworkKind } from './cropArtwork'
+import { getArtworkCrop, getCropOutputSize, getRotatedSize, getSpineCrop, type ArtworkKind } from './cropArtwork'
 import { getObiLayout } from './obi'
 
 describe('artwork crop dimensions', () => {
+  it.each([
+    [0, 900, 600],
+    [90, 600, 900],
+    [-90, 600, 900],
+    [180, 900, 600],
+    [45, 1500 / Math.sqrt(2), 1500 / Math.sqrt(2)],
+    [30, 450 * Math.sqrt(3) + 300, 450 + 300 * Math.sqrt(3)],
+  ])('uses the rotated image bounds at %i degrees', (rotation, width, height) => {
+    const size = getRotatedSize(900, 600, rotation)
+    expect(size.width).toBeCloseTo(width, 8)
+    expect(size.height).toBeCloseTo(height, 8)
+  })
+
   it('locks booklet and disc images to a square, with a circular disc guide', () => {
     const kinds: ArtworkKind[] = ['cover', 'bookletBack', 'disc', 'page']
     for (const kind of kinds) {

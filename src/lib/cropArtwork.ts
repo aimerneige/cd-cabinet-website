@@ -39,13 +39,30 @@ export function getCropOutputSize(area: Pick<Area, 'width' | 'height'>, profile:
   return { width: Math.max(1, Math.round(profile.width * scale)), height: Math.max(1, Math.round(profile.height * scale)) }
 }
 
-export function cropArtwork(image: HTMLImageElement, area: Area, profile: ArtworkCrop): string {
+export function getRotatedSize(width: number, height: number, rotation: number) {
+  const radians = rotation * Math.PI / 180
+  return {
+    width: Math.abs(Math.cos(radians) * width) + Math.abs(Math.sin(radians) * height),
+    height: Math.abs(Math.sin(radians) * width) + Math.abs(Math.cos(radians) * height),
+  }
+}
+
+export function cropArtwork(image: HTMLImageElement, area: Area, profile: ArtworkCrop, rotation = 0): string {
   const canvas = document.createElement('canvas')
   const size = getCropOutputSize(area, profile)
   canvas.width = size.width
   canvas.height = size.height
   const context = canvas.getContext('2d')
   if (!context) throw new Error('Canvas is unavailable.')
-  context.drawImage(image, area.x, area.y, area.width, area.height, 0, 0, size.width, size.height)
+  if (rotation === 0) {
+    context.drawImage(image, area.x, area.y, area.width, area.height, 0, 0, size.width, size.height)
+  } else {
+    const bounds = getRotatedSize(image.naturalWidth, image.naturalHeight, rotation)
+    // 裁剪坐标基于旋转后的包围盒；直接绘入输出画布，避免为高清原图再分配一张大画布。
+    context.scale(size.width / area.width, size.height / area.height)
+    context.translate(bounds.width / 2 - area.x, bounds.height / 2 - area.y)
+    context.rotate(rotation * Math.PI / 180)
+    context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2)
+  }
   return canvas.toDataURL('image/png')
 }

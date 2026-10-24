@@ -38,8 +38,27 @@ async function pixels(preview: Locator) {
       width: canvas.width, height: canvas.height,
       corner: [...context.getImageData(2, 2, 1, 1).data],
       center: [...context.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1).data],
+      quadrants: [[.25, .25], [.75, .25], [.25, .75], [.75, .75]].map(([x, y]) =>
+        [...context.getImageData(Math.floor(canvas.width * x), Math.floor(canvas.height * y), 1, 1).data]),
+      offAxis: [[.75, .55], [.75, .7]].map(([x, y]) =>
+        [...context.getImageData(Math.floor(canvas.width * x), Math.floor(canvas.height * y), 1, 1).data]),
     }
   })
+}
+
+async function quadrantImage(page: Page) {
+  const source = await page.evaluate(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 900
+    canvas.height = 600
+    const context = canvas.getContext('2d')!
+    for (const [index, color] of ['#ff0000', '#00ff00', '#0000ff', '#ffff00'].entries()) {
+      context.fillStyle = color
+      context.fillRect(index % 2 * 450, Math.floor(index / 2) * 300, 450, 300)
+    }
+    return canvas.toDataURL('image/png')
+  })
+  return { name: 'quadrants.png', mimeType: 'image/png', buffer: Buffer.from(source.split(',')[1], 'base64') }
 }
 
 async function setSpineWidth(page: Page, width: number) {
@@ -177,9 +196,11 @@ test('booklet crops are confirmed individually and cancelling a batch preserves 
   const zoom = dialog.getByRole('slider', { name: 'Zoom', exact: true })
   await zoom.focus()
   await page.keyboard.press('End')
+  await dialog.getByRole('slider', { name: 'Rotation', exact: true }).fill('90')
   await dialog.getByRole('button', { name: 'Use crop', exact: true }).click()
   await expect(dialog.getByRole('status')).toHaveText('Image 2 of 2')
   await expect(zoom).toHaveValue('1')
+  await expect(dialog.getByRole('slider', { name: 'Rotation', exact: true })).toHaveValue('0')
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
   await expect(page.locator('.booklet-pages-editor li')).toHaveCount(1)
@@ -191,6 +212,83 @@ test('booklet crops are confirmed individually and cancelling a batch preserves 
     await selectBookletPage(page, number)
     const result = await pixels(page.locator('.booklet-pages-editor li img'))
     expect(result.width).toBe(result.height)
+  }
+})
+
+test('rotation controls change exported pixels, reset orientation and preserve the result after reload', async ({ page }) => {
+  await draft(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+  const file = await quadrantImage(page)
+  await page.getByLabel('Upload cover artwork', { exact: true }).setInputFiles(file)
+  const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
+  const rotation = dialog.getByRole('slider', { name: 'Rotation', exact: true })
+  const zoom = dialog.getByRole('slider', { name: 'Zoom', exact: true })
+  await expect(rotation).toHaveValue('0')
+  await dialog.getByRole('button', { name: 'Rotate left 90°', exact: true }).click()
+  await expect(rotation).toHaveValue('-90')
+  await dialog.getByRole('button', { name: 'Rotate right 90°', exact: true }).click()
+  await expect(rotation).toHaveValue('0')
+  await rotation.fill('33')
+  await expect.poll(() => dialog.locator('.reactEasyCrop_Image').evaluate((image) => (image as HTMLElement).style.transform)).toContain('rotate(33deg)')
+  await dialog.getByRole('button', { name: 'Reset crop', exact: true }).click()
+  await expect(rotation).toHaveValue('0')
+  await expect(zoom).toHaveValue('1')
+  await rotation.fill('33')
+  await zoom.fill('2')
+  await dialog.screenshot({ path: 'test-results/rotation-crop-mobile.png' })
+  expect(await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true)
+  await confirmCrop(page)
+  const preview = page.getByRole('img', { name: 'Cover preview', exact: true })
+  const tilted = await pixels(preview)
+  expect(tilted.width).toBe(tilted.height)
+  expect(tilted.offAxis).toEqual([[0, 255, 0, 255], [255, 255, 0, 255]])
+  await page.getByLabel('Upload cover artwork', { exact: true }).setInputFiles(file)
+  await expect(rotation).toHaveValue('0')
+  await dialog.getByRole('button', { name: 'Rotate right 90°', exact: true }).click()
+  await confirmCrop(page)
+  expect((await pixels(preview)).quadrants).toEqual([
+    [0, 0, 255, 255], [255, 0, 0, 255], [255, 255, 0, 255], [0, 255, 0, 255],
+  ])
+  const source = (await preview.getAttribute('src'))!
+  await page.getByLabel('Upload cover artwork', { exact: true }).setInputFiles(file)
+  await dialog.getByRole('button', { name: 'Rotate left 90°', exact: true }).click()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+  await expect(preview).toHaveAttribute('src', source)
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Cropped Session by Crop Artist', exact: true }).click()
+  await expect(page.locator('.lid-front img')).toHaveAttribute('src', source)
+})
+
+test('rotation preserves the crop ratio and pixel orientation for every packaging image', async ({ page }) => {
+  await draft(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+  const file = await quadrantImage(page)
+  await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
+  for (const [upload, alt] of [
+    ['Upload booklet back cover', 'Booklet reverse preview'],
+    ['Upload back cover artwork', 'Back cover preview'],
+    ['Upload inside back cover', 'Back cover inside preview'],
+    ['Upload spine artwork', 'Spine preview'],
+    ['Upload right spine artwork', 'Right spine preview'],
+    ['Upload OBI paper strip', 'OBI preview'],
+    ['Upload disc artwork', 'Disc preview'],
+  ]) {
+    await page.getByLabel(upload, { exact: true }).setInputFiles(file)
+    const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
+    const frame = (await dialog.locator('.reactEasyCrop_CropArea').boundingBox())!
+    const ratio = frame.width / frame.height
+    await dialog.getByRole('button', { name: 'Rotate left 90°', exact: true }).click()
+    const rotatedFrame = (await dialog.locator('.reactEasyCrop_CropArea').boundingBox())!
+    expect(rotatedFrame.width / rotatedFrame.height).toBeCloseTo(ratio, 3)
+    await confirmCrop(page)
+    const result = await pixels(page.getByRole('img', { name: alt, exact: true }))
+    expect(Math.abs(result.width - result.height * ratio)).toBeLessThanOrEqual(1)
+    expect(result.quadrants, upload).toEqual([
+      [0, 255, 0, 255], [255, 255, 0, 255], [255, 0, 0, 255], [0, 0, 255, 255],
+    ])
   }
 })
 
