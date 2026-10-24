@@ -807,7 +807,8 @@ footer i {
   position: absolute;
   inset: 0;
   transform: translateZ(7px);
-  transform-origin: calc((var(--case-width) - var(--case-height)) / 2) center;
+  /* 轴心略向盒脊收回，参考实物照片为展开的铰链臂保留约 3 mm 窄缝。 */
+  transform-origin: calc((var(--case-width) - var(--case-height)) / 2 - var(--case-height) * 1.5 / 125) center;
   transform-style: preserve-3d;
   will-change: transform;
 }

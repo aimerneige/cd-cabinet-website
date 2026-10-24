@@ -50,12 +50,15 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
       expect(dimensions.edge.width).toBeCloseTo(dimensions.box.width, 2)
       expect(dimensions.spine.height).toBeCloseTo(dimensions.box.height, 2)
       expectLength(dimensions.obi.height, 125)
-      async function expectConnectedLid() {
+      async function expectLidClearance() {
         const lid = (await page.locator('.lid-inside').boundingBox())!
         const hinge = (await page.locator('.case-hinge').boundingBox())!
-        expect(Math.abs(lid.x + lid.width - hinge.x)).toBeLessThan(hinge.width / 17 + 1)
+        const gap = hinge.x - lid.x - lid.width
+        const pixelsPerMm = hinge.width / 17
+        expect(gap).toBeGreaterThan(2 * pixelsPerMm)
+        expect(gap).toBeLessThan(4 * pixelsPerMm + 1)
       }
-      await expectConnectedLid()
+      await expectLidClearance()
       for (const view of ['Back', 'Front', 'Back', 'Inside']) {
         await page.getByRole('button', { name: view, exact: true }).click()
         await expect(page.getByRole('button', { name: view, exact: true })).toHaveAttribute('aria-pressed', 'true')
@@ -73,7 +76,7 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
           expect(booklet.width / booklet.height).toBeCloseTo(1, 3)
           await page.screenshot({ path: `test-results/case-front-${viewport.width}-${reducedMotion}.png` })
         }
-        if (view === 'Inside') await expectConnectedLid()
+        if (view === 'Inside') await expectLidClearance()
       }
       await page.screenshot({ path: `test-results/case-dimensions-${viewport.width}-${reducedMotion}.png` })
       await page.getByRole('button', { name: 'Close album', exact: true }).click()
