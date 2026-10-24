@@ -135,7 +135,7 @@ export const zh: Record<keyof typeof en, string> = {
   'editor.discardChanges': '放弃修改',
   'editor.coverArtwork': '歌词本封面（合盒正面）',
   'editor.randomCover': '换一个',
-  'editor.randomCoverGuidance': '默认生成随机封面及配套的盘面、封底和侧标纸带。不满意可以换一个，也可以上传图片单独替换。',
+  'editor.randomCoverGuidance': '只需上传封面，即可根据封面配色自动生成盘面、封底、侧脊和 OBI 纸带。单独上传的图片会保留，也可以尝试随机封面。',
   'editor.uploadCoverAria': '上传唱片封面',
   'editor.coverPreviewAlt': '封面预览',
   'editor.spineArtwork': '左侧脊图案',

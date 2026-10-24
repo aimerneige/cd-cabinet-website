@@ -1,5 +1,21 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { confirmCrop } from './helpers/artwork'
+
+async function coverFile(page: Page, color: string) {
+  const source = await page.evaluate((fill) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 64
+    const context = canvas.getContext('2d')!
+    context.fillStyle = fill
+    context.fillRect(0, 0, 64, 64)
+    context.fillStyle = '#ffffff'
+    context.fillRect(48, 0, 16, 64)
+    context.fillStyle = '#000000'
+    context.fillRect(50, 8, 12, 4)
+    return canvas.toDataURL('image/png')
+  }, color)
+  return { name: 'cover.png', mimeType: 'image/png', buffer: Buffer.from(source.split(',')[1], 'base64') }
+}
 
 test('default covers can be changed, saved and edited without losing their design', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -233,4 +249,89 @@ test('uploads replace individual artwork and randomizing preserves other uploade
   await page.reload()
   await page.getByRole('button', { name: 'Open My cover by Local Artist', exact: true }).click()
   await expect(page.getByRole('img', { name: 'My cover cover artwork' })).toHaveAttribute('src', /^data:image\/png/)
+})
+
+test('uploaded covers recolor generated packaging, keep custom images and preserve the palette after saving', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Cover Colors')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
+  await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
+  const names = ['Disc preview', 'Back cover preview', 'Booklet reverse preview', 'Back cover inside preview', 'Spine preview', 'Right spine preview', 'OBI preview']
+  await page.getByLabel('Upload cover artwork', { exact: true }).setInputFiles(await coverFile(page, '#b43c2c'))
+  await confirmCrop(page)
+  await expect(page.getByRole('button', { name: 'Try another cover' })).toBeEnabled()
+  const cover = (await page.getByRole('img', { name: 'Cover preview', exact: true }).getAttribute('src'))!
+  const sources: string[] = []
+  for (const name of names) {
+    const preview = page.getByRole('img', { name, exact: true })
+    const source = (await preview.getAttribute('src'))!
+    sources.push(source)
+    expect(decodeURIComponent(source)).toContain('fill="#b43c2c"')
+    expect(decodeURIComponent(source)).toContain('fill="#ffffff"')
+    await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0)
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+  await page.locator('.editor-artwork').screenshot({ path: 'test-results/cover-palette-warm-mobile.png' })
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Cover Colors by Local Artist', exact: true }).click()
+  await expect(page.getByRole('img', { name: 'Cover Colors cover artwork', exact: true })).toHaveAttribute('src', cover)
+  await expect(page.locator('.case-spine')).toHaveCSS('background-color', 'rgb(180, 60, 44)')
+  await expect(page.locator('.tray-front .disc')).toHaveCSS('background-image', `url("${sources[0]}")`)
+  await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
+  for (const [index, name] of names.entries()) {
+    await expect(page.getByRole('img', { name, exact: true })).toHaveAttribute('src', sources[index])
+  }
+
+  await page.getByLabel('Upload disc artwork', { exact: true }).setInputFiles(await coverFile(page, '#447788'))
+  await confirmCrop(page)
+  await expect(page.getByRole('button', { name: 'Try another cover' })).toBeEnabled()
+  const disc = (await page.getByRole('img', { name: 'Disc preview', exact: true }).getAttribute('src'))!
+  await page.getByLabel('Upload cover artwork', { exact: true }).setInputFiles(await coverFile(page, '#ede7df'))
+  await confirmCrop(page)
+  await expect(page.getByRole('button', { name: 'Try another cover' })).toBeEnabled()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Pale Colors')
+  for (const name of names.slice(1)) {
+    const source = (await page.getByRole('img', { name, exact: true }).getAttribute('src'))!
+    expect(decodeURIComponent(source)).toContain('fill="#ede7df"')
+    expect(decodeURIComponent(source)).toContain('fill="#000000"')
+    expect(decodeURIComponent(source)).toContain('Pale Colors')
+  }
+  await expect(page.getByRole('img', { name: 'Disc preview', exact: true })).toHaveAttribute('src', disc)
+  await page.locator('.editor-artwork').screenshot({ path: 'test-results/cover-palette-pale-mobile.png' })
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Pale Colors by Local Artist', exact: true }).click()
+  await expect(page.locator('.case-spine')).toHaveCSS('background-color', 'rgb(237, 231, 223)')
+  await expect(page.locator('.case-spine')).toHaveCSS('color', 'rgb(0, 0, 0)')
+  await expect(page.locator('.tray-front .disc')).toHaveCSS('background-image', `url("${disc}")`)
+})
+
+test('importing a booklet takes its packaging palette from the front cover', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Blue Booklet')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
+  await page.getByLabel('Import entire booklet', { exact: true }).setInputFiles([
+    await coverFile(page, '#244f86'),
+    await coverFile(page, '#aa2244'),
+  ])
+  await confirmCrop(page, 2)
+  await expect(page.getByRole('button', { name: 'Try another cover' })).toBeEnabled()
+  const back = page.getByRole('img', { name: 'Back cover preview', exact: true })
+  const source = (await back.getAttribute('src'))!
+  expect(decodeURIComponent(source)).toContain('fill="#244f86"')
+  await expect(page.getByRole('img', { name: 'Booklet reverse preview', exact: true })).toHaveAttribute('src', /^data:image\/png/)
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Blue Booklet by Local Artist', exact: true }).click()
+  await expect(page.locator('.case-spine')).toHaveCSS('background-color', 'rgb(36, 79, 134)')
+  await expect(page.locator('.case-rear img')).toHaveAttribute('src', source)
 })

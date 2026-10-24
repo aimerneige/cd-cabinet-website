@@ -135,7 +135,7 @@ export const en = {
   'editor.discardChanges': 'Discard changes',
   'editor.coverArtwork': 'Booklet front cover',
   'editor.randomCover': 'Try another cover',
-  'editor.randomCoverGuidance': 'Start with a random cover, matching disc label, back cover and OBI paper strip. Try another style or upload your own images.',
+  'editor.randomCoverGuidance': 'Upload just a cover to generate matching disc, back cover, spine and OBI artwork from its colors. Images you upload separately are kept. You can also try a random cover.',
   'editor.uploadCoverAria': 'Upload cover artwork',
   'editor.coverPreviewAlt': 'Cover preview',
   'editor.spineArtwork': 'Left spine artwork',

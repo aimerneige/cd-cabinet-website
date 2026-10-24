@@ -3,6 +3,7 @@ import type { CSSProperties, FormEvent } from 'react'
 import type { Album, AlbumDisc, BookletPage, ObiDimensions, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, getCaseThicknessMm, getSpineDepth, hasObi, MAX_CASE_THICKNESS_MM, MIN_CASE_THICKNESS_MM, resizeDiscs, STANDARD_CASE_DEPTH } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
+import { readCoverPalette } from '../../lib/coverPalette'
 import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
 import { alignSpineArtwork } from '../../lib/spineArtwork'
 import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from '../../lib/generatedCover'
@@ -67,6 +68,7 @@ export function AlbumEditor({
     () => album ? getGeneratedCoverStyle(album.coverUrl) : randomCoverStyle(),
   )
   const [cover, setCover] = useState(coverStyle ? '' : album?.coverUrl ?? '')
+  const [coverPalette, setCoverPalette] = useState<Pick<Album, 'color' | 'ink'> | null>(null)
   const [spine, setSpine] = useState(album?.spineUrl ?? '')
   const [backCover, setBackCover] = useState(album?.backCoverUrl ?? '')
   const [bookletBack, setBookletBack] = useState(album?.bookletBackUrl ?? '')
@@ -95,8 +97,8 @@ export function AlbumEditor({
     artist: artist.trim() || t('editor.artist'),
     year: Number(year),
     genre: genreValue,
-    color: coverStyle?.color ?? album?.color ?? '#7a8273',
-    ink: coverStyle?.ink ?? album?.ink ?? '#f0eadb',
+    color: (cover ? coverPalette?.color : undefined) ?? coverStyle?.color ?? album?.color ?? '#7a8273',
+    ink: (cover ? coverPalette?.ink : undefined) ?? coverStyle?.ink ?? album?.ink ?? '#f0eadb',
     tracks: discs.flatMap((disc) => disc.tracks),
     discs,
     spineWidthMm,
@@ -105,7 +107,7 @@ export function AlbumEditor({
   }
   const coverUrl = cover || (coverStyle ? generateCover(artworkDetails, coverStyle) : '')
   const previewAlbum = { ...artworkDetails, coverUrl, bookletBackUrl: bookletBack, backInsideUrl: backInside, spineUrl: spine, rightSpineUrl: rightSpine, backCoverUrl: backCover, obiUrl: obi }
-  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, caseThicknessInput, coverStyle, cover, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
+  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, caseThicknessInput, coverStyle, cover, coverPalette, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
   const initialDraft = useRef(draftValues)
   // 比较不可变状态的引用，避免每次输入都重新序列化高清图片和音频。
   const dirty = draftValues.some((value, index) => !Object.is(value, initialDraft.current[index]))
@@ -215,10 +217,15 @@ export function AlbumEditor({
         return
       }
       const source = result.source
-      if (kind === 'disc') {
+      if (kind === 'cover') {
+        const palette = await readCoverPalette(source)
+        if (!alive.current) return
+        setCoverPalette(palette)
+        setCover(source)
+      } else if (kind === 'disc') {
         setDiscs((previous) => previous.map((disc) => disc.id === discId ? { ...disc, labelUrl: source } : disc))
       } else {
-        const setters = { cover: setCover, bookletBack: setBookletBack, back: setBackCover, backInside: setBackInside }
+        const setters = { bookletBack: setBookletBack, back: setBackCover, backInside: setBackInside }
         setters[kind](source)
       }
     })
@@ -250,7 +257,10 @@ export function AlbumEditor({
       setArtworkAlert({ message: t('booklet.needCovers'), returnFocus: document.activeElement as HTMLElement | null })
       return
     }
-    void readImages(files, 'page', (results) => {
+    void readImages(files, 'page', async (results) => {
+      const palette = await readCoverPalette(results[0].source)
+      if (!alive.current) return
+      setCoverPalette(palette)
       setCover(results[0].source)
       setBookletBack(results[results.length - 1].source)
       setBookletPages(results.slice(1, -1).map((result, index) => ({
@@ -371,7 +381,8 @@ export function AlbumEditor({
         bookletPages: bookletPages.map((page) => ({ ...page, title: page.title.trim() })),
         backInsideUrl: backInside || undefined,
         rightSpineUrl: rightSpine || undefined,
-        ...(coverStyle ? { color: coverStyle.color, ink: coverStyle.ink } : {}),
+        color: artworkDetails.color,
+        ink: artworkDetails.ink,
         backCoverUrl: backCover || undefined,
         obiUrl: obiEnabled ? obi || undefined : undefined,
         obiEnabled,

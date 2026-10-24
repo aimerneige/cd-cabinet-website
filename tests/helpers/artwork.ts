@@ -10,6 +10,7 @@ export async function confirmCrop(page: Page, total = 1) {
     await apply.click()
   }
   await expect(page.locator('.artwork-cropper')).toHaveCount(0)
+  await expect(page.locator('.save-recording')).toBeEnabled()
 }
 
 export async function dismissArtworkAlert(page: Page, message: string) {

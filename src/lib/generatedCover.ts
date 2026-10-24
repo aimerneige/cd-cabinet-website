@@ -49,6 +49,42 @@ function svgUrl(svg: string): string {
   return prefix + encodeURIComponent(svg).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)
 }
 
+function getPackagingStyle(album: ArtworkDetails): { id: CoverStyle['id']; accent: string; custom: boolean } {
+  const generated = getGeneratedCoverStyle(album.coverUrl)
+  if (generated) return { ...generated, custom: false }
+  if (!/^#[\da-f]{6}$/i.test(album.color)) return { id: 'orbit', accent: escapeXml(album.ink), custom: true }
+  const [red, green, blue] = [1, 3, 5].map((index) => Number.parseInt(album.color.slice(index, index + 2), 16))
+  const max = Math.max(red, green, blue)
+  const chroma = max - Math.min(red, green, blue)
+  const sector = max === red ? green - blue : max === green ? blue - red : red - green
+  const offset = max === red ? 0 : max === green ? 2 : 4
+  const hue = chroma === 0 ? 0 : ((sector / chroma + offset) * 60 + 360) % 360
+  // 低彩度使用克制的圆环；暖色用拱形与色块，冷色用波纹与弧线。
+  let id: CoverStyle['id'] = 'orbit'
+  if (chroma >= 24) {
+    if (hue < 25 || hue >= 335) id = 'arch'
+    else if (hue < 75) id = 'tiles'
+    else if (hue < 170) id = 'waves'
+    else if (hue < 255) id = 'dusk'
+  }
+  const accent = '#' + [red, green, blue].map((value, index) => {
+    const ink = /^#[\da-f]{6}$/i.test(album.ink) ? Number.parseInt(album.ink.slice(index * 2 + 1, index * 2 + 3), 16) : 255
+    return Math.round(value * 0.6 + ink * 0.4).toString(16).padStart(2, '0')
+  }).join('')
+  return { id, accent, custom: true }
+}
+
+function packagingPattern(id: CoverStyle['id']): string {
+  const designs: Record<CoverStyle['id'], string> = {
+    dusk: '<path d="M65 320Q180 210 300 320T535 320M65 350Q180 240 300 350T535 350"/>',
+    orbit: '<circle cx="300" cy="300" r="120"/><ellipse cx="300" cy="300" rx="235" ry="90"/>',
+    arch: '<path d="M115 375V300A185 185 0 0 1 485 300V375M155 375V300A145 145 0 0 1 445 300V375"/>',
+    waves: [255, 300, 345].map((y) => `<path d="M65 ${y}Q180 ${y - 50} 300 ${y}T535 ${y}"/>`).join(''),
+    tiles: '<path d="M100 245H220V365H100ZM380 245H500V365H380Z"/><circle cx="300" cy="300" r="140"/>',
+  }
+  return designs[id]
+}
+
 export function generateCover(
   details: Pick<Album, 'title' | 'artist' | 'year' | 'genre'>,
   style: CoverStyle,
@@ -93,25 +129,18 @@ export function getDiscArtwork(
   disc: AlbumDisc,
 ): string {
   if (disc.labelUrl) return disc.labelUrl
-  const style = getGeneratedCoverStyle(album.coverUrl)
+  const style = getPackagingStyle(album)
   const color = escapeXml(album.color)
   const ink = escapeXml(album.ink)
-  const accent = style?.accent ?? ink
+  const accent = style.accent
   const discs = album.discs?.length ? album.discs : [disc]
   const number = discs.findIndex((item) => item.id === disc.id) + 1
-  const designs: Record<CoverStyle['id'], string> = {
-    dusk: '<path d="M65 320Q180 210 300 320T535 320M65 350Q180 240 300 350T535 350"/>',
-    orbit: '<circle cx="300" cy="300" r="120"/><ellipse cx="300" cy="300" rx="235" ry="90"/>',
-    arch: '<path d="M115 375V300A185 185 0 0 1 485 300V375M155 375V300A145 145 0 0 1 445 300V375"/>',
-    waves: [255, 300, 345].map((y) => `<path d="M65 ${y}Q180 ${y - 50} 300 ${y}T535 ${y}"/>`).join(''),
-    tiles: '<path d="M100 245H220V365H100ZM380 245H500V365H380Z"/><circle cx="300" cy="300" r="140"/>',
-  }
   // 文字放在圆形安全区内，避开中央直径约 21% 的盘毂及外缘。
-  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-disc="${style?.id ?? 'custom'}" width="1000" height="1000" viewBox="0 0 600 600">
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-disc="${style.custom ? 'custom' : style.id}" width="1000" height="1000" viewBox="0 0 600 600">
     <defs><mask id="disc-print"><circle cx="300" cy="300" r="300" fill="white"/><circle cx="300" cy="300" r="66" fill="black"/></mask></defs>
     <g mask="url(#disc-print)">
       <circle cx="300" cy="300" r="300" fill="${color}"/>
-      <g fill="none" stroke="${accent}" stroke-width="3" opacity=".35">${designs[style?.id ?? 'orbit']}</g>
+      <g fill="none" stroke="${accent}" stroke-width="3" opacity=".35">${packagingPattern(style.id)}</g>
       <g fill="none" stroke="${ink}" opacity=".4"><circle cx="300" cy="300" r="265"/><circle cx="300" cy="300" r="82"/></g>
       <g fill="${ink}" text-anchor="middle" transform="translate(300 0)">
         ${centeredText(album.artist, 150, 17, 330)}
@@ -126,14 +155,16 @@ export function getDiscArtwork(
 
 export function getBackCoverArtwork(album: ArtworkDetails & Pick<Album, 'backCoverUrl' | 'tracks'>): string {
   if (album.backCoverUrl) return album.backCoverUrl
-  const style = getGeneratedCoverStyle(album.coverUrl)
+  const style = getPackagingStyle(album)
   const color = escapeXml(album.color)
   const ink = escapeXml(album.ink)
   const count = album.discs?.length || 1
-  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-back="${style?.id ?? 'custom'}" width="1380" height="1180" viewBox="0 0 690 590">
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-back="${style.custom ? 'custom' : style.id}" width="1380" height="1180" viewBox="0 0 690 590">
     <rect width="690" height="590" fill="${color}"/>
     <rect x="18" y="18" width="654" height="554" fill="none" stroke="${ink}" opacity=".3"/>
-    <g fill="none" stroke="${style?.accent ?? ink}" opacity=".15"><circle cx="620" cy="295" r="140"/><circle cx="620" cy="295" r="110"/></g>
+    <g fill="none" stroke="${style.accent}" opacity=".15">${style.custom
+      ? `<g transform="translate(420 115) scale(.6)" stroke-width="3">${packagingPattern(style.id)}</g>`
+      : '<circle cx="620" cy="295" r="140"/><circle cx="620" cy="295" r="110"/>'}</g>
     <g fill="${ink}">
       ${text(album.artist, 65, 18)}
       ${text(album.title, 112, 32, 'Georgia, serif')}
@@ -149,7 +180,7 @@ export function getBackCoverArtwork(album: ArtworkDetails & Pick<Album, 'backCov
 
 export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): string {
   if (album.obiUrl) return album.obiUrl
-  const style = getGeneratedCoverStyle(album.coverUrl)
+  const style = getPackagingStyle(album)
   const color = escapeXml(album.color)
   const ink = escapeXml(album.ink)
   const layout = getObiLayout(album)
@@ -160,35 +191,36 @@ export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): st
   const panel = (side: 'back' | 'spine' | 'front', x: number, panelWidth: number) => {
     const spine = side === 'spine'
     const fontScale = spine ? 1 : Math.min(1, panelWidth / 46)
-    const paper = side === 'back' ? '#e9e0c8' : spine ? '#e2d8bd' : '#eee6cd'
+    const paper = style.custom ? color : side === 'back' ? '#e9e0c8' : spine ? '#e2d8bd' : '#eee6cd'
+    const print = style.custom ? ink : color
     return `<g data-obi-panel="${side}" transform="translate(${x} 0)${layout.height === 304 ? '' : ` scale(1 ${layout.height / 304})`}">
       <rect width="${panelWidth}" height="304" fill="${paper}"/>
-      <rect y="24" width="${panelWidth}" height="17" fill="${color}"/>
+      <rect y="24" width="${panelWidth}" height="17" fill="${print}"/>
       <g transform="translate(${panelWidth / 2} 0)" text-anchor="middle">
-        <g fill="${color}">${centeredText('COMPACT DISC', 15, 4.5, panelWidth - 8)}</g>
-        <g fill="${ink}">${centeredText('STEREO', 35, 6, panelWidth - 8)}</g>
-        <g fill="${color}">
+        <g fill="${print}">${centeredText('COMPACT DISC', 15, 4.5, panelWidth - 8)}</g>
+        <g fill="${style.custom ? color : ink}">${centeredText('STEREO', 35, 6, panelWidth - 8)}</g>
+        <g fill="${print}">
           ${centeredText('ORIGINAL RECORDINGS', 274, 4.5, panelWidth - 8)}
           ${centeredText(discLabel, 288, 5.5, panelWidth - 8)}
           ${centeredText(album.genre, 299, 5, panelWidth - 8)}
         </g>
       </g>
-      <g fill="${color}" text-anchor="middle" writing-mode="vertical-rl" style="text-orientation:mixed">
+      <g fill="${print}" text-anchor="middle" writing-mode="vertical-rl" style="text-orientation:mixed">
         <g transform="translate(${spine ? panelWidth / 2 : panelWidth * 16 / 46} 0)">
           ${centeredText(side === 'back' ? album.artist : album.title, 150, (spine ? 12 : 15) * fontScale, 188, 'Georgia, serif')}
         </g>
         ${spine ? '' : `<g transform="translate(${panelWidth * 36 / 46} 0)">${centeredText(side === 'front' ? album.artist : discLabel, 150, 7 * fontScale, 188)}</g>`}
       </g>
-      <circle cx="${panelWidth / 2}" cy="250" r="4" fill="${style?.accent ?? color}"/>
-      <path d="M4 263H${panelWidth - 4}" stroke="${color}" opacity=".45"/>
+      <circle cx="${panelWidth / 2}" cy="250" r="4" fill="${style.accent}"/>
+      <path d="M4 263H${panelWidth - 4}" stroke="${print}" opacity=".45"/>
     </g>`
   }
   // 展开图按后折页、侧脊、前折页排列，使用与 3D 纸带一致的实际尺寸。
-  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-obi="${style?.id ?? 'custom'}" width="${width * 3}" height="${layout.height * 3}" viewBox="0 0 ${width} ${layout.height}">
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-obi="${style.custom ? 'custom' : style.id}" width="${width * 3}" height="${layout.height * 3}" viewBox="0 0 ${width} ${layout.height}">
     ${panel('back', 0, layout.backWidth)}
     ${panel('spine', layout.backWidth, depth)}
     ${panel('front', layout.backWidth + depth, layout.frontWidth)}
-    <path d="M${layout.backWidth} 0V${layout.height}M${layout.backWidth + depth} 0V${layout.height}" fill="none" stroke="${color}" stroke-dasharray="2 3" opacity=".25"/>
+    <path d="M${layout.backWidth} 0V${layout.height}M${layout.backWidth + depth} 0V${layout.height}" fill="none" stroke="${style.custom ? ink : color}" stroke-dasharray="2 3" opacity=".25"/>
   </svg>`)
 }
 
@@ -200,11 +232,14 @@ export function getInnerArtwork(
   if (uploaded) return uploaded
   const color = escapeXml(album.color)
   const ink = escapeXml(album.ink)
+  const style = getPackagingStyle(album)
   const width = side === 'back' ? 690 : 600
   const height = side === 'back' ? 590 : 600
   return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-inside="${side}" width="${side === 'back' ? 1380 : 1000}" height="${side === 'back' ? 1180 : 1000}" viewBox="0 0 ${width} ${height}">
     <rect width="${width}" height="${height}" fill="${color}"/>
-    <g fill="none" stroke="${ink}" opacity=".25"><circle cx="${width / 2}" cy="285" r="170"/><circle cx="${width / 2}" cy="285" r="130"/><path d="M40 460H${width - 40}"/></g>
+    <g fill="none" stroke="${style.custom ? style.accent : ink}" opacity=".25">${style.custom
+      ? `<g transform="translate(${(width - 600) / 2} 0)" stroke-width="3">${packagingPattern(style.id)}</g>`
+      : `<circle cx="${width / 2}" cy="285" r="170"/><circle cx="${width / 2}" cy="285" r="130"/>`}<path d="M40 460H${width - 40}"/></g>
     <g fill="${ink}">
       ${text(side === 'booklet' ? 'BOOKLET' : 'ORIGINAL RECORDINGS', 65, 14)}
       ${text(album.title, 510, 32, 'Georgia, serif')}

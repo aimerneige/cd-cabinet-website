@@ -137,7 +137,7 @@ export const ja: Record<keyof typeof en, string> = {
   'editor.discardChanges': '変更を破棄',
   'editor.coverArtwork': 'ブックレットの表紙',
   'editor.randomCover': '別のデザインにする',
-  'editor.randomCoverGuidance': 'ランダムなジャケットと同じ配色の盤面・バックインレイ・帯を自動生成します。別のデザインを試すか、お好みの画像に差し替えられます。',
+  'editor.randomCoverGuidance': '表紙をアップロードするだけで、その配色に合わせた盤面・裏表紙・背・帯を自動生成します。個別にアップロードした画像は保持されます。ランダムな表紙も試せます。',
   'editor.uploadCoverAria': 'フロントジャケットをアップロード',
   'editor.coverPreviewAlt': 'ジャケットのプレビュー',
   'editor.spineArtwork': '左側の背ラベル',
