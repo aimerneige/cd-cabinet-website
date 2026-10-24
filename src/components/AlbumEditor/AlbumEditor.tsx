@@ -412,65 +412,6 @@ export function AlbumEditor({
             <span aria-hidden="true">← </span>{t('editor.backToCollection')}
           </button>
         </div>
-        <div className="random-cover-controls">
-          <p>{t('editor.randomCoverGuidance')}</p>
-          <button
-            type="button"
-            disabled={loading || saving}
-            onClick={() => {
-              setCoverStyle(randomCoverStyle(coverStyle))
-              setCover('')
-              setError('')
-            }}
-          >
-            {t('editor.randomCover')}
-          </button>
-        </div>
-        <div className="editor-artwork">
-          <div className="artwork-input">
-            <ArtworkInput label={t('editor.coverArtwork')} src={coverUrl} alt={t('editor.coverPreviewAlt')} uploadLabel={t('editor.uploadCoverAria')}
-              resetLabel={t('editor.useGeneratedCover')} custom={!!cover} disabled={loading || saving} onUpload={(file) => upload(file, 'cover')} onUploadMany={importBooklet}
-              onReset={() => { setCover(''); if (!coverStyle) setCoverStyle(randomCoverStyle()) }} />
-            <p className="booklet-cover-guidance">{t('booklet.coverUploadGuidance')}</p>
-          </div>
-          <ArtworkInput label={t('editor.bookletBackArtwork')} src={getInnerArtwork(previewAlbum, 'booklet')} alt={t('editor.bookletBackPreview')}
-            uploadLabel={t('editor.uploadBookletBack')} resetLabel={t('editor.useGeneratedBookletBack')} custom={!!bookletBack} disabled={loading || saving}
-            onUpload={(file) => upload(file, 'bookletBack')} onReset={() => setBookletBack('')} />
-          <BookletPagesEditor pages={bookletPages} onChange={setBookletPages} onUpload={uploadPages} onImport={importBooklet} disabled={loading || saving} />
-          <ArtworkInput label={t('editor.spineArtwork')} src={getSpineArtwork(previewAlbum, 'left')} alt={t('editor.spinePreviewAlt')}
-            uploadLabel={t('editor.uploadSpineAria')} resetLabel={t('editor.useGeneratedSpine')} custom={!!spine} disabled={loading || saving} variant="spine"
-            onUpload={(file) => upload(file, 'spine')} onReset={() => { setSpine(''); if (!rightSpine) setSpineWidthMm(undefined) }} />
-          <ArtworkInput label={t('editor.rightSpineArtwork')} src={getSpineArtwork(previewAlbum, 'right')} alt={t('editor.rightSpinePreview')}
-            uploadLabel={t('editor.uploadRightSpine')} resetLabel={t('editor.useGeneratedRightSpine')} custom={!!rightSpine} disabled={loading || saving} variant="spine"
-            onUpload={(file) => upload(file, 'rightSpine')} onReset={() => { setRightSpine(''); if (!spine) setSpineWidthMm(undefined) }} />
-          <ArtworkInput label={t('editor.backCoverArtwork')} src={getBackCoverArtwork(previewAlbum)} alt={t('editor.backCoverPreviewAlt')}
-            uploadLabel={t('editor.uploadBackCoverAria')} resetLabel={t('editor.useGeneratedBackCover')} custom={!!backCover} disabled={loading || saving} variant="back"
-            onUpload={(file) => upload(file, 'back')} onReset={() => setBackCover('')} />
-          <ArtworkInput label={t('editor.backInsideArtwork')} src={getInnerArtwork(previewAlbum, 'back')} alt={t('editor.backInsidePreview')}
-            uploadLabel={t('editor.uploadBackInside')} resetLabel={t('editor.useGeneratedBackInside')} custom={!!backInside} disabled={loading || saving} variant="back"
-            onUpload={(file) => upload(file, 'backInside')} onReset={() => setBackInside('')} />
-          <div className="disc-artwork">
-            {discCount > 1 && <select aria-label={t('viewer.chooseDiscAria')} value={editingDisc} disabled={loading || saving} onChange={(event) => setEditingDisc(Number(event.target.value))}>
-              {discs.map((disc, index) => <option key={disc.id} value={index}>{t('viewer.discButton', { number: index + 1 })}</option>)}
-            </select>}
-            <ArtworkInput label={t('editor.discArtwork')} src={getDiscArtwork(previewAlbum, discs[editingDisc])} alt={t('editor.discPreviewAlt')}
-              uploadLabel={t('editor.uploadDisc')} resetLabel={t('editor.useGeneratedDisc')} custom={!!discs[editingDisc].labelUrl} disabled={loading || saving} variant="disc"
-              onUpload={(file) => upload(file, 'disc')} onReset={() => setDiscs((previous) => previous.map((disc, index) => index === editingDisc ? { ...disc, labelUrl: undefined } : disc))} />
-            <p className="obi-upload-guidance">{t('editor.discGuidance')}</p>
-          </div>
-          <div className="artwork-input">
-            <label className="obi-toggle"><input type="checkbox" checked={obiEnabled} disabled={loading || saving} onChange={(event) => {
-              setObiEnabled(event.target.checked)
-              if (!event.target.checked) { setObi(''); setObiDimensions(undefined) }
-            }} />{t('editor.includeObi')}</label>
-            {obiEnabled && <><ArtworkInput label={t('editor.obiPaperStrip')} src={getObiArtwork(previewAlbum)} alt={t('editor.obiPreviewAlt')}
-              uploadLabel={t('editor.uploadObiAria')} resetLabel={t('editor.useGeneratedObi')} custom={!!obi} disabled={loading || saving} variant="obi"
-              onUpload={(file) => upload(file, 'obi')} onReset={() => setObi('')} />
-            {obi && <button type="button" className="remove-spine" disabled={loading || saving} onClick={() => void recropObi()}>{t('obi.recrop')}</button>}
-            <p className="obi-upload-guidance">{t('editor.obiUploadGuidance')}</p></>}
-          </div>
-        </div>
-        <p className="upload-guidance">{t('editor.uploadGuidance')}</p>
         <fieldset disabled={saving || loading}>
           <div className="editor-fields">
             <label>
@@ -573,6 +514,64 @@ export function AlbumEditor({
             </label>
           </div>
         </fieldset>
+        <div className="random-cover-controls">
+          <p>{t('editor.randomCoverGuidance')}</p>
+          <button
+            type="button"
+            disabled={loading || saving}
+            onClick={() => {
+              setCoverStyle(randomCoverStyle(coverStyle))
+              setCover('')
+              setError('')
+            }}
+          >
+            {t('editor.randomCover')}
+          </button>
+        </div>
+        <div className="editor-artwork">
+          <div className="artwork-input">
+            <ArtworkInput label={t('editor.coverArtwork')} src={coverUrl} alt={t('editor.coverPreviewAlt')} uploadLabel={t('editor.uploadCoverAria')}
+              resetLabel={t('editor.useGeneratedCover')} custom={!!cover} disabled={loading || saving} onUpload={(file) => upload(file, 'cover')} onUploadMany={importBooklet}
+              onReset={() => { setCover(''); if (!coverStyle) setCoverStyle(randomCoverStyle()) }} />
+            <p className="booklet-cover-guidance">{t('booklet.coverUploadGuidance')}</p>
+          </div>
+          <ArtworkInput label={t('editor.bookletBackArtwork')} src={getInnerArtwork(previewAlbum, 'booklet')} alt={t('editor.bookletBackPreview')}
+            uploadLabel={t('editor.uploadBookletBack')} resetLabel={t('editor.useGeneratedBookletBack')} custom={!!bookletBack} disabled={loading || saving}
+            onUpload={(file) => upload(file, 'bookletBack')} onReset={() => setBookletBack('')} />
+          <ArtworkInput label={t('editor.spineArtwork')} src={getSpineArtwork(previewAlbum, 'left')} alt={t('editor.spinePreviewAlt')}
+            uploadLabel={t('editor.uploadSpineAria')} resetLabel={t('editor.useGeneratedSpine')} custom={!!spine} disabled={loading || saving} variant="spine"
+            onUpload={(file) => upload(file, 'spine')} onReset={() => { setSpine(''); if (!rightSpine) setSpineWidthMm(undefined) }} />
+          <ArtworkInput label={t('editor.rightSpineArtwork')} src={getSpineArtwork(previewAlbum, 'right')} alt={t('editor.rightSpinePreview')}
+            uploadLabel={t('editor.uploadRightSpine')} resetLabel={t('editor.useGeneratedRightSpine')} custom={!!rightSpine} disabled={loading || saving} variant="spine"
+            onUpload={(file) => upload(file, 'rightSpine')} onReset={() => { setRightSpine(''); if (!spine) setSpineWidthMm(undefined) }} />
+          <ArtworkInput label={t('editor.backCoverArtwork')} src={getBackCoverArtwork(previewAlbum)} alt={t('editor.backCoverPreviewAlt')}
+            uploadLabel={t('editor.uploadBackCoverAria')} resetLabel={t('editor.useGeneratedBackCover')} custom={!!backCover} disabled={loading || saving} variant="back"
+            onUpload={(file) => upload(file, 'back')} onReset={() => setBackCover('')} />
+          <ArtworkInput label={t('editor.backInsideArtwork')} src={getInnerArtwork(previewAlbum, 'back')} alt={t('editor.backInsidePreview')}
+            uploadLabel={t('editor.uploadBackInside')} resetLabel={t('editor.useGeneratedBackInside')} custom={!!backInside} disabled={loading || saving} variant="back"
+            onUpload={(file) => upload(file, 'backInside')} onReset={() => setBackInside('')} />
+          <div className="disc-artwork">
+            {discCount > 1 && <select aria-label={t('viewer.chooseDiscAria')} value={editingDisc} disabled={loading || saving} onChange={(event) => setEditingDisc(Number(event.target.value))}>
+              {discs.map((disc, index) => <option key={disc.id} value={index}>{t('viewer.discButton', { number: index + 1 })}</option>)}
+            </select>}
+            <ArtworkInput label={t('editor.discArtwork')} src={getDiscArtwork(previewAlbum, discs[editingDisc])} alt={t('editor.discPreviewAlt')}
+              uploadLabel={t('editor.uploadDisc')} resetLabel={t('editor.useGeneratedDisc')} custom={!!discs[editingDisc].labelUrl} disabled={loading || saving} variant="disc"
+              onUpload={(file) => upload(file, 'disc')} onReset={() => setDiscs((previous) => previous.map((disc, index) => index === editingDisc ? { ...disc, labelUrl: undefined } : disc))} />
+            <p className="obi-upload-guidance">{t('editor.discGuidance')}</p>
+          </div>
+          <div className="artwork-input">
+            <label className="obi-toggle"><input type="checkbox" checked={obiEnabled} disabled={loading || saving} onChange={(event) => {
+              setObiEnabled(event.target.checked)
+              if (!event.target.checked) { setObi(''); setObiDimensions(undefined) }
+            }} />{t('editor.includeObi')}</label>
+            {obiEnabled && <><ArtworkInput label={t('editor.obiPaperStrip')} src={getObiArtwork(previewAlbum)} alt={t('editor.obiPreviewAlt')}
+              uploadLabel={t('editor.uploadObiAria')} resetLabel={t('editor.useGeneratedObi')} custom={!!obi} disabled={loading || saving} variant="obi"
+              onUpload={(file) => upload(file, 'obi')} onReset={() => setObi('')} />
+            {obi && <button type="button" className="remove-spine" disabled={loading || saving} onClick={() => void recropObi()}>{t('obi.recrop')}</button>}
+            <p className="obi-upload-guidance">{t('editor.obiUploadGuidance')}</p></>}
+          </div>
+        </div>
+        <p className="upload-guidance">{t('editor.uploadGuidance')}</p>
         <fieldset className="editor-audio" disabled={loading || saving}>
           <legend>{t('editor.audioHeading')}</legend>
           {discs.length > 1 && (
@@ -632,6 +631,7 @@ export function AlbumEditor({
             ))}
           </ol>
         </fieldset>
+        <BookletPagesEditor pages={bookletPages} onChange={setBookletPages} onUpload={uploadPages} onImport={importBooklet} disabled={loading || saving} />
         {error && (
           <p className="editor-error" role="alert">
             {error}
