@@ -7,6 +7,8 @@ import type { ObiMode } from '../../hooks/useObiAnimation'
 import { ObiStrip } from '../ObiStrip/ObiStrip'
 import { useTranslation } from '../../i18n'
 
+const bookletTabPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
+
 export const CDCase = forwardRef<
   HTMLDivElement,
   {
@@ -82,6 +84,9 @@ export const CDCase = forwardRef<
             ? `DISC ${discs.findIndex((item) => item.id === selected.id) + 1} / ${discs.length}`
             : ''}
         </span>
+        <div className="case-recesses" aria-hidden="true">
+          {bookletTabPositions.map((position) => <span key={position} className={`booklet-recess booklet-${position}`} />)}
+        </div>
         <div className="case-hinge" aria-hidden="true" />
         <div className="case-lid">
           <div className="lid-front">
@@ -92,6 +97,9 @@ export const CDCase = forwardRef<
           </div>
           <div className="lid-inside">
             <img src={getInnerArtwork(album, 'booklet')} alt={t('editor.bookletBackArtwork')} />
+            <div className="booklet-tabs" aria-hidden="true">
+              {bookletTabPositions.map((position) => <span key={position} className={`booklet-tab booklet-${position}`} />)}
+            </div>
           </div>
         </div>
         {hasObi(album) && <ObiStrip

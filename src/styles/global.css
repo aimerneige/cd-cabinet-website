@@ -688,19 +688,30 @@ footer i {
 }
 .tray-ring {
   position: absolute;
-  width: calc(var(--booklet-size) + 2px);
+  width: calc(var(--booklet-size) + 4px);
   aspect-ratio: 1;
-  border: 2px solid #758b7e55;
+  border: 2px solid;
+  border-color: #58736899 #91a99c99 #f1f9efcc #718c7c99;
   border-radius: 50%;
   box-shadow:
-    inset 0 1px 2px #243f3626,
-    0 1px 0 #ffffff66;
+    inset 1px 2px 3px #243f364d,
+    inset -1px -1px 1px #f4fff0bb,
+    0 1px 1px #ffffffaa;
   pointer-events: none;
+}
+.tray-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1px solid #9cb2a680;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 #ffffff99, 0 1px 1px #38554826;
 }
 .disc-tray > .disc {
   box-shadow:
-    0 1px 0 #cbd7ce,
-    1px 3px 4px #20382c40,
+    0 1px 0 #f5faf1,
+    0 2px 0 #83968caa,
+    1px 4px 5px #20382c5c,
     inset 0 0 0 3px #e5ece2,
     inset 0 0 0 7px #9baca5,
     inset 0 0 0 14px #e2e6d399;
