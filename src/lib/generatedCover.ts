@@ -1,4 +1,4 @@
-import type { Album, AlbumDisc } from '../types/album'
+import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme } from '../types/album'
 import { getSpineDepth } from './album'
 import { getObiLayout } from './obi'
 
@@ -10,15 +10,31 @@ const styles = [
   { id: 'tiles', color: '#635f4d', ink: '#f2ead7', accent: '#c38a6c' },
 ] as const
 
-export type CoverStyle = (typeof styles)[number]
-type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs' | 'spineWidthMm' | 'caseThicknessMm' | 'obiDimensions'>
+export const artworkThemes = ['dusk', 'orbit', 'arch', 'waves', 'tiles'] as const
+export const artworkPalettes = [
+  { id: 'cream', color: '#e8dfcc', ink: '#31352f', accent: '#a47b58' },
+  { id: 'clay', color: '#9a5546', ink: '#fff0d8', accent: '#d5b68e' },
+  { id: 'forest', color: '#3e625a', ink: '#f2eedc', accent: '#9ab49a' },
+  { id: 'ocean', color: '#365c78', ink: '#f1efdf', accent: '#b6d0d2' },
+  { id: 'midnight', color: '#463c65', ink: '#f5eede', accent: '#bea6cb' },
+] as const
+
+export type CoverStyle = { id: ArtworkTheme; color: string; ink: string; accent: string }
+type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs' | 'spineWidthMm' | 'caseThicknessMm' | 'obiDimensions' | 'artworkTheme' | 'artworkPalette'>
+
+export function getArtworkPalette(id?: ArtworkPalette) {
+  return artworkPalettes.find((palette) => palette.id === id)
+}
 
 const prefix = 'data:image/svg+xml;charset=utf-8,'
 const opening = (style: CoverStyle) =>
   `<svg xmlns="http://www.w3.org/2000/svg" data-cd-cover="${style.id}"`
 
 export function getGeneratedCoverStyle(url: string): CoverStyle | null {
-  return styles.find((style) => url.startsWith(prefix + encodeURIComponent(opening(style)))) ?? null
+  const style = styles.find((style) => url.startsWith(prefix + encodeURIComponent(opening(style))))
+  if (!style) return null
+  const colors = url.match(/data-cd-colors%3D%22(%23[\da-f]{6})%2C(%23[\da-f]{6})%2C(%23[\da-f]{6})%22/i)
+  return colors ? { ...style, color: decodeURIComponent(colors[1]), ink: decodeURIComponent(colors[2]), accent: decodeURIComponent(colors[3]) } : style
 }
 
 export function randomCoverStyle(previous?: CoverStyle | null): CoverStyle {
@@ -51,8 +67,14 @@ function svgUrl(svg: string): string {
 
 function getPackagingStyle(album: ArtworkDetails): { id: CoverStyle['id']; accent: string; custom: boolean } {
   const generated = getGeneratedCoverStyle(album.coverUrl)
-  if (generated) return { ...generated, custom: false }
-  if (!/^#[\da-f]{6}$/i.test(album.color)) return { id: 'orbit', accent: escapeXml(album.ink), custom: true }
+  const palette = getArtworkPalette(album.artworkPalette)
+  const selectedTheme = artworkThemes.find((theme) => theme === album.artworkTheme)
+  if (generated) return {
+    id: selectedTheme ?? generated.id,
+    accent: palette?.accent ?? generated.accent,
+    custom: !!selectedTheme || !!palette,
+  }
+  if (!/^#[\da-f]{6}$/i.test(album.color)) return { id: selectedTheme ?? 'orbit', accent: palette?.accent ?? escapeXml(album.ink), custom: true }
   const [red, green, blue] = [1, 3, 5].map((index) => Number.parseInt(album.color.slice(index, index + 2), 16))
   const max = Math.max(red, green, blue)
   const chroma = max - Math.min(red, green, blue)
@@ -71,7 +93,7 @@ function getPackagingStyle(album: ArtworkDetails): { id: CoverStyle['id']; accen
     const ink = /^#[\da-f]{6}$/i.test(album.ink) ? Number.parseInt(album.ink.slice(index * 2 + 1, index * 2 + 3), 16) : 255
     return Math.round(value * 0.6 + ink * 0.4).toString(16).padStart(2, '0')
   }).join('')
-  return { id, accent, custom: true }
+  return { id: selectedTheme ?? id, accent: palette?.accent ?? accent, custom: true }
 }
 
 function packagingPattern(id: CoverStyle['id']): string {
@@ -90,6 +112,10 @@ export function generateCover(
   style: CoverStyle,
 ): string {
   const { color, ink, accent } = style
+  const original = styles.find((item) => item.id === style.id)
+  // 图形和配色独立选择后，封面需携带实际配色，重新编辑时才能原样恢复。
+  const colors = color === original?.color && ink === original.ink && accent === original.accent
+    ? '' : ` data-cd-colors="${escapeXml(`${color},${ink},${accent}`)}"`
   const designs: Record<CoverStyle['id'], string> = {
     dusk: `<circle cx="300" cy="265" r="116" fill="${accent}"/>
       <path d="M0 340Q150 245 300 350T600 315V450H0Z" fill="${color}"/>
@@ -111,7 +137,7 @@ export function generateCover(
       <path d="M155 305H295V445Z" fill="${accent}"/>
       <path d="M305 445V375A70 70 0 0 1 445 375V445Z" fill="${ink}"/>`,
   }
-  const svg = `${opening(style)} width="1000" height="1000" viewBox="0 0 600 600">
+  const svg = `${opening(style)}${colors} width="1000" height="1000" viewBox="0 0 600 600">
     <rect width="600" height="600" fill="${color}"/>
     <rect x="18" y="18" width="564" height="564" fill="none" stroke="${ink}" opacity=".3"/>
     ${designs[style.id]}
@@ -211,7 +237,8 @@ export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): st
         </g>
         ${spine ? '' : `<g transform="translate(${panelWidth * 36 / 46} 0)">${centeredText(side === 'front' ? album.artist : discLabel, 150, 7 * fontScale, 188)}</g>`}
       </g>
-      <circle cx="${panelWidth / 2}" cy="250" r="4" fill="${style.accent}"/>
+      ${album.artworkTheme ? `<g transform="translate(${panelWidth / 2} 250) scale(${Math.min(panelWidth - 8, 36) / 600}) translate(-300 -300)" fill="none" stroke="${style.accent}" stroke-width="8">${packagingPattern(style.id)}</g>`
+        : `<circle cx="${panelWidth / 2}" cy="250" r="4" fill="${style.accent}"/>`}
       <path d="M4 263H${panelWidth - 4}" stroke="${print}" opacity=".45"/>
     </g>`
   }

@@ -146,6 +146,25 @@
   padding: 0;
   border: 0;
 }
+.album-editor .editor-design {
+  min-width: 0;
+  margin-bottom: 24px;
+  padding: 16px 20px 20px;
+  border: 1px solid #c5cab9;
+}
+.editor-design > legend { padding: 0 8px; font: 24px/1.2 'Libre Caslon Display', Georgia, serif; }
+.editor-design > p { margin: 0 0 18px; font-size: 11px; line-height: 1.7; color: #66745c; }
+.editor-design-groups { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.editor-design-group { min-width: 0; }
+.editor-design-group > legend { margin-bottom: 10px; font-size: 12px; }
+.editor-design-choices { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.editor-design-choice { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 48px; padding: 8px 10px; border: 1px solid #c5cab9; font-size: 11px; cursor: pointer; }
+.editor-design-choice:has(input:checked) { background: #e1e5d8; border-color: #66745c; }
+.editor-design-choice:focus-within { outline: 2px solid #668064; outline-offset: 2px; }
+.editor-design-choice input { margin: 0; accent-color: #66745c; flex-shrink: 0; }
+.editor-palette-swatch { width: 24px; height: 24px; flex-shrink: 0; border: 1px solid #38403333; border-radius: 50%; }
+.editor-palette-auto { background: conic-gradient(#b88a69, #7fa29a, #6b638b, #b88a69); }
+.editor-design:disabled .editor-design-choice { opacity: .5; cursor: default; }
 .album-editor .booklet-pages-editor { margin: 26px 0 0; padding: 20px 0; border-top: 1px solid #c5cab9; border-bottom: 1px solid #c5cab9; }
 .booklet-pages-editor legend { font: 24px/1.2 'Libre Caslon Display', Georgia, serif; }
 .booklet-pages-editor > p { font-size: 11px; line-height: 1.7; color: #78836b; }
@@ -327,6 +346,7 @@ fieldset:disabled .audio-upload { opacity: .5; cursor: default; }
   line-height: 1.7;
 }
 @media (max-width: 700px) {
+  .editor-design-groups { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .editor-track-list li { gap: 8px; flex-wrap: wrap; }
   .editor-track-actions { margin-left: 25px; width: 100%; justify-content: flex-end; }
   .album-editor {

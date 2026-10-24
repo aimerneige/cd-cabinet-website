@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
-import type { Album, AlbumDisc, BookletPage, ObiDimensions, Track } from '../../types/album'
+import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme, BookletPage, ObiDimensions, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, getCaseThicknessMm, getSpineDepth, hasObi, MAX_CASE_THICKNESS_MM, MIN_CASE_THICKNESS_MM, resizeDiscs, STANDARD_CASE_DEPTH } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
 import { readCoverPalette } from '../../lib/coverPalette'
 import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
 import { alignSpineArtwork } from '../../lib/spineArtwork'
-import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from '../../lib/generatedCover'
+import { artworkPalettes, artworkThemes, generateCover, getArtworkPalette, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from '../../lib/generatedCover'
 import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
 import { useTranslation } from '../../i18n'
@@ -69,6 +69,8 @@ export function AlbumEditor({
   )
   const [cover, setCover] = useState(coverStyle ? '' : album?.coverUrl ?? '')
   const [coverPalette, setCoverPalette] = useState<Pick<Album, 'color' | 'ink'> | null>(null)
+  const [artworkPalette, setArtworkPalette] = useState<ArtworkPalette | undefined>(album?.artworkPalette)
+  const [artworkTheme, setArtworkTheme] = useState<ArtworkTheme | undefined>(album?.artworkTheme)
   const [spine, setSpine] = useState(album?.spineUrl ?? '')
   const [backCover, setBackCover] = useState(album?.backCoverUrl ?? '')
   const [bookletBack, setBookletBack] = useState(album?.bookletBackUrl ?? '')
@@ -92,22 +94,31 @@ export function AlbumEditor({
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
   const deleteAlbum = useCollection((state) => state.deleteAlbum)
+  const selectedPalette = getArtworkPalette(artworkPalette)
   const artworkDetails = {
     title: title.trim() || t('editor.albumTitle'),
     artist: artist.trim() || t('editor.artist'),
     year: Number(year),
     genre: genreValue,
-    color: (cover ? coverPalette?.color : undefined) ?? coverStyle?.color ?? album?.color ?? '#7a8273',
-    ink: (cover ? coverPalette?.ink : undefined) ?? coverStyle?.ink ?? album?.ink ?? '#f0eadb',
+    color: selectedPalette?.color ?? (cover ? coverPalette?.color : undefined) ?? coverStyle?.color ?? album?.color ?? '#7a8273',
+    ink: selectedPalette?.ink ?? (cover ? coverPalette?.ink : undefined) ?? coverStyle?.ink ?? album?.ink ?? '#f0eadb',
     tracks: discs.flatMap((disc) => disc.tracks),
     discs,
     spineWidthMm,
     caseThicknessMm,
     obiDimensions,
+    artworkPalette,
+    artworkTheme,
   }
-  const coverUrl = cover || (coverStyle ? generateCover(artworkDetails, coverStyle) : '')
+  const generatedStyle = coverStyle ? {
+    id: artworkTheme ?? coverStyle.id,
+    color: artworkDetails.color,
+    ink: artworkDetails.ink,
+    accent: selectedPalette?.accent ?? coverStyle.accent,
+  } : null
+  const coverUrl = cover || (generatedStyle ? generateCover(artworkDetails, generatedStyle) : '')
   const previewAlbum = { ...artworkDetails, coverUrl, bookletBackUrl: bookletBack, backInsideUrl: backInside, spineUrl: spine, rightSpineUrl: rightSpine, backCoverUrl: backCover, obiUrl: obi }
-  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, caseThicknessInput, coverStyle, cover, coverPalette, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
+  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, caseThicknessInput, coverStyle, cover, coverPalette, artworkPalette, artworkTheme, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
   const initialDraft = useRef(draftValues)
   // 比较不可变状态的引用，避免每次输入都重新序列化高清图片和音频。
   const dirty = draftValues.some((value, index) => !Object.is(value, initialDraft.current[index]))
@@ -229,6 +240,31 @@ export function AlbumEditor({
         setters[kind](source)
       }
     })
+  }
+
+  async function selectArtworkPalette(palette?: ArtworkPalette) {
+    if (loading || saving) return
+    if (!palette && cover && !coverPalette) {
+      const returnFocus = document.activeElement as HTMLElement | null
+      const previousPalette = artworkPalette
+      setArtworkPalette(undefined)
+      setLoading(true)
+      try {
+        const colors = await readCoverPalette(cover)
+        if (!alive.current) return
+        setCoverPalette(colors)
+        setArtworkPalette(undefined)
+      } catch (cause) {
+        if (alive.current) {
+          setArtworkPalette(previousPalette)
+          setArtworkAlert({ message: cause instanceof Error ? cause.message : t('artworkErrors.readFailed'), returnFocus })
+        }
+      } finally {
+        if (alive.current) setLoading(false)
+      }
+      return
+    }
+    setArtworkPalette(palette)
   }
 
   function uploadPages(files: File[]) {
@@ -383,6 +419,8 @@ export function AlbumEditor({
         rightSpineUrl: rightSpine || undefined,
         color: artworkDetails.color,
         ink: artworkDetails.ink,
+        artworkPalette,
+        artworkTheme,
         backCoverUrl: backCover || undefined,
         obiUrl: obiEnabled ? obi || undefined : undefined,
         obiEnabled,
@@ -531,7 +569,10 @@ export function AlbumEditor({
             type="button"
             disabled={loading || saving}
             onClick={() => {
-              setCoverStyle(randomCoverStyle(coverStyle))
+              setCoverStyle(randomCoverStyle(generatedStyle))
+              setArtworkPalette(undefined)
+              setArtworkTheme(undefined)
+              setCoverPalette(null)
               setCover('')
               setError('')
             }}
@@ -539,6 +580,44 @@ export function AlbumEditor({
             {t('editor.randomCover')}
           </button>
         </div>
+        <fieldset className="editor-design" disabled={loading || saving}>
+          <legend>{t('artwork.design')}</legend>
+          <p>{t('artwork.guidance')}</p>
+          <div className="editor-design-groups">
+            <fieldset className="editor-design-group">
+              <legend>{t('artwork.palette')}</legend>
+              <div className="editor-design-choices">
+                <label className="editor-design-choice">
+                  <input type="radio" name="artwork-palette" value="auto" checked={!artworkPalette} onChange={() => void selectArtworkPalette()} />
+                  <span className="editor-palette-swatch editor-palette-auto" aria-hidden="true" />
+                  <span>{t('artwork.palette.auto')}</span>
+                </label>
+                {artworkPalettes.map((palette) => (
+                  <label className="editor-design-choice" key={palette.id}>
+                    <input type="radio" name="artwork-palette" value={palette.id} checked={artworkPalette === palette.id} onChange={() => void selectArtworkPalette(palette.id)} />
+                    <span className="editor-palette-swatch" aria-hidden="true" style={{ background: `linear-gradient(135deg, ${palette.color} 55%, ${palette.ink} 55% 75%, ${palette.accent} 75%)` }} />
+                    <span>{t(`artwork.palette.${palette.id}`)}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="editor-design-group">
+              <legend>{t('artwork.theme')}</legend>
+              <div className="editor-design-choices">
+                <label className="editor-design-choice">
+                  <input type="radio" name="artwork-theme" value="auto" checked={!artworkTheme} onChange={() => setArtworkTheme(undefined)} />
+                  <span>{t('artwork.theme.auto')}</span>
+                </label>
+                {artworkThemes.map((theme) => (
+                  <label className="editor-design-choice" key={theme}>
+                    <input type="radio" name="artwork-theme" value={theme} checked={artworkTheme === theme} onChange={() => setArtworkTheme(theme)} />
+                    <span>{t(`artwork.theme.${theme}`)}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+        </fieldset>
         <div className="editor-artwork">
           <div className="artwork-input">
             <ArtworkInput label={t('editor.coverArtwork')} src={coverUrl} alt={t('editor.coverPreviewAlt')} uploadLabel={t('editor.uploadCoverAria')}

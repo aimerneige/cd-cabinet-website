@@ -335,3 +335,143 @@ test('importing a booklet takes its packaging palette from the front cover', asy
   await expect(page.locator('.case-spine')).toHaveCSS('background-color', 'rgb(36, 79, 134)')
   await expect(page.locator('.case-rear img')).toHaveAttribute('src', source)
 })
+
+test('palette and theme choices preserve uploaded images, survive reload and can return to cover colors', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Chosen Style')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
+  await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
+  await page.getByLabel('Upload cover artwork', { exact: true }).setInputFiles(await coverFile(page, '#b43c2c'))
+  await confirmCrop(page)
+  await page.getByLabel('Upload disc artwork', { exact: true }).setInputFiles(await coverFile(page, '#447788'))
+  await confirmCrop(page)
+  const cover = page.getByRole('img', { name: 'Cover preview', exact: true })
+  const disc = page.getByRole('img', { name: 'Disc preview', exact: true })
+  const originalCover = (await cover.getAttribute('src'))!
+  const originalDisc = (await disc.getAttribute('src'))!
+  const back = page.getByRole('img', { name: 'Back cover preview', exact: true })
+  const obi = page.getByRole('img', { name: 'OBI preview', exact: true })
+  await expect(page.getByRole('group', { name: 'Color palette', exact: true }).getByRole('radio')).toHaveCount(6)
+  await expect(page.getByRole('group', { name: 'Graphic theme', exact: true }).getByRole('radio')).toHaveCount(6)
+  await page.getByRole('radio', { name: 'Cream paper', exact: true }).check()
+  await page.getByRole('radio', { name: 'Flowing waves', exact: true }).check()
+  expect(decodeURIComponent((await back.getAttribute('src'))!)).toContain('fill="#e8dfcc"')
+  await page.getByRole('radio', { name: 'Forest green', exact: true }).check()
+  await expect(page.getByRole('radio', { name: 'Flowing waves', exact: true })).toBeChecked()
+  const previousBack = (await back.getAttribute('src'))!
+  const previousObi = (await obi.getAttribute('src'))!
+  await page.getByRole('radio', { name: 'Geometric collage', exact: true }).check()
+  await expect(page.getByRole('radio', { name: 'Forest green', exact: true })).toBeChecked()
+  await expect(back).not.toHaveAttribute('src', previousBack)
+  await expect(obi).not.toHaveAttribute('src', previousObi)
+  const savedBack = (await back.getAttribute('src'))!
+  expect(decodeURIComponent(savedBack)).toContain('fill="#3e625a"')
+  await expect(cover).toHaveAttribute('src', originalCover)
+  await expect(disc).toHaveAttribute('src', originalDisc)
+  await page.locator('.editor-design').screenshot({ path: 'test-results/artwork-style-choices-mobile.png' })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Chosen Style by Local Artist', exact: true }).click()
+  await expect(page.locator('.case-spine')).toHaveCSS('background-color', 'rgb(62, 98, 90)')
+  await expect(page.locator('.case-rear img')).toHaveAttribute('src', savedBack)
+  await expect(page.locator('.tray-front .disc')).toHaveCSS('background-image', `url("${originalDisc}")`)
+  await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
+  await expect(page.getByRole('radio', { name: 'Forest green', exact: true })).toBeChecked()
+  await expect(page.getByRole('radio', { name: 'Geometric collage', exact: true })).toBeChecked()
+  await expect(page.locator('.editor-footer > span')).toHaveText('Saved on this browser.')
+  await page.getByRole('radio', { name: 'From cover', exact: true }).check()
+  await expect(page.locator('.save-recording')).toBeEnabled()
+  expect(decodeURIComponent((await back.getAttribute('src'))!)).toContain('fill="#b43c2c"')
+  await expect(page.getByRole('radio', { name: 'Geometric collage', exact: true })).toBeChecked()
+  await expect(cover).toHaveAttribute('src', originalCover)
+  await expect(disc).toHaveAttribute('src', originalDisc)
+  await page.getByLabel('Upload cover artwork', { exact: true }).setInputFiles(await coverFile(page, '#244f86'))
+  await confirmCrop(page)
+  expect(decodeURIComponent((await back.getAttribute('src'))!)).toContain('fill="#244f86"')
+  await expect(page.getByRole('radio', { name: 'Geometric collage', exact: true })).toBeChecked()
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Chosen Style by Local Artist', exact: true }).click()
+  await expect(page.locator('.case-spine')).toHaveCSS('background-color', 'rgb(36, 79, 134)')
+})
+
+test('every theme and palette updates generated covers and keeps the chosen design after reopening', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Generated Choices')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
+  await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
+  await page.getByRole('radio', { name: 'Cream paper', exact: true }).check()
+  const names = ['Cover preview', 'Disc preview', 'Back cover preview', 'Booklet reverse preview', 'OBI preview']
+  const variations = names.map(() => new Set<string>())
+  for (const theme of ['Dusk arcs', 'Orbital rings', 'Architectural arches', 'Flowing waves', 'Geometric collage']) {
+    await page.getByRole('radio', { name: theme, exact: true }).check()
+    await expect(page.getByRole('radio', { name: 'Cream paper', exact: true })).toBeChecked()
+    for (const [index, name] of names.entries()) {
+      const preview = page.getByRole('img', { name, exact: true })
+      const source = (await preview.getAttribute('src'))!
+      expect(decodeURIComponent(source)).toContain('#e8dfcc')
+      variations[index].add(source)
+      await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0)
+    }
+  }
+  for (const variants of variations) expect(variants.size).toBe(5)
+  for (const [palette, color] of [
+    ['Warm terracotta', '#9a5546'], ['Forest green', '#3e625a'], ['Deep ocean', '#365c78'], ['Midnight violet', '#463c65'],
+  ]) {
+    await page.getByRole('radio', { name: palette, exact: true }).check()
+    await expect(page.getByRole('radio', { name: 'Geometric collage', exact: true })).toBeChecked()
+    expect(decodeURIComponent((await page.getByRole('img', { name: 'Cover preview', exact: true }).getAttribute('src'))!)).toContain(color)
+  }
+  const sources = await Promise.all(names.map((name) => page.getByRole('img', { name, exact: true }).getAttribute('src')))
+  await page.locator('.editor-design').screenshot({ path: 'test-results/artwork-style-choices-desktop.png' })
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Generated Choices by Local Artist', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
+  await expect(page.getByRole('radio', { name: 'Midnight violet', exact: true })).toBeChecked()
+  await expect(page.getByRole('radio', { name: 'Geometric collage', exact: true })).toBeChecked()
+  for (const [index, name] of names.entries()) {
+    await expect(page.getByRole('img', { name, exact: true })).toHaveAttribute('src', sources[index]!)
+  }
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Edited Choices')
+  expect(decodeURIComponent((await page.getByRole('img', { name: 'Cover preview', exact: true }).getAttribute('src'))!)).toContain('Edited Choices')
+  await page.getByRole('button', { name: 'Try another cover' }).click()
+  await expect(page.getByRole('radio', { name: 'From cover', exact: true })).toBeChecked()
+  await expect(page.getByRole('radio', { name: 'Automatic', exact: true })).toBeChecked()
+  await expect(page.getByRole('img', { name: 'Cover preview', exact: true })).not.toHaveAttribute('src', sources[0]!)
+})
+
+test('changing only the theme preserves the existing generated colors after reopening', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Theme Only')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Local Artist')
+  const cover = page.getByRole('img', { name: 'Cover preview', exact: true })
+  const initial = decodeURIComponent((await cover.getAttribute('src'))!)
+  const theme = initial.includes('data-cd-cover="tiles"') ? 'Flowing waves' : 'Geometric collage'
+  const color = initial.match(/<rect width="600" height="600" fill="([^"]+)"/)![1]
+  await page.getByRole('radio', { name: theme, exact: true }).check()
+  await expect(page.getByRole('radio', { name: 'From cover', exact: true })).toBeChecked()
+  const source = (await cover.getAttribute('src'))!
+  const disc = (await page.getByRole('img', { name: 'Disc preview', exact: true }).getAttribute('src'))!
+  expect(decodeURIComponent(source)).toContain(`fill="${color}"`)
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open Theme Only by Local Artist', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
+  await expect(page.getByRole('radio', { name: theme, exact: true })).toBeChecked()
+  await expect(cover).toHaveAttribute('src', source)
+  await expect(page.getByRole('img', { name: 'Disc preview', exact: true })).toHaveAttribute('src', disc)
+  await expect(page.locator('.editor-footer > span')).toHaveText('Saved on this browser.')
+})

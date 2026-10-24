@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from './generatedCover'
+import { artworkPalettes, artworkThemes, generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from './generatedCover'
 import { getSpineDepth } from './album'
 import { getObiLayout } from './obi'
 
@@ -49,6 +49,18 @@ describe('generated covers', () => {
     expect(svg).not.toContain('<script>')
     expect(cover).not.toMatch(/[\s'"()]/)
   })
+
+  it('recovers independently chosen colors without reverting to the theme default', () => {
+    for (const theme of artworkThemes) {
+      for (const palette of artworkPalettes) {
+        const style = { id: theme, color: palette.color, ink: palette.ink, accent: palette.accent }
+        const cover = generateCover(details, style)
+        const restored = getGeneratedCoverStyle(cover)!
+        expect(restored).toEqual(style)
+        expect(generateCover(details, restored)).toBe(cover)
+      }
+    }
+  })
 })
 
 describe('generated packaging', () => {
@@ -97,6 +109,7 @@ describe('generated packaging', () => {
     const album = {
       ...details, color: '#536f78', ink: '#f3eee0',
       coverUrl: 'data:image/png;base64,cover', tracks: [],
+      artworkTheme: 'tiles' as const, artworkPalette: 'ocean' as const,
     }
     expect(decodeURIComponent(getDiscArtwork(album, discs[0]))).toContain('data-cd-disc="custom"')
     expect(decodeURIComponent(getDiscArtwork(album, discs[0]))).toContain('DISC 1 / 1')
@@ -112,6 +125,28 @@ describe('generated packaging', () => {
     expect(getInnerArtwork(album, 'booklet')).not.toBe(getInnerArtwork(album, 'back'))
     expect(getInnerArtwork(album, 'booklet')).not.toBe(album.coverUrl)
     expect(decodeURIComponent(getSpineArtwork({ ...album, spineUrl: '/left.png' }, 'right'))).toContain('data-cd-spine="right"')
+  })
+
+  it('supports every palette with every theme independently of an uploaded cover', () => {
+    for (const palette of artworkPalettes) {
+      const variants = [new Set<string>(), new Set<string>(), new Set<string>(), new Set<string>()]
+      for (const theme of artworkThemes) {
+        const album = {
+          ...details, color: palette.color, ink: palette.ink,
+          coverUrl: '/uploaded-cover.png', tracks: [],
+          artworkTheme: theme, artworkPalette: palette.id,
+        }
+        const sources = [getDiscArtwork(album, discs[0]), getBackCoverArtwork(album), getInnerArtwork(album, 'booklet'), getObiArtwork(album)]
+        for (const [index, source] of sources.entries()) {
+          const svg = decodeURIComponent(source)
+          expect(svg).toContain(palette.color)
+          expect(svg).toContain(palette.ink)
+          expect(svg).toContain(palette.accent)
+          variants[index].add(source)
+        }
+      }
+      for (const variantsForPart of variants) expect(variantsForPart.size).toBe(artworkThemes.length)
+    }
   })
 
   it('escapes all album, disc and track text and keeps CSS URLs safe', () => {
