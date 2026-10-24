@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { albums as samples } from '../data/albums'
-import { getCaseDepth } from '../lib/album'
+import { getCaseDepth, STANDARD_CASE_DEPTH } from '../lib/album'
 import { saveCollection } from '../lib/collectionStorage'
 import { isSampleAlbum } from '../lib/sampleAlbums'
 import { useCollection } from './collectionStore'
@@ -63,7 +63,7 @@ describe('sample collection actions', () => {
     expect(restored.slice(0, 48)).toEqual(owned)
     expect(new Set(restored.filter(isSampleAlbum).map((album) => album.shelfId))).toEqual(new Set(['shelf-3', 'shelf-4']))
     for (const shelfId of new Set(restored.map((album) => album.shelfId))) {
-      expect(restored.filter((album) => album.shelfId === shelfId).reduce((total, album) => total + getCaseDepth(album) / 24, 0)).toBeLessThanOrEqual(24)
+      expect(restored.filter((album) => album.shelfId === shelfId).reduce((total, album) => total + getCaseDepth(album) / STANDARD_CASE_DEPTH, 0)).toBeLessThanOrEqual(24)
     }
   })
 

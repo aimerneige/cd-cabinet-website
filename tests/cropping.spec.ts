@@ -111,17 +111,17 @@ test('cropping changes actual pixels, supports zoom and movement, and survives c
   await expect(page.locator('.lid-front img')).toHaveAttribute('src', source)
 })
 
-test('fixed ratios follow case thickness and the disc has a circular guide on mobile', async ({ page }) => {
+test('paper ratios stay independent of outer thickness and the disc has a circular guide on mobile', async ({ page }) => {
   await draft(page)
   await page.setViewportSize({ width: 390, height: 844 })
   const file = await stripedImage(page)
   for (const [count, upload, ratio, alt] of [
-    ['1', 'Upload spine artwork', '2:25', 'Spine preview'],
-    ['1', 'Upload OBI paper strip', '124:321.79661', 'OBI preview'],
+    ['1', 'Upload spine artwork', '13:236', 'Spine preview'],
+    ['1', 'Upload OBI paper strip', '118.440678:317.79661', 'OBI preview'],
     ['1', 'Upload back cover artwork', '69:59', 'Back cover preview'],
     ['4', 'Upload inside back cover', '69:59', 'Back cover inside preview'],
-    ['4', 'Upload right spine artwork', '29:150', 'Right spine preview'],
-    ['4', 'Upload OBI paper strip', '158:321.79661', 'OBI preview'],
+    ['4', 'Upload right spine artwork', '13:236', 'Right spine preview'],
+    ['4', 'Upload OBI paper strip', '153.016949:317.79661', 'OBI preview'],
     ['4', 'Upload disc artwork', '1:1', 'Disc preview'],
   ]) {
     await page.getByLabel('Number of discs').selectOption(count)
@@ -130,11 +130,15 @@ test('fixed ratios follow case thickness and the disc has a circular guide on mo
     const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
     if (upload.includes('spine artwork')) {
       const slider = dialog.getByRole('slider', { name: 'Spine width (mm)', exact: true })
-      await expect(slider).toHaveValue(count === '1' ? '9.4' : '22.8')
+      await expect(slider).toHaveValue('6.5')
       const frame = (await dialog.locator('.reactEasyCrop_CropArea').boundingBox())!
       expect(frame.width / frame.height).toBeCloseTo(Number(await slider.inputValue()) / 118, 3)
     } else if (upload === 'Upload OBI paper strip') await expect(dialog).toContainText('OBI size')
     else await expect(dialog).toContainText(`Fixed ratio ${ratio}`)
+    if (upload === 'Upload OBI paper strip' && count === '4') {
+      const thickness = dialog.getByRole('slider', { name: 'Side / outer case thickness (mm)', exact: true })
+      await thickness.fill('24')
+    }
     await expect(dialog.getByRole('button', { name: 'Use crop', exact: true })).toBeEnabled()
     const box = (await dialog.boundingBox())!
     expect(box.x).toBeGreaterThanOrEqual(0)
@@ -151,7 +155,7 @@ test('fixed ratios follow case thickness and the disc has a circular guide on mo
     await confirmCrop(page)
     const result = await pixels(page.getByRole('img', { name: alt, exact: true }))
     const [width, height] = ratio.split(':').map(Number)
-    const aspect = upload.includes('spine artwork') ? (count === '1' ? 9.4 : 22.8) / 118 : width / height
+    const aspect = width / height
     expect(Math.abs(result.width - result.height * aspect)).toBeLessThanOrEqual(1)
     if (ratio === '69:59') {
       const preview = (await page.getByRole('img', { name: alt, exact: true }).locator('..').boundingBox())!
@@ -190,7 +194,7 @@ test('booklet crops are confirmed individually and cancelling a batch preserves 
   }
 })
 
-test('the millimeter slider spans its absolute bounds, resets, and persists the chosen case thickness', async ({ page }) => {
+test('the paper width slider spans its bounds and persists without changing outer case thickness', async ({ page }) => {
   await draft(page)
   await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
   await page.setViewportSize({ width: 390, height: 844 })
@@ -198,7 +202,7 @@ test('the millimeter slider spans its absolute bounds, resets, and persists the 
   await page.getByLabel('Upload spine artwork', { exact: true }).setInputFiles(file)
   const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
   const slider = dialog.getByRole('slider', { name: 'Spine width (mm)', exact: true })
-  await expect(slider).toHaveValue('9.4')
+  await expect(slider).toHaveValue('6.5')
   await expect(slider).toHaveAttribute('min', '2')
   await expect(slider).toHaveAttribute('max', '40')
   await expect(slider).toHaveAttribute('step', '0.1')
@@ -215,7 +219,7 @@ test('the millimeter slider spans its absolute bounds, resets, and persists the 
   await page.keyboard.press('ArrowLeft')
   await expect(slider).toHaveValue('2')
   await dialog.getByRole('button', { name: 'Reset crop', exact: true }).click()
-  await expect(slider).toHaveValue('9.4')
+  await expect(slider).toHaveValue('6.5')
   await setSpineWidth(page, 12)
   await page.screenshot({ path: 'test-results/spine-crop-mobile.png' })
   await confirmCrop(page)
@@ -236,9 +240,10 @@ test('the millimeter slider spans its absolute bounds, resets, and persists the 
   await expect(page.locator('.case-spine img')).toHaveAttribute('src', spine)
   await expect(page.locator('.case-spine img')).toHaveCSS('object-fit', 'contain')
   const dimensions = await page.locator('.cd-case').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--case-depth')))
-  expect(dimensions).toBeCloseTo(12 / 118 * 300, 5)
+  expect(dimensions).toBeCloseTo(10.4 / 118 * 300, 5)
+  expect(await page.locator('.case-spine img').evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBeCloseTo(12 / 118 * 300, 1)
   await expect(page.locator('.case-spine')).toHaveCSS('width', await page.locator('.case-spine-right').evaluate((element) => getComputedStyle(element).width))
-  expect(await page.locator('.obi-strip').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--obi-width')))).toBeCloseTo(100 + dimensions, 5)
+  expect(await page.locator('.obi-strip').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--obi-width')))).toBeCloseTo(92 + dimensions, 5)
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await page.getByLabel('Number of discs').selectOption('4')
   await page.getByLabel('Upload spine artwork', { exact: true }).setInputFiles(file)
@@ -246,7 +251,7 @@ test('the millimeter slider spans its absolute bounds, resets, and persists the 
   await page.keyboard.press('Escape')
 })
 
-test('right spine crops start from the fatbox width and keep narrow scans filled when widened', async ({ page }) => {
+test('right spine crops use paper width in fatboxes and keep narrow scans filled when widened', async ({ page }) => {
   await draft(page)
   await page.getByLabel('Number of discs').selectOption('4')
   const source = await page.evaluate(() => {
@@ -261,12 +266,12 @@ test('right spine crops start from the fatbox width and keep narrow scans filled
   await page.getByLabel('Upload right spine artwork', { exact: true }).setInputFiles({ name: 'narrow.png', mimeType: 'image/png', buffer: Buffer.from(source.split(',')[1], 'base64') })
   const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
   const slider = dialog.getByRole('slider', { name: 'Spine width (mm)', exact: true })
-  await expect(slider).toHaveValue('22.8')
+  await expect(slider).toHaveValue('6.5')
   const initial = (await dialog.locator('.reactEasyCrop_CropArea').boundingBox())!
-  expect(initial.width / initial.height).toBeCloseTo(22.8 / 118, 3)
+  expect(initial.width / initial.height).toBeCloseTo(6.5 / 118, 3)
   await slider.focus()
   await page.keyboard.press('End')
-  await expect.poll(async () => Number(await dialog.getByRole('slider', { name: 'Zoom', exact: true }).inputValue())).toBeCloseTo(40 / 22.8, 4)
+  await expect.poll(async () => Number(await dialog.getByRole('slider', { name: 'Zoom', exact: true }).inputValue())).toBeCloseTo(40 / 118 / (60 / 1000), 4)
   await confirmCrop(page)
   const output = await pixels(page.getByRole('img', { name: 'Right spine preview', exact: true }))
   expect(Math.abs(output.width - output.height * 40 / 118)).toBeLessThanOrEqual(1)
@@ -326,20 +331,20 @@ for (const firstSide of ['left', 'right'] as const) {
     await expect(page.locator('.album-editor')).toHaveCount(0)
     await page.reload()
     const album = page.getByRole('button', { name: 'Open Cropped Session by Crop Artist', exact: true })
-    expect(await album.locator('..').evaluate((element) => Number((element as HTMLElement).style.getPropertyValue('--spine-units')))).toBeCloseTo(6 / 118 * 300 / 24, 10)
+    expect(await album.locator('..').evaluate((element) => Number((element as HTMLElement).style.getPropertyValue('--spine-units')))).toBe(1)
     await album.click()
-    expect(await page.locator('.cd-case').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--case-depth')))).toBeCloseTo(6 / 118 * 300, 5)
+    expect(await page.locator('.cd-case').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--case-depth')))).toBeCloseTo(10.4 / 118 * 300, 5)
     await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
     await expect(firstPreview).toHaveAttribute('src', alignedFirst)
     await page.getByRole('button', { name: 'Use generated spine', exact: true }).click()
     await page.getByRole('button', { name: 'Use generated right spine', exact: true }).click()
     const generated = (await firstPreview.locator('..').boundingBox())!
-    expect(generated.width).toBe(12)
+    expect(generated.width).toBeCloseTo(6.5 / 118 * 150, 1)
     await page.getByRole('button', { name: 'Save changes', exact: true }).click()
     await expect(page.locator('.album-editor')).toHaveCount(0)
     await page.reload()
     await album.click()
-    await expect(page.locator('.cd-case')).toHaveCSS('--case-depth', '24px')
+    expect(await page.locator('.cd-case').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--case-depth')))).toBeCloseTo(10.4 / 118 * 300, 5)
   })
 }
 

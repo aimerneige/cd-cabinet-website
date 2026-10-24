@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { albums } from '../data/albums'
 import { withDiscCount } from './album'
 import { getArtworkCrop, getCropOutputSize, getSpineCrop, type ArtworkKind } from './cropArtwork'
+import { getObiLayout } from './obi'
 
 describe('artwork crop dimensions', () => {
   it('locks booklet and disc images to a square, with a circular disc guide', () => {
@@ -19,15 +20,15 @@ describe('artwork crop dimensions', () => {
     }
   })
 
-  it('matches both spines and the unfolded OBI to the selected case thickness', () => {
+  it('keeps paper crops independent of disc count while OBI follows the outer case', () => {
     for (const count of [1, 3, 4, 6]) {
       const album = withDiscCount(albums[0], count)
-      const thick = count > 3
       for (const side of ['spine', 'rightSpine'] as const) {
-        expect(getArtworkCrop(side, album)).toEqual({ width: thick ? 29 : 2, height: thick ? 150 : 25, round: false })
+        expect(getArtworkCrop(side, album)).toEqual({ width: 13, height: 236, round: false })
       }
       const obi = getArtworkCrop('obi', album)
-      expect(obi.width / obi.height).toBeCloseTo((thick ? 158 : 124) / 321.79661, 10)
+      const layout = getObiLayout(album)
+      expect(obi.width / obi.height).toBeCloseTo(layout.width / layout.height, 10)
       expect(obi.round).toBe(false)
     }
   })
@@ -39,14 +40,14 @@ describe('artwork crop dimensions', () => {
     }
   })
 
-  it('matches generated spines and OBI crops to the shared thickness', () => {
-    const album = { ...albums[0], spineWidthMm: 6.5 }
+  it('uses independent inner paper and outer case dimensions for spine and OBI crops', () => {
+    const album = { ...albums[0], spineWidthMm: 6.5, caseThicknessMm: 14 }
     for (const kind of ['spine', 'rightSpine'] as const) {
       const profile = getArtworkCrop(kind, album)
       expect(profile.width / profile.height).toBeCloseTo(6.5 / 118, 10)
     }
     const obi = getArtworkCrop('obi', album)
-    expect(obi.width / obi.height).toBeCloseTo((100 + 6.5 / 118 * 300) / 321.79661, 10)
+    expect(obi.width / obi.height).toBeCloseTo((92 + 14 / 118 * 300) / (125 / 118 * 300), 10)
   })
 
   it('keeps rounding within one pixel and limits the longest edge to 2048 pixels', () => {

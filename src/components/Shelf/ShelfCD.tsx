@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { CSSProperties } from 'react'
 import type { Album } from '../../types/album'
-import { getAlbumDiscs, getCaseDepth } from '../../lib/album'
+import { getAlbumDiscs, getCaseDepth, getSpineDepth, STANDARD_CASE_DEPTH } from '../../lib/album'
 import { useTranslation } from '../../i18n'
 
 interface Props {
@@ -33,7 +33,8 @@ export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
           transform: CSS.Transform.toString(transform),
           transition,
           zIndex: isDragging ? 2 : undefined,
-          '--spine-units': getCaseDepth(album) / 24,
+          '--spine-units': getCaseDepth(album) / STANDARD_CASE_DEPTH,
+          '--spine-paper-width': `${getSpineDepth(album) / getCaseDepth(album) * 100}%`,
         } as CSSProperties
       }
     >

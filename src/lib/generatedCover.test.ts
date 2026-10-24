@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from './generatedCover'
+import { getSpineDepth } from './album'
+import { getObiLayout } from './obi'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -129,14 +131,14 @@ describe('generated packaging', () => {
 
   it('sizes the unfolded OBI to standard and thicker cases', () => {
     const album = { ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png' }
-    expect(decodeURIComponent(getObiArtwork(album))).toContain('viewBox="0 0 124 321.79661"')
     for (const count of [0, 1, 3, 4, 6]) {
       const discs = Array.from({ length: count }, (_, index) => ({ id: `disc-${index}`, tracks: [] }))
       const svg = decodeURIComponent(getObiArtwork({ ...album, discs }))
-      expect(svg).toContain(`viewBox="0 0 ${count > 3 ? 158 : 124} 321.79661"`)
+      const layout = getObiLayout({ discs })
+      expect(svg).toContain(`viewBox="0 0 ${layout.width} ${layout.height}"`)
       expect(svg).toContain('data-obi-panel="back" transform="translate(0 0) scale(1 ')
       expect(svg).toContain('data-obi-panel="spine" transform="translate(46 0) scale(1 ')
-      expect(svg).toContain(`data-obi-panel="front" transform="translate(${count > 3 ? 112 : 78} 0) scale(1 `)
+      expect(svg).toContain(`data-obi-panel="front" transform="translate(${46 + layout.depth} 0) scale(1 `)
     }
   })
 
@@ -152,14 +154,15 @@ describe('generated packaging', () => {
     expect(decodeURIComponent(cover)).toContain('width="1000" height="1000" viewBox="0 0 600 600"')
   })
 
-  it('fits generated spines and OBI folds to the thickness selected in the cropper', () => {
-    const album = { ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png', spineWidthMm: 6.5 }
-    const depth = 6.5 * 300 / 118
+  it('uses independent paper width and outer case thickness for generated artwork', () => {
+    const album = { ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png', spineWidthMm: 6.5, caseThicknessMm: 14 }
+    const depth = getSpineDepth(album)
     for (const side of ['left', 'right'] as const) {
       expect(decodeURIComponent(getSpineArtwork(album, side))).toContain(`viewBox="0 0 ${depth * 2} 600"`)
     }
     const obi = decodeURIComponent(getObiArtwork(album))
-    expect(obi).toContain(`viewBox="0 0 ${92 + depth + 8} 321.79661"`)
-    expect(obi).toContain(`data-obi-panel="front" transform="translate(${46 + depth + 8} 0) scale(1 `)
+    const layout = getObiLayout(album)
+    expect(obi).toContain(`viewBox="0 0 ${layout.width} ${layout.height}"`)
+    expect(obi).toContain(`data-obi-panel="front" transform="translate(${46 + layout.depth} 0) scale(1 `)
   })
 })

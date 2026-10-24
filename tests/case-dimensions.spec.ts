@@ -44,7 +44,7 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
       expect(dimensions.ring.width / dimensions.ring.height).toBeCloseTo(1, 4)
       expect(dimensions.edge.width).toBeCloseTo(dimensions.box.width, 2)
       expect(dimensions.spine.height).toBeCloseTo(dimensions.box.height, 2)
-      expect(dimensions.obi.height).toBeGreaterThan(dimensions.box.height)
+      expectLength(dimensions.obi.height, 125)
       for (const view of ['Back', 'Front', 'Back', 'Inside']) {
         await page.getByRole('button', { name: view, exact: true }).click()
         await expect(page.getByRole('button', { name: view, exact: true })).toHaveAttribute('aria-pressed', 'true')

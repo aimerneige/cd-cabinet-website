@@ -36,6 +36,8 @@
   position: absolute;
   inset: 0;
   backface-visibility: hidden;
+  /* 仅将印刷面向外抬起，避免与盒体重叠；不改变纸张裁剪尺寸。 */
+  transform: translateZ(2px);
   background: #eee6cd;
   border-top: 1px solid #fff9;
   border-bottom: 1px solid #c4bba1;

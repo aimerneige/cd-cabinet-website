@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import type { Album, AlbumDisc, BookletPage, ObiDimensions, Track } from '../../types/album'
-import { getAlbumDiscs, getCaseDepth, hasObi, resizeDiscs } from '../../lib/album'
+import { getAlbumDiscs, getCaseDepth, getCaseThicknessMm, getSpineDepth, hasObi, MAX_CASE_THICKNESS_MM, MIN_CASE_THICKNESS_MM, resizeDiscs, STANDARD_CASE_DEPTH } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
 import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
 import { alignSpineArtwork } from '../../lib/spineArtwork'
@@ -59,7 +59,9 @@ export function AlbumEditor({
   )
   const discCount = discs.length
   const [spineWidthMm, setSpineWidthMm] = useState(album?.spineWidthMm)
-  const caseDepth = getCaseDepth({ discs, spineWidthMm })
+  const [caseThicknessInput, setCaseThicknessInput] = useState(album?.caseThicknessMm?.toString() ?? '')
+  const caseThicknessMm = caseThicknessInput ? Number(caseThicknessInput) : undefined
+  const caseDepth = getCaseDepth({ discs, caseThicknessMm })
   const [editingDisc, setEditingDisc] = useState(0)
   const [coverStyle, setCoverStyle] = useState(
     () => album ? getGeneratedCoverStyle(album.coverUrl) : randomCoverStyle(),
@@ -84,7 +86,7 @@ export function AlbumEditor({
   const pendingUploads = useRef(0)
   const cropSequence = useRef(0)
   const cropResolver = useRef<((result: ArtworkCropResult | null) => void) | null>(null)
-  const [cropRequest, setCropRequest] = useState<{ id: number; source: string; profile: ArtworkCrop; resizeWidth: boolean; obi?: Pick<Album, 'discs' | 'spineWidthMm' | 'obiDimensions'>; name: string; current: number; total: number } | null>(null)
+  const [cropRequest, setCropRequest] = useState<{ id: number; source: string; profile: ArtworkCrop; resizeWidth: boolean; obi?: Pick<Album, 'discs' | 'caseThicknessMm' | 'obiDimensions'>; name: string; current: number; total: number } | null>(null)
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
   const deleteAlbum = useCollection((state) => state.deleteAlbum)
@@ -98,11 +100,12 @@ export function AlbumEditor({
     tracks: discs.flatMap((disc) => disc.tracks),
     discs,
     spineWidthMm,
+    caseThicknessMm,
     obiDimensions,
   }
   const coverUrl = cover || (coverStyle ? generateCover(artworkDetails, coverStyle) : '')
   const previewAlbum = { ...artworkDetails, coverUrl, bookletBackUrl: bookletBack, backInsideUrl: backInside, spineUrl: spine, rightSpineUrl: rightSpine, backCoverUrl: backCover, obiUrl: obi }
-  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, coverStyle, cover, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
+  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, caseThicknessInput, coverStyle, cover, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
   const initialDraft = useRef(draftValues)
   // 比较不可变状态的引用，避免每次输入都重新序列化高清图片和音频。
   const dirty = draftValues.some((value, index) => !Object.is(value, initialDraft.current[index]))
@@ -155,7 +158,7 @@ export function AlbumEditor({
   async function readImages(files: File[], kind: ArtworkKind, apply: (results: ArtworkCropResult[]) => void | Promise<void>) {
     if (!files.length || pendingUploads.current > 0 || saving) return
     const previous = document.activeElement as HTMLElement | null
-    const profile = getArtworkCrop(kind, { discs, spineWidthMm, obiDimensions })
+    const profile = getArtworkCrop(kind, { discs, spineWidthMm, caseThicknessMm, obiDimensions })
     pendingUploads.current += 1
     setLoading(true)
     setError('')
@@ -170,7 +173,7 @@ export function AlbumEditor({
       for (const [index, source] of sources.entries()) {
         const result = await new Promise<ArtworkCropResult | null>((resolve) => {
           cropResolver.current = resolve
-          setCropRequest({ id: ++cropSequence.current, source, profile, resizeWidth: kind === 'spine' || kind === 'rightSpine', obi: kind === 'obi' ? { discs, spineWidthMm, obiDimensions } : undefined, name: files[index].name, current: index + 1, total: files.length })
+          setCropRequest({ id: ++cropSequence.current, source, profile, resizeWidth: kind === 'spine' || kind === 'rightSpine', obi: kind === 'obi' ? { discs, caseThicknessMm, obiDimensions } : undefined, name: files[index].name, current: index + 1, total: files.length })
         })
         if (!result || !alive.current) return
         cropped.push(result)
@@ -208,6 +211,7 @@ export function AlbumEditor({
       if (kind === 'obi') {
         setObi(result.source)
         setObiDimensions(result.obiDimensions)
+        setCaseThicknessInput(result.caseThicknessMm?.toString() ?? '')
         return
       }
       const source = result.source
@@ -330,8 +334,8 @@ export function AlbumEditor({
         (id) =>
           collection
             .filter((item) => item.shelfId === id)
-            .reduce((units, item) => units + getCaseDepth(item) / 24, 0) +
-            caseDepth / 24 <=
+            .reduce((units, item) => units + getCaseDepth(item) / STANDARD_CASE_DEPTH, 0) +
+            caseDepth / STANDARD_CASE_DEPTH <=
           24,
       ) ??
       `shelf-${Math.max(0, ...shelves.map((id) => Number(id.split('-')[1]) || 0)) + 1}`
@@ -374,6 +378,7 @@ export function AlbumEditor({
         obiDimensions: obiEnabled ? obiDimensions : undefined,
         spineUrl: spine || undefined,
         spineWidthMm,
+        caseThicknessMm,
         discs: savedDiscs,
         tracks: savedDiscs.flatMap((disc) => disc.tracks),
       })
@@ -387,7 +392,7 @@ export function AlbumEditor({
   return (
     <main
       className="album-editor"
-      style={{ '--spine-preview-width': `${caseDepth / 2}px` } as CSSProperties}
+      style={{ '--spine-preview-width': `${getSpineDepth({ spineWidthMm }) / 2}px` } as CSSProperties}
       aria-labelledby="editor-title"
       onKeyDown={(event) => event.stopPropagation()}
     >
@@ -454,7 +459,10 @@ export function AlbumEditor({
             <p className="obi-upload-guidance">{t('editor.discGuidance')}</p>
           </div>
           <div className="artwork-input">
-            <label className="obi-toggle"><input type="checkbox" checked={obiEnabled} disabled={loading || saving} onChange={(event) => setObiEnabled(event.target.checked)} />{t('editor.includeObi')}</label>
+            <label className="obi-toggle"><input type="checkbox" checked={obiEnabled} disabled={loading || saving} onChange={(event) => {
+              setObiEnabled(event.target.checked)
+              if (!event.target.checked) { setObi(''); setObiDimensions(undefined) }
+            }} />{t('editor.includeObi')}</label>
             {obiEnabled && <><ArtworkInput label={t('editor.obiPaperStrip')} src={getObiArtwork(previewAlbum)} alt={t('editor.obiPreviewAlt')}
               uploadLabel={t('editor.uploadObiAria')} resetLabel={t('editor.useGeneratedObi')} custom={!!obi} disabled={loading || saving} variant="obi"
               onUpload={(file) => upload(file, 'obi')} onReset={() => setObi('')} />
@@ -554,6 +562,14 @@ export function AlbumEditor({
                   </option>
                 ))}
               </select>
+            </label>
+            <label>
+              {t('editor.caseThickness')}
+              <input type="number" min={MIN_CASE_THICKNESS_MM} max={MAX_CASE_THICKNESS_MM} step="0.1"
+                aria-label={t('editor.caseThickness')} aria-describedby="case-thickness-guidance" disabled={!!obi}
+                value={caseThicknessInput} placeholder={getCaseThicknessMm({ discs }).toFixed(1)}
+                onChange={(event) => setCaseThicknessInput(event.target.value)} />
+              <small id="case-thickness-guidance">{t(obi ? 'editor.caseThicknessCropGuidance' : 'editor.caseThicknessGuidance')}</small>
             </label>
           </div>
         </fieldset>

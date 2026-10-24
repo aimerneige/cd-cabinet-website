@@ -3,7 +3,6 @@
   perspective: none;
 }
 .cd-case {
-  --case-depth: 24px;
   perspective: 1600px;
 }
 .case-body {
@@ -106,12 +105,21 @@
   height: 100%;
   object-fit: contain;
 }
+.shelf-cd .spine-artwork {
+  left: 50%;
+  top: 50%;
+  width: var(--spine-paper-width);
+  height: 94.4%;
+  transform: translate(-50%, -50%);
+}
 .case-spine .spine-artwork,
 .case-spine-right .spine-artwork {
+  left: 50%;
   top: 50%;
   bottom: auto;
+  width: var(--spine-paper-width);
   height: var(--paper-height);
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%);
 }
 .spine-disc-count {
   position: absolute;

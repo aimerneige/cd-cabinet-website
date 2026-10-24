@@ -32,7 +32,7 @@ test('default covers can be changed, saved and edited without losing their desig
     await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1000)
     await expect.poll(() => discPreview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1000)
     await expect.poll(() => backPreview.evaluate((image: HTMLImageElement) => [image.naturalWidth, image.naturalHeight])).toEqual([1380, 1180])
-    await expect.poll(() => obiPreview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(372)
+    await expect.poll(() => obiPreview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(355)
     source = (await preview.getAttribute('src'))!
   }
   const style = decodeURIComponent(source).match(/data-cd-cover="([^"]+)"/)![1]
@@ -139,7 +139,7 @@ test('generated OBI fits every fold and follows thicker cases on mobile', async 
   await expect(preview).toHaveCSS('object-fit', 'contain')
   for (const count of [1, 3, 4, 6]) {
     await page.getByLabel('Number of discs').selectOption(String(count))
-    await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(count > 3 ? 474 : 372)
+    await expect.poll(() => preview.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(count > 3 ? 459 : 355)
     const bounds = await preview.evaluate((image: HTMLImageElement) => {
       const parsed = new DOMParser().parseFromString(decodeURIComponent(image.src.split(',')[1]), 'image/svg+xml')
       const svg = document.importNode(parsed.documentElement, true)
@@ -177,15 +177,19 @@ test('generated OBI fits every fold and follows thicker cases on mobile', async 
   await page.reload()
   await page.getByRole('button', { name: /^Open OBI Session by/ }).click()
   await page.getByRole('button', { name: 'Lay flat', exact: true }).click()
-  await expect(page.locator('.obi-strip')).toHaveCSS('--obi-depth', '66px')
-  await expect(page.locator('.obi-strip')).toHaveCSS('--obi-width', '158px')
+  const layout = await page.locator('.obi-strip').evaluate((element) => {
+    const style = getComputedStyle(element)
+    return { depth: Number.parseFloat(style.getPropertyValue('--obi-depth')), width: Number.parseFloat(style.getPropertyValue('--obi-width')) }
+  })
+  expect(layout.depth).toBeCloseTo(24 * 300 / 118, 5)
+  expect(layout.width).toBeCloseTo(92 + 24 * 300 / 118, 5)
   for (const side of ['back', 'spine', 'front']) {
     await expect(page.locator(`.obi-print-${side}`)).toHaveCSS('background-image', `url("${source}")`)
-    await expect(page.locator(`.obi-print-${side}`)).toHaveCSS('background-size', '158px 321.797px')
+    await expect(page.locator(`.obi-print-${side}`)).toHaveCSS('background-size', '153.017px 317.797px')
   }
   await expect(page.locator('.obi-print-back')).toHaveCSS('background-position', '0px 0px')
   await expect(page.locator('.obi-print-spine')).toHaveCSS('background-position', '-46px 0px')
-  await expect(page.locator('.obi-print-front')).toHaveCSS('background-position', '-112px 0px')
+  await expect(page.locator('.obi-print-front')).toHaveCSS('background-position', '-107.017px 0px')
 })
 
 test('uploads replace individual artwork and randomizing preserves other uploaded images', async ({ page }) => {

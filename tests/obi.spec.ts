@@ -24,6 +24,44 @@ async function visibleObiColors(page: Page) {
   }, screenshot.toString('base64'))
 }
 
+test('outer thickness works without OBI, persists independently of paper and supports automatic defaults', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Add recording' }).click()
+  await page.getByRole('textbox', { name: 'Album title', exact: true }).fill('Independent case')
+  await page.getByRole('textbox', { name: 'Artist', exact: true }).fill('Print Artist')
+  const thickness = page.getByRole('spinbutton', { name: 'Outer case thickness (mm)', exact: true })
+  await expect(thickness).toHaveAttribute('placeholder', '10.4')
+  await thickness.fill('1')
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(1)
+  expect(await thickness.evaluate((input: HTMLInputElement) => input.validity.rangeUnderflow)).toBe(true)
+  await thickness.fill('14')
+  await page.getByRole('button', { name: 'Add recording', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  const album = page.getByRole('button', { name: 'Open Independent case by Print Artist', exact: true })
+  expect(await album.locator('..').evaluate((element) => Number((element as HTMLElement).style.getPropertyValue('--spine-units')))).toBeCloseTo(14 / 10.4, 8)
+  await album.click()
+  expect(await page.locator('.cd-case').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--case-depth')))).toBeCloseTo(14 * 300 / 118, 5)
+  await expect(page.locator('.obi-strip')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
+  await expect(thickness).toHaveValue('14')
+  const spine = page.getByRole('img', { name: 'Spine preview', exact: true })
+  const paper = (await spine.getAttribute('src'))!
+  await page.getByLabel('Number of discs').selectOption('6')
+  await expect(thickness).toHaveValue('14')
+  await expect(spine).toHaveAttribute('src', paper)
+  await thickness.fill('')
+  await expect(thickness).toHaveAttribute('placeholder', '24.0')
+  await expect(spine).toHaveAttribute('src', paper)
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+  await expect(page.locator('.album-editor')).toHaveCount(0)
+  await page.reload()
+  await album.click()
+  expect(await page.locator('.cd-case').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--case-depth')))).toBeCloseTo(24 * 300 / 118, 5)
+})
+
 test('recordings without OBI omit its artwork and controls and still open and close normally', async ({ page }) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
@@ -104,12 +142,12 @@ test('uploaded artwork is painted on every fold through front, back and flat ani
   await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
   const source = await page.evaluate(() => {
     const canvas = document.createElement('canvas')
-    canvas.width = 1240
-    canvas.height = 3040
+    canvas.width = 466
+    canvas.height = 1250
     const context = canvas.getContext('2d')!
-    for (const [x, width, color] of [[0, 460, '#ff00ff'], [460, 320, '#00ffff'], [780, 460, '#ffff00']] as const) {
+    for (const [x, width, color] of [[0, 181, '#ff00ff'], [181, 104, '#00ffff'], [285, 181, '#ffff00']] as const) {
       context.fillStyle = color
-      context.fillRect(x, 0, width, 3040)
+      context.fillRect(x, 0, width, 1250)
     }
     return canvas.toDataURL('image/png')
   })
@@ -162,24 +200,31 @@ test('custom OBI dimensions drive generated artwork, crop guides, uploaded image
     context.fillRect(0, 0, 800, 1200)
     return canvas.toDataURL('image/png')
   })
+  await page.getByLabel('Upload spine artwork', { exact: true }).setInputFiles({ name: 'spine.png', mimeType: 'image/png', buffer: Buffer.from(source.split(',')[1], 'base64') })
+  await confirmCrop(page)
+  const spinePreview = page.getByRole('img', { name: 'Spine preview', exact: true })
+  const spineSource = (await spinePreview.getAttribute('src'))!
   await page.getByLabel('Upload OBI paper strip', { exact: true }).setInputFiles({ name: 'sized.png', mimeType: 'image/png', buffer: Buffer.from(source.split(',')[1], 'base64') })
   const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
-  await expect(dialog.getByRole('slider', { name: 'Front flap width (mm)', exact: true })).toHaveValue('18.1')
-  for (const [name, minimum, target] of [['Front flap width (mm)', 5, 30], ['Back flap width (mm)', 5, 10], ['OBI height (mm)', 40, 90]] as const) {
+  await expect(dialog.locator('.obi-size-controls input')).toHaveCount(2)
+  await expect(dialog).toContainText('Fixed front width 18.1 mm · Height 125 mm')
+  await expect(dialog.getByRole('slider', { name: 'Side / outer case thickness (mm)', exact: true })).toHaveValue('10.4')
+  for (const [name, minimum, target] of [['Side / outer case thickness (mm)', 2, 14], ['Back flap width (mm)', 5, 10]] as const) {
     const slider = dialog.getByRole('slider', { name, exact: true })
     await slider.focus()
     await page.keyboard.press('Home')
     for (let step = 0; step < (target - minimum) * 10; step += 1) await page.keyboard.press('ArrowRight')
     await expect(slider).toHaveValue(String(target))
   }
-  await expect(dialog).toContainText('OBI size 52.6 × 90.0 mm')
+  await expect(dialog).toContainText('OBI size 42.1 × 125.0 mm')
+  await expect(dialog.locator('.crop-obi-panel')).toHaveText(['Back', 'Side', 'Front'])
   await expect(dialog.locator('.crop-obi-folds span')).toHaveCount(2)
-  const widthMm = 40 + 32 * 118 / 300
+  const widthMm = 10 + 14 + 46 * 118 / 300
   const frame = (await dialog.locator('.reactEasyCrop_CropArea').boundingBox())!
-  expect(frame.width / frame.height).toBeCloseTo(widthMm / 90, 3)
+  expect(frame.width / frame.height).toBeCloseTo(widthMm / 125, 3)
   const folds = await dialog.locator('.crop-obi-folds span').evaluateAll((elements) => elements.map((element) => Number.parseFloat((element as HTMLElement).style.left)))
   expect(folds[0]).toBeCloseTo(10 / widthMm * 100, 3)
-  expect(folds[1]).toBeCloseTo((10 + 32 * 118 / 300) / widthMm * 100, 3)
+  expect(folds[1]).toBeCloseTo(24 / widthMm * 100, 3)
   await page.screenshot({ path: 'test-results/obi-crop-controls-mobile.png' })
   await confirmCrop(page)
   const cropped = (await preview.getAttribute('src'))!
@@ -187,20 +232,25 @@ test('custom OBI dimensions drive generated artwork, crop guides, uploaded image
     await image.decode()
     return { width: image.naturalWidth, height: image.naturalHeight }
   })
-  expect(Math.abs(output.width - output.height * widthMm / 90)).toBeLessThanOrEqual(1)
+  expect(Math.abs(output.width - output.height * widthMm / 125)).toBeLessThanOrEqual(1)
+  await expect(page.getByRole('spinbutton', { name: 'Outer case thickness (mm)', exact: true })).toHaveValue('14')
+  await expect(page.getByRole('spinbutton', { name: 'Outer case thickness (mm)', exact: true })).toBeDisabled()
+  await expect(spinePreview).toHaveAttribute('src', spineSource)
   await page.getByRole('button', { name: 'Recrop OBI image', exact: true }).click()
-  await expect(dialog).toContainText('OBI size 52.6 × 90.0 mm')
-  const frontWidth = dialog.getByRole('slider', { name: 'Front flap width (mm)', exact: true })
-  await frontWidth.focus()
+  await expect(dialog).toContainText('OBI size 42.1 × 125.0 mm')
+  const sideThickness = dialog.getByRole('slider', { name: 'Side / outer case thickness (mm)', exact: true })
+  await sideThickness.focus()
   await page.keyboard.press('End')
-  await expect(frontWidth).toHaveValue('60')
+  await expect(sideThickness).toHaveValue('45')
   await dialog.getByRole('button', { name: 'Reset crop', exact: true }).click()
-  await expect(frontWidth).toHaveValue('30')
-  await dialog.getByRole('button', { name: 'Reset OBI size', exact: true }).click()
-  await expect(frontWidth).toHaveValue('18.1')
+  await expect(sideThickness).toHaveValue('14')
+  await dialog.getByRole('button', { name: 'Reset back width', exact: true }).click()
+  await expect(dialog.getByRole('slider', { name: 'Back flap width (mm)', exact: true })).toHaveValue('18.1')
+  await expect(sideThickness).toHaveValue('14')
   await page.keyboard.press('Escape')
   await expect(dialog).toHaveCount(0)
   await expect(preview).toHaveAttribute('src', cropped)
+  await expect(page.getByRole('spinbutton', { name: 'Outer case thickness (mm)', exact: true })).toHaveValue('14')
   await page.getByRole('button', { name: 'Add recording', exact: true }).click()
   await expect(page.locator('.album-editor')).toHaveCount(0)
   await page.reload()
@@ -210,10 +260,13 @@ test('custom OBI dimensions drive generated artwork, crop guides, uploaded image
     const style = getComputedStyle(element)
     return ['--obi-front-width', '--obi-back-width', '--obi-height', '--obi-depth'].map((key) => Number.parseFloat(style.getPropertyValue(key)))
   })
-  expect(layout[0]).toBeCloseTo(30 * 300 / 118, 5)
+  expect(layout[0]).toBe(46)
   expect(layout[1]).toBeCloseTo(10 * 300 / 118, 5)
-  expect(layout[2]).toBeCloseTo(90 * 300 / 118, 5)
-  expect(layout[3]).toBe(32)
+  expect(layout[2]).toBeCloseTo(125 * 300 / 118, 5)
+  expect(layout[3]).toBeCloseTo(14 * 300 / 118, 5)
+  expect(await page.locator('.cd-case').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--case-depth')))).toBeCloseTo(layout[3], 5)
+  await expect(page.locator('.case-spine img')).toHaveAttribute('src', spineSource)
+  expect(await page.locator('.case-spine img').evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBeCloseTo(6.5 * 300 / 118, 1)
   for (const image of await page.locator('.obi-uploaded img').all()) {
     await expect(image).toHaveAttribute('src', cropped)
     await expect(image).toHaveCSS('object-fit', 'contain')
@@ -222,11 +275,11 @@ test('custom OBI dimensions drive generated artwork, crop guides, uploaded image
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await expect(page.locator('.obi-size-controls')).toHaveCount(0)
   await page.getByRole('button', { name: 'Recrop OBI image', exact: true }).click()
-  await expect(dialog.getByRole('slider', { name: 'Front flap width (mm)', exact: true })).toHaveValue('30')
+  await expect(sideThickness).toHaveValue('14')
   await expect(dialog.getByRole('slider', { name: 'Back flap width (mm)', exact: true })).toHaveValue('10')
-  await expect(dialog.getByRole('slider', { name: 'OBI height (mm)', exact: true })).toHaveValue('90')
-  await dialog.getByRole('button', { name: 'Reset OBI size', exact: true }).click()
-  await expect(dialog.getByRole('slider', { name: 'Front flap width (mm)', exact: true })).toHaveValue('18.1')
+  await dialog.getByRole('button', { name: 'Reset back width', exact: true }).click()
+  await expect(dialog.getByRole('slider', { name: 'Back flap width (mm)', exact: true })).toHaveValue('18.1')
+  await expect(sideThickness).toHaveValue('14')
   await confirmCrop(page)
   await page.getByRole('button', { name: 'Save changes', exact: true }).click()
   await expect(page.locator('.album-editor')).toHaveCount(0)
@@ -234,7 +287,7 @@ test('custom OBI dimensions drive generated artwork, crop guides, uploaded image
   await page.getByRole('button', { name: 'Open Sized OBI by Print Artist', exact: true }).click()
   await expect(page.locator('.obi-strip')).toHaveCSS('--obi-front-width', '46px')
   await expect(page.locator('.obi-strip')).toHaveCSS('--obi-back-width', '46px')
-  await expect(page.locator('.obi-strip')).toHaveCSS('--obi-height', '321.79661px')
+  expect(await page.locator('.obi-strip').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--obi-height')))).toBeCloseTo(125 * 300 / 118, 5)
 })
 
 test('OBI size changes stay inside the crop dialog and cancelling an upload keeps the defaults', async ({ page }) => {
@@ -248,12 +301,12 @@ test('OBI size changes stay inside the crop dialog and cancelling an upload keep
   await page.getByLabel('Upload OBI paper strip', { exact: true }).setInputFiles(file)
   const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
   await expect(dialog.getByRole('button', { name: 'Use crop', exact: true })).toBeEnabled()
-  for (const name of ['Front flap width (mm)', 'Back flap width (mm)', 'OBI height (mm)']) {
+  for (const name of ['Side / outer case thickness (mm)', 'Back flap width (mm)']) {
     const slider = dialog.getByRole('slider', { name, exact: true })
     await slider.focus()
     await page.keyboard.press('End')
   }
-  await expect(dialog).toContainText('OBI size 132.6 × 130.0 mm')
+  await expect(dialog).toContainText('OBI size 123.1 × 125.0 mm')
   const bounds = (await dialog.boundingBox())!
   const apply = (await dialog.getByRole('button', { name: 'Use crop', exact: true }).boundingBox())!
   const stage = (await dialog.locator('.crop-stage').boundingBox())!
@@ -268,8 +321,7 @@ test('OBI size changes stay inside the crop dialog and cancelling an upload keep
   await expect(preview).toHaveAttribute('src', generated)
   await expect(page.locator('.obi-size-controls')).toHaveCount(0)
   await page.getByLabel('Upload OBI paper strip', { exact: true }).setInputFiles(file)
-  await expect(dialog.getByRole('slider', { name: 'Front flap width (mm)', exact: true })).toHaveValue('18.1')
+  await expect(dialog.getByRole('slider', { name: 'Side / outer case thickness (mm)', exact: true })).toHaveValue('10.4')
   await expect(dialog.getByRole('slider', { name: 'Back flap width (mm)', exact: true })).toHaveValue('18.1')
-  await expect(dialog.getByRole('slider', { name: 'OBI height (mm)', exact: true })).toHaveValue('126.6')
   await page.keyboard.press('Escape')
 })

@@ -1,5 +1,5 @@
 import type { Album, AlbumDisc } from '../types/album'
-import { getCaseDepth } from './album'
+import { getSpineDepth } from './album'
 import { getObiLayout } from './obi'
 
 const styles = [
@@ -11,7 +11,7 @@ const styles = [
 ] as const
 
 export type CoverStyle = (typeof styles)[number]
-type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs' | 'spineWidthMm' | 'obiDimensions'>
+type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs' | 'spineWidthMm' | 'caseThicknessMm' | 'obiDimensions'>
 
 const prefix = 'data:image/svg+xml;charset=utf-8,'
 const opening = (style: CoverStyle) =>
@@ -220,7 +220,7 @@ export function getSpineArtwork(
 ): string {
   const uploaded = side === 'left' ? album.spineUrl : album.rightSpineUrl
   if (uploaded) return uploaded
-  const width = getCaseDepth(album) * 2
+  const width = getSpineDepth(album) * 2
   return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-spine="${side}" width="${width * 3}" height="1800" viewBox="0 0 ${width} 600">
     <rect width="${width}" height="600" fill="${escapeXml(album.color)}"/>
     <g fill="${escapeXml(album.ink)}" text-anchor="middle" writing-mode="vertical-rl" transform="translate(${width / 2} 0)">

@@ -18,9 +18,7 @@ export interface BookletPage {
   imageUrl?: string
 }
 export interface ObiDimensions {
-  frontWidthMm?: number
   backWidthMm?: number
-  heightMm?: number
 }
 export interface Album {
   id: string
@@ -37,6 +35,7 @@ export interface Album {
   spineUrl?: string
   rightSpineUrl?: string
   spineWidthMm?: number
+  caseThicknessMm?: number
   obiUrl?: string
   obiEnabled?: boolean
   obiDimensions?: ObiDimensions
