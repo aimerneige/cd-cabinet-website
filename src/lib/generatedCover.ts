@@ -48,13 +48,13 @@ function escapeXml(value: string): string {
   })[character]!)
 }
 
-function text(value: string, y: number, size: number, font = 'Arial, sans-serif', x = 40, maxWidth = 520): string {
+function text(value: string, y: number, size: number, font = 'sans-serif', x = 40, maxWidth = 520): string {
   const width = Array.from(value).reduce((sum, character) => sum + (/^[\x00-\x7f]$/.test(character) ? 0.6 : 1), 0) * size
   const fit = width > maxWidth ? ` textLength="${maxWidth}" lengthAdjust="spacingAndGlyphs"` : ''
   return `<text x="${x}" y="${y}" font-family="${font}" font-size="${size}"${fit}>${escapeXml(value)}</text>`
 }
 
-function centeredText(value: string, y: number, size: number, maxWidth: number, font = 'Arial, sans-serif'): string {
+function centeredText(value: string, y: number, size: number, maxWidth: number, font = 'sans-serif'): string {
   // 采用保守字宽，避免 W 等宽字母被低估后超出印刷区域。
   const fit = Array.from(value).length * size > maxWidth ? ` textLength="${maxWidth}" lengthAdjust="spacingAndGlyphs"` : ''
   return `<text x="0" y="${y}" font-family="${font}" font-size="${size}"${fit}>${escapeXml(value)}</text>`
@@ -143,7 +143,7 @@ export function generateCover(
     ${designs[style.id]}
     <g fill="${ink}">
       ${text(details.artist, 65, 18)}
-      ${text(details.title, 523, 40, 'Georgia, serif')}
+      ${text(details.title, 523, 40, 'serif')}
       ${text(`${details.year} · ${details.genre} · STEREO`, 560, 11)}
     </g>
   </svg>`
@@ -170,7 +170,7 @@ export function getDiscArtwork(
       <g fill="none" stroke="${ink}" opacity=".4"><circle cx="300" cy="300" r="265"/><circle cx="300" cy="300" r="82"/></g>
       <g fill="${ink}" text-anchor="middle" transform="translate(300 0)">
         ${centeredText(album.artist, 150, 17, 330)}
-        ${centeredText(album.title, 195, 32, 360, 'Georgia, serif')}
+        ${centeredText(album.title, 195, 32, 360, 'serif')}
         ${centeredText(disc.title ?? 'COMPACT DISC · DIGITAL AUDIO', 420, 13, 340)}
         ${centeredText(`DISC ${number} / ${discs.length}`, 454, 19, 300)}
         ${centeredText(`${album.year} · ${album.genre}`, 484, 12, 250)}
@@ -193,11 +193,11 @@ export function getBackCoverArtwork(album: ArtworkDetails & Pick<Album, 'backCov
       : '<circle cx="620" cy="295" r="140"/><circle cx="620" cy="295" r="110"/>'}</g>
     <g fill="${ink}">
       ${text(album.artist, 65, 18)}
-      ${text(album.title, 112, 32, 'Georgia, serif')}
+      ${text(album.title, 112, 32, 'serif')}
       ${text('ORIGINAL RECORDINGS', 150, 11)}
       ${album.tracks.slice(0, 12).map((track, index) => `
-        ${text(`${String(index + 1).padStart(2, '0')}  ${track.title}`, 190 + index * 28, 14, 'Arial, sans-serif', 40, 450)}
-        <g text-anchor="end">${text(track.duration ?? '', 190 + index * 28, 12, 'Arial, sans-serif', 650, 55)}</g>
+        ${text(`${String(index + 1).padStart(2, '0')}  ${track.title}`, 190 + index * 28, 14, 'sans-serif', 40, 450)}
+        <g text-anchor="end">${text(track.duration ?? '', 190 + index * 28, 12, 'sans-serif', 650, 55)}</g>
       `).join('')}
       ${text(`${album.year} · ${count} ${count === 1 ? 'CD' : 'CDs'} · ${album.genre}`, 555, 11)}
     </g>
@@ -233,7 +233,7 @@ export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): st
       </g>
       <g fill="${print}" text-anchor="middle" writing-mode="vertical-rl" style="text-orientation:mixed">
         <g transform="translate(${spine ? panelWidth / 2 : panelWidth * 16 / 46} 0)">
-          ${centeredText(side === 'back' ? album.artist : album.title, 150, (spine ? 12 : 15) * fontScale, 188, 'Georgia, serif')}
+          ${centeredText(side === 'back' ? album.artist : album.title, 150, (spine ? 12 : 15) * fontScale, 188, 'serif')}
         </g>
         ${spine ? '' : `<g transform="translate(${panelWidth * 36 / 46} 0)">${centeredText(side === 'front' ? album.artist : discLabel, 150, 7 * fontScale, 188)}</g>`}
       </g>
@@ -269,7 +269,7 @@ export function getInnerArtwork(
       : `<circle cx="${width / 2}" cy="285" r="170"/><circle cx="${width / 2}" cy="285" r="130"/>`}<path d="M40 460H${width - 40}"/></g>
     <g fill="${ink}">
       ${text(side === 'booklet' ? 'BOOKLET' : 'ORIGINAL RECORDINGS', 65, 14)}
-      ${text(album.title, 510, 32, 'Georgia, serif')}
+      ${text(album.title, 510, 32, 'serif')}
       ${text(album.artist, 548, 16)}
       ${text(`${album.year} · ${album.genre}`, 575, 10)}
     </g>

@@ -13,7 +13,6 @@
 .editor-heading h1 {
   font:
     38px/1.1 'Libre Caslon Display',
-    Georgia,
     serif;
   margin: 10px 0 0;
 }
@@ -152,7 +151,7 @@
   padding: 16px 20px 20px;
   border: 1px solid #c5cab9;
 }
-.editor-design > legend { padding: 0 8px; font: 24px/1.2 'Libre Caslon Display', Georgia, serif; }
+.editor-design > legend { padding: 0 8px; font: 24px/1.2 'Libre Caslon Display', serif; }
 .editor-design > p { margin: 0 0 18px; font-size: 11px; line-height: 1.7; color: #66745c; }
 .editor-design-groups { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
 .editor-design-group { min-width: 0; }
@@ -166,7 +165,7 @@
 .editor-palette-auto { background: conic-gradient(#b88a69, #7fa29a, #6b638b, #b88a69); }
 .editor-design:disabled .editor-design-choice { opacity: .5; cursor: default; }
 .album-editor .booklet-pages-editor { margin: 26px 0 0; padding: 20px 0; border-top: 1px solid #c5cab9; border-bottom: 1px solid #c5cab9; }
-.booklet-pages-editor legend { font: 24px/1.2 'Libre Caslon Display', Georgia, serif; }
+.booklet-pages-editor legend { font: 24px/1.2 'Libre Caslon Display', serif; }
 .booklet-pages-editor > p { font-size: 11px; line-height: 1.7; color: #78836b; }
 .booklet-pages-editor .booklet-page-count { color: #384033; font-weight: 500; }
 .booklet-cover-guidance { font-size: 10px; color: #78836b; line-height: 1.7; }
@@ -245,14 +244,14 @@
 }
 .artwork-alert { width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 24px; border: 1px solid #b6bbac; background: #eeece5; color: #384033; }
 .artwork-alert::backdrop { background: #302e2788; backdrop-filter: blur(4px); }
-.artwork-alert h2 { margin: 0; font: 30px/1.2 'Libre Caslon Display', Georgia, serif; }
+.artwork-alert h2 { margin: 0; font: 30px/1.2 'Libre Caslon Display', serif; }
 .artwork-alert p { margin: 16px 0 24px; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
 .artwork-alert > div { display: flex; justify-content: flex-end; }
 .artwork-alert button { padding: 8px 20px; border: 1px solid #66745c; background: #66745c; color: #fff; font-size: 12px; }
 .delete-recording { margin-top: 24px; padding: 9px 12px; border: 1px solid #a96350; color: #934b37; background: transparent; font-size: 11px; }
 .delete-album-dialog { width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 24px; border: 1px solid #b6bbac; background: #eeece5; color: #384033; }
 .delete-album-dialog::backdrop { background: #302e2788; backdrop-filter: blur(5px); }
-.delete-album-dialog h2 { margin: 0; font: 30px/1.2 'Libre Caslon Display', Georgia, serif; }
+.delete-album-dialog h2 { margin: 0; font: 30px/1.2 'Libre Caslon Display', serif; }
 .delete-album-dialog p { margin: 16px 0 24px; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
 .delete-album-dialog > div { display: flex; justify-content: flex-end; gap: 10px; }
 .delete-album-dialog button { padding: 9px 12px; border: 1px solid #aab49b; background: transparent; color: #58664a; font-size: 12px; }

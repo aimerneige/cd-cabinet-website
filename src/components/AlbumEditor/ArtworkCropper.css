@@ -21,7 +21,7 @@
 .artwork-cropper::backdrop { background: #302e2788; backdrop-filter: blur(5px); }
 .artwork-cropper header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .artwork-cropper header > div { min-width: 0; }
-.artwork-cropper h2 { font: 32px/1.1 'Libre Caslon Display', Georgia, serif; margin: 0; }
+.artwork-cropper h2 { font: 32px/1.1 'Libre Caslon Display', serif; margin: 0; }
 .artwork-cropper header p { margin: 8px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: #78836b; }
 .artwork-cropper button { border: 1px solid #aab49b; padding: 8px 12px; background: transparent; color: inherit; font-size: 12px; }
 .artwork-cropper header button { border: 0; font-size: 26px; }

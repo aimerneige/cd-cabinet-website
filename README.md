@@ -80,3 +80,16 @@ Albums, artwork, booklet pages, audio and shelf order are saved in IndexedDB in 
 - `src/styles/global.css`: responsive cabinet, case and reduced motion styles
 
 Fonts and artwork are bundled locally. Font licenses are included in `public/assets/fonts`. The application makes no external requests.
+
+## Font licensing
+
+The bundled fonts are licensed under the SIL Open Font License 1.1, which permits commercial use, self-hosting and redistribution with this application.
+
+| Font | Bundled files | Copyright and license |
+| --- | --- | --- |
+| [DM Sans](https://github.com/google/fonts/tree/main/ofl/dmsans) | `dm-sans-regular.ttf`, `dm-sans-medium.ttf`, `dm-sans-semibold.ttf` | Copyright 2014 The DM Sans Project Authors; [full license](public/assets/fonts/DM-Sans-OFL.txt) |
+| [Libre Caslon Display](https://github.com/google/fonts/tree/main/ofl/librecaslondisplay) | `libre-caslon-display.ttf` | Copyright 2012 The Libre Caslon Display Authors; [full license](public/assets/fonts/Libre-Caslon-Display-OFL.txt) |
+
+Keep the copyright notices and full license files alongside the fonts in source distributions and deployed builds. Font files must not be sold on their own, and modified versions must respect any Reserved Font Names. These font licenses do not require the application code or artwork to use the same license. See the [official OFL guidance](https://openfontlicense.org/how-to-use-ofl-fonts/) for details.
+
+CSS fallbacks and SVG artwork use the generic `serif`, `sans-serif` and `monospace` families, rendered with fonts available on the visitor's device. No proprietary font files are bundled or embedded in the artwork.
