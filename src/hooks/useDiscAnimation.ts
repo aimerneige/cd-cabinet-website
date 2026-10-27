@@ -53,13 +53,23 @@ export function useDiscAnimation(discs: AlbumDisc[], caseDepth: number, initialI
     const tl = gsap.timeline({ onComplete: finish })
     animation.current = tl
     const step = target > position.current ? 1 : -1
-    for (let page = position.current; page !== target; page += step) {
+    // 一页翻完再翻下一页，避免托盘互相穿插；连续翻多页时每页更快。
+    const duration = Math.abs(target - position.current) > 1 ? 0.5 : 0.68
+    for (let page = position.current, turn = 0; page !== target; page += step, turn++) {
       const trayIndex = step > 0 ? page : page - 1
-      tl.to(trayRefs.current[trayIndex], {
-        ...trayTransform(trayIndex, step > 0),
-        duration: 0.7,
-        ease: 'power2.inOut',
-      })
+      const tray = trayRefs.current[trayIndex]
+      const { rotationY, z } = trayTransform(trayIndex, step > 0)
+      const at = turn * duration
+      tl.to(tray, { rotationY, duration, ease: 'power3.inOut' }, at)
+        // 翻页中途稍微抬起托盘，落下时贴合到目标层。
+        .to(tray, {
+          keyframes: {
+            '50%': { z: Math.max(z, Number(gsap.getProperty(tray, 'z'))) + 10 },
+            '100%': { z },
+            easeEach: 'sine.inOut',
+          },
+          duration,
+        }, at)
     }
   }
 
@@ -81,6 +91,7 @@ export function useDiscAnimation(discs: AlbumDisc[], caseDepth: number, initialI
     }
     const tl = gsap.timeline({ onComplete: onClosed })
     animation.current = tl
+    let turn = 0
     for (let index = trayRefs.current.length - 1; index >= 0; index--) {
       const tray = trayRefs.current[index]
       if (Number(gsap.getProperty(tray, 'rotationY'))) {
@@ -88,8 +99,8 @@ export function useDiscAnimation(discs: AlbumDisc[], caseDepth: number, initialI
           ...trayTransform(index, false),
           duration: 0.3,
           ease: 'power2.inOut',
-        })
-      } else tl.set(tray, trayTransform(index, false))
+        }, turn++ * 0.3)
+      } else tl.set(tray, trayTransform(index, false), 0)
     }
   }
 

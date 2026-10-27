@@ -77,24 +77,40 @@ export function useAlbumAnimation(
         .to(jewel, { opacity: 1, duration: 0.2 }, 0)
         .to([details, controls], { opacity: 1, duration: 0.15 }, 0.1)
     } else {
+      const items = [
+        ...details.querySelectorAll('.album-heading > *, .track-list > li'),
+      ]
+      // 先把盒子从架上抽出（朝观者方向），再沿弧线飞到中央并转正。
       tl.to(jewel, {
-        z: 70,
-        x: '+=18',
-        y: '-=8',
-        duration: 0.22,
+        z: 110,
+        y: '-=14',
+        duration: 0.28,
         ease: 'power2.out',
       })
-        .to(overlay, { opacity: 1, duration: 0.45 }, 0.15)
+        .to(overlay, { opacity: 1, duration: 0.5, ease: 'power1.out' }, 0.08)
         .to(
           jewel,
           {
             x: endX + width / 2 - CASE_WIDTH / 2,
             y: endY + size / 2 - CASE_HEIGHT / 2,
             z: 0,
-            duration: 0.6,
+            duration: 0.72,
             ease: 'power3.inOut',
           },
-          0.22,
+          0.2,
+        )
+        .to(
+          jewel,
+          {
+            // 移动途中轻微倾斜，像是被手拿着转过来。
+            keyframes: {
+              '45%': { rotationZ: -3.5, rotationX: 6 },
+              '100%': { rotationZ: 0, rotationX: 0 },
+              easeEach: 'sine.inOut',
+            },
+            duration: 0.8,
+          },
+          0.2,
         )
         .to(
           jewel,
@@ -102,14 +118,33 @@ export function useAlbumAnimation(
             rotationY: 0,
             scale: size / CASE_HEIGHT,
             '--case-depth': `${caseDepth}px`,
-            duration: 0.65,
+            duration: 0.74,
             ease: 'power3.inOut',
           },
-          0.38,
+          0.26,
         )
-      if (paper) tl.to(paper, { autoAlpha: 0, duration: 0.22 }, 0.9)
-      tl.to(lid, { rotationY: -165, duration: 0.6, ease: 'power2.inOut' }, 1.12)
-        .to([details, controls], { opacity: 1, duration: 0.3 }, 1.4)
+      if (paper) tl.to(paper, { autoAlpha: 0, duration: 0.2 }, 0.78)
+      tl.to(lid, { rotationY: -165, duration: 0.7, ease: 'back.out(1.15)' }, 0.86)
+        .to(details, { opacity: 1, duration: 0.2 }, 0.98)
+        .fromTo(
+          items,
+          { opacity: 0, y: 12 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.42,
+            ease: 'power2.out',
+            stagger: { amount: Math.min(0.28, items.length * 0.03) },
+            clearProps: 'transform',
+          },
+          0.98,
+        )
+        .fromTo(
+          controls,
+          { opacity: 0, y: -8 },
+          { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' },
+          1.12,
+        )
     }
     timeline.current = tl
     if (closeRequested.current) tl.reverse()
@@ -157,18 +192,35 @@ export function useAlbumAnimation(
             : next === 'front'
               ? -CASE_WIDTH / 2
               : 0,
-        duration: reduced ? 0 : 0.65,
-        ease: 'power2.inOut',
+        duration: reduced ? 0 : 0.7,
+        ease: 'power3.inOut',
       },
       0,
     )
+    const flipping =
+      (next === 'back') !== Number(gsap.getProperty(body, 'rotationY')) > 90
+    if (flipping && !reduced) {
+      // 翻面时把盒子微微拿起再放下，避免像贴在平面上旋转。
+      tl.to(
+        body,
+        {
+          keyframes: {
+            '50%': { z: 45 },
+            '100%': { z: 0 },
+            easeEach: 'sine.inOut',
+          },
+          duration: 0.7,
+        },
+        0,
+      )
+    }
     if (next !== 'back') {
       tl.to(
         lid,
         {
           rotationY: opened.current ? -165 : 0,
-          duration: reduced ? 0 : 0.4,
-          ease: 'power2.inOut',
+          duration: reduced ? 0 : 0.5,
+          ease: opened.current ? 'back.out(1.2)' : 'power3.inOut',
         },
         0,
       )
@@ -179,8 +231,8 @@ export function useAlbumAnimation(
             ...(opened.current
               ? trayTransforms.current[index]
               : { rotationY: 0, z: trays.length > 1 ? caseDepth / 2 - 3 - index * 6 : 3 }),
-            duration: reduced ? 0 : 0.4,
-            ease: 'power2.inOut',
+            duration: reduced ? 0 : 0.5,
+            ease: 'power3.inOut',
           },
           0,
         )
@@ -194,29 +246,31 @@ export function useAlbumAnimation(
     const changedView = !!viewTimeline.current || view !== 'inside'
     viewTimeline.current?.kill()
     foldTray(() => {
+      const jewel = caseRef.current!
+      const lid = jewel.querySelector('.case-lid')!
+      const reduced = window.matchMedia(
+        '(prefers-reduced-motion: reduce)',
+      ).matches
+      // 单独合盖，避免原开盒时间线反向时把盒盖重新打开或回弹。
+      for (const tween of timeline.current!.getChildren(
+        false,
+        true,
+        false,
+      ) as gsap.core.Tween[]) {
+        if (tween.targets().includes(lid)) tween.kill()
+      }
+      const putBack = () => timeline.current?.timeScale(1.3).reverse()
       if (changedView) {
-        const jewel = caseRef.current!
-        const lid = jewel.querySelector('.case-lid')!
-        const reduced = window.matchMedia(
-          '(prefers-reduced-motion: reduce)',
-        ).matches
-        // 视角改变后单独合盖，避免原开盒时间线把闭合的盒盖重新打开。
-        for (const tween of timeline.current!.getChildren(
-          false,
-          true,
-          false,
-        ) as gsap.core.Tween[]) {
-          if (tween.targets().includes(lid)) tween.kill()
-        }
         viewTimeline.current = gsap
-          .timeline({ onComplete: () => timeline.current?.reverse() })
+          .timeline({ onComplete: putBack })
           .to(
             jewel.querySelector('.case-body'),
             {
               rotationY: 0,
               x: 0,
-              duration: reduced ? 0 : 0.35,
-              ease: 'power2.inOut',
+              z: 0,
+              duration: reduced ? 0 : 0.4,
+              ease: 'power3.inOut',
             },
             0,
           )
@@ -224,14 +278,19 @@ export function useAlbumAnimation(
             lid,
             {
               rotationY: 0,
-              duration: reduced ? 0 : 0.35,
-              ease: 'power2.inOut',
+              duration: reduced ? 0 : 0.4,
+              ease: 'power3.inOut',
             },
             0,
           )
         return
       }
-      timeline.current?.reverse()
+      gsap.to(lid, {
+        rotationY: 0,
+        duration: reduced ? 0 : 0.45,
+        ease: 'power3.inOut',
+      })
+      putBack()
     })
   }
   return {

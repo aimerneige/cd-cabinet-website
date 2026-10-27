@@ -44,6 +44,7 @@ export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
         {...(edit ? listeners : {})}
         type="button"
         data-album-id={album.id}
+        data-flip-id={album.id}
         className={`shelf-cd ${hidden ? 'is-away' : ''}`}
         style={
           {

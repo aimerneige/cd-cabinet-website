@@ -1,8 +1,10 @@
 .cd-player {
   position: absolute;
   top: max(90px, 17vh);
-  left: 50%;
-  transform: translateX(-50%);
+  /* 用 margin 居中，留出 transform 给入场/退场动画。 */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   width: min(640px, calc(100vw - 36px));
   padding: 23px 26px 24px;
   border: 1px solid #a6a79e;

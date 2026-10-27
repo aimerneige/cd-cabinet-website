@@ -1,0 +1,303 @@
+/* 交互动效：悬停、按压、入场。关闭动效偏好时统一停用（见文件末尾）。 */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* ---------- 页面入场 ---------- */
+#root > main:not(.album-editor) {
+  animation: fade-in 0.45s var(--ease-out) both;
+}
+.collection-heading > div > *,
+.collection-count {
+  animation: rise-in 0.7s var(--ease-out) both;
+}
+.collection-heading > div > :nth-child(2) { animation-delay: 0.06s; }
+.collection-heading > div > :nth-child(3) { animation-delay: 0.12s; }
+.collection-count { animation-delay: 0.1s; }
+.album-editor {
+  animation: rise-in 0.45s var(--ease-out) both;
+}
+
+/* ---------- 通用按钮手感 ---------- */
+.edit-button,
+.add-recording,
+.sample-collection-actions > button,
+.viewer-controls button,
+.disc-selector button,
+.artwork-reader button,
+.delete-album-dialog button,
+.compact-player button,
+.player-transport button,
+.language-select {
+  transition:
+    background-color 0.2s var(--ease-out),
+    color 0.2s var(--ease-out),
+    border-color 0.2s var(--ease-out),
+    box-shadow 0.2s var(--ease-out),
+    filter 0.2s var(--ease-out),
+    transform 0.15s var(--ease-out);
+}
+:is(
+    .edit-button:not(.editing),
+    .add-recording,
+    .sample-collection-actions > button,
+    .viewer-controls button,
+    .disc-selector button:not([aria-pressed='true']),
+    .artwork-reader button:not([aria-current='page']),
+    .delete-album-dialog button:not(.confirm-delete-album),
+    .compact-player button
+  ):not(:disabled):hover {
+  background-color: #66745c14;
+  border-color: #858f77;
+  color: #3d4735;
+}
+:is(
+    .edit-button.editing,
+    .disc-selector button[aria-pressed='true'],
+    .delete-album-dialog .confirm-delete-album,
+    .player-transport button
+  ):not(:disabled):hover {
+  filter: brightness(1.07);
+}
+:is(
+    .edit-button,
+    .add-recording,
+    .sample-collection-actions > button,
+    .viewer-controls button,
+    .disc-selector button,
+    .artwork-reader button,
+    .delete-album-dialog button,
+    .compact-player button
+  ):not(:disabled):active {
+  transform: translateY(1px) scale(0.98);
+  transition-duration: 0.06s;
+}
+
+/* ---------- 工具栏 ---------- */
+.genre-tabs button {
+  transition: color 0.2s var(--ease-out);
+}
+.genre-tabs button::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: #626f54;
+  transform: scaleX(0);
+  opacity: 0;
+  transition:
+    transform 0.35s var(--ease-out),
+    opacity 0.2s;
+}
+.genre-tabs button.selected::after {
+  transform: scaleX(1);
+  opacity: 1;
+}
+.genre-tabs button:not(.selected):not(:disabled):hover {
+  color: #4d5644;
+}
+.genre-tabs button:not(.selected):not(:disabled):hover::after {
+  transform: scaleX(0.4);
+  opacity: 0.45;
+}
+.search {
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.25s var(--ease-out);
+}
+.search:focus-within {
+  border-color: #8a8c81;
+}
+.search svg {
+  transition: color 0.25s var(--ease-out), transform 0.3s var(--ease-out);
+}
+.search:focus-within svg {
+  color: #4f5a46;
+  transform: scale(1.08);
+}
+
+/* ---------- 唱片架 ---------- */
+.shelf-cd {
+  transition:
+    transform 0.38s var(--ease-out),
+    filter 0.25s var(--ease-out),
+    box-shadow 0.38s var(--ease-out);
+}
+.shelf-cd:hover,
+.shelf-cd:focus-visible {
+  /* 像从架上把盒子往外抽出一截。 */
+  transform: translateY(-10px) translateZ(14px);
+  filter: brightness(1.1);
+  box-shadow:
+    inset 1px 0 0 #ffffff75,
+    inset -2px 0 0 #0b0c1255,
+    0 14px 14px -10px #000c;
+}
+.shelf-cd:active {
+  transform: translateY(-6px) translateZ(8px);
+  transition-duration: 0.08s;
+}
+.cabinet-edit .shelf-cd:hover {
+  transform: translateY(-5px);
+}
+.is-dragging .shelf-cd {
+  transform: translateY(-14px) rotate(-2deg);
+}
+/* Flip 动画逐帧写 transform，期间关闭 CSS 过渡避免拖影。 */
+.is-reflowing .shelf-cd {
+  transition-property: filter, box-shadow;
+}
+.shelf-cavity {
+  transition: box-shadow 0.4s var(--ease-out);
+}
+.cabinet-edit .shelf-cavity {
+  box-shadow:
+    inset 4px 0 9px #120e0a40,
+    inset -4px 0 9px #120e0a40,
+    inset 0 0 0 1px #d8bf9530;
+}
+
+/* ---------- 盒内光盘 ---------- */
+.disc-tray > .disc[role='button'] {
+  transition:
+    scale 0.35s var(--ease-out),
+    filter 0.3s var(--ease-out);
+}
+.disc-tray > .disc[role='button']:hover {
+  scale: 1.025;
+  filter: brightness(1.05);
+}
+.disc-tray > .disc[role='button']:active {
+  scale: 0.99;
+  transition-duration: 0.08s;
+}
+
+/* ---------- 曲目列表 ---------- */
+/* 播放器展开/收起时，详情区平滑让位而不是瞬间跳动。 */
+.album-details {
+  transition: top 0.55s var(--ease-in-out);
+}
+.track-list li {
+  transition:
+    background-color 0.25s var(--ease-out),
+    color 0.25s var(--ease-out),
+    padding 0.3s var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
+}
+.track-list li:has(.track-title:not(:disabled)):hover {
+  background-color: #7686640f;
+}
+.track-title {
+  transition: color 0.2s var(--ease-out);
+}
+.track-list li.current-track {
+  padding-left: 8px;
+  box-shadow: inset 2px 0 0 #4e713b;
+}
+
+/* ---------- 播放器 ---------- */
+.player-transport .play-key {
+  transition:
+    box-shadow 0.35s var(--ease-out),
+    filter 0.2s var(--ease-out),
+    transform 0.15s var(--ease-out);
+}
+.display-heading > span:last-child {
+  transition: color 0.3s, text-shadow 0.3s;
+}
+.compact-player {
+  animation: compact-in 0.5s var(--ease-out) both;
+}
+
+/* ---------- 弹窗与阅读器 ---------- */
+dialog:not(.artwork-cropper)[open] {
+  animation: dialog-in 0.32s var(--ease-out);
+}
+dialog[open]::backdrop {
+  animation: fade-in 0.3s ease-out;
+}
+.reader-paper {
+  animation: fade-in 0.3s var(--ease-out);
+}
+.reader-thumbnails button {
+  transition:
+    background-color 0.2s var(--ease-out),
+    border-color 0.2s var(--ease-out),
+    box-shadow 0.2s var(--ease-out),
+    transform 0.25s var(--ease-out);
+}
+.reader-thumbnails button:not([aria-current='page']):hover {
+  transform: translateY(-2px);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px); }
+}
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+@keyframes compact-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(24px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* 只停用本文件加的入场动画和过渡；不要对 * 设置 transition，
+     否则默认的 transition-property: all 会拖慢 GSAP 写入的 transform。 */
+  #root > main:not(.album-editor),
+  .collection-heading > div > *,
+  .collection-count,
+  .album-editor,
+  .compact-player,
+  dialog[open],
+  dialog[open]::backdrop,
+  .reader-paper {
+    animation: none !important;
+  }
+  .edit-button,
+  .add-recording,
+  .sample-collection-actions > button,
+  .viewer-controls button,
+  .disc-selector button,
+  .artwork-reader button,
+  .delete-album-dialog button,
+  .compact-player button,
+  .player-transport button,
+  .language-select,
+  .genre-tabs button,
+  .genre-tabs button::after,
+  .search,
+  .search svg,
+  .shelf-cd,
+  .shelf-cavity,
+  .disc-tray > .disc[role='button'],
+  .album-details,
+  .track-list li,
+  .track-title,
+  .display-heading > span:last-child,
+  .reader-thumbnails button {
+    transition: none !important;
+  }
+  .reader-thumbnails button:hover {
+    transform: none !important;
+  }
+  .cd-player .player-disc,
+  .compact-player .compact-disc {
+    animation: none !important;
+  }
+  .shelf-cd:hover,
+  .shelf-cd:focus-visible,
+  .shelf-cd:active,
+  .cabinet-edit .shelf-cd:hover,
+  .is-dragging .shelf-cd {
+    transform: none;
+  }
+  .disc-tray > .disc[role='button']:hover,
+  .disc-tray > .disc[role='button']:active {
+    scale: none;
+  }
+}

@@ -38,7 +38,7 @@ export function useObiAnimation(
     const reduced = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches
-    const duration = reduced ? 0 : 0.35
+    const duration = reduced ? 0 : 0.45
     setIsMoving(true)
     const tl = gsap.timeline({
       onComplete: () => {
@@ -70,14 +70,14 @@ export function useObiAnimation(
         rotationY: reversed ? 180 : 0,
         rotationZ: -2,
         duration,
-        ease: 'power2.inOut',
+        ease: 'power3.inOut',
       }).to(
         folds,
         {
           rotationY: 0,
           duration,
-          stagger: reduced ? 0 : 0.08,
-          ease: 'power2.inOut',
+          stagger: reduced ? 0 : 0.1,
+          ease: 'power2.out',
         },
         reduced ? 0 : 0.2,
       )
@@ -88,7 +88,7 @@ export function useObiAnimation(
         z: reversed ? -80 : 80,
         rotationZ: -6,
         autoAlpha: 0,
-        duration,
+        duration: reduced ? 0 : 0.38,
         ease: 'power2.in',
       })
     } else {

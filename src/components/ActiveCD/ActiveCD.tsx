@@ -171,24 +171,25 @@ export function ActiveCD({
       return
     }
     const copy = createGhost(getCaseDisc(), discOrigin.current)
-    gsap.set(player, { opacity: 0 })
+    gsap.set(player, { opacity: 0, y: 18 })
     const tl = gsap.timeline({ onComplete: finish })
     transferAnimation.current = tl
-    const offset = outgoingDisc.current ? 0.6 : 0
+    const offset = outgoingDisc.current ? 0.55 : 0
     if (outgoingDisc.current) {
       const previous = createGhost(target, rect)
       previous.classList.add('is-outgoing')
       previous.style.backgroundImage = `url(${getDiscArtwork(outgoingDisc.current.album, outgoingDisc.current.disc)})`
       gsap.set(copy, { autoAlpha: 0 })
-      tl.to(player, { opacity: 1, duration: 0.2 }, 0)
-        .to(previous, { y: '-=55', rotation: -20, duration: 0.3, ease: 'power2.out' }, 0)
-        .to(previous, { x: '-=100', autoAlpha: 0, duration: 0.3, ease: 'power2.in' }, 0.3)
+      tl.to(player, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' }, 0)
+        .to(previous, { y: '-=55', rotation: -20, duration: 0.28, ease: 'power2.out' }, 0)
+        .to(previous, { x: '-=110', rotation: -60, autoAlpha: 0, duration: 0.3, ease: 'power2.in' }, 0.26)
         .set(copy, { autoAlpha: 1 }, offset)
     }
+    // 光盘被拿起后边飞边顺时针转入播放器，落位时角度归零，与转盘衔接。
     tl.to(copy, { y: '-=65', scale: 1.08, rotation: -18, duration: 0.3, ease: 'power2.out' }, offset)
-      .to(caseRef.current, { autoAlpha: 0, duration: 0.3 }, offset + 0.2)
-      .to(player, { opacity: 1, duration: 0.35 }, offset + 0.3)
-      .to(copy, { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1, rotation: 0, duration: 0.65, ease: 'power2.inOut' }, offset + 0.3)
+      .to(caseRef.current, { autoAlpha: 0, duration: 0.35, ease: 'power1.out' }, offset + 0.2)
+      .to(player, { opacity: 1, y: 0, duration: 0.45, ease: 'power3.out' }, offset + 0.25)
+      .to(copy, { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1, rotation: 360, duration: 0.7, ease: 'power3.inOut' }, offset + 0.3)
   }, [playerOpen])
 
   useEffect(() => {
@@ -222,12 +223,16 @@ export function ActiveCD({
       return
     }
     const copy = createGhost(playerDisc.current!, playerDisc.current!.getBoundingClientRect())
+    // 从转盘当前角度接手，避免弹出时图案突然跳回 0°。
+    const [a = 1, b = 0] = getComputedStyle(playerDisc.current!).transform
+      .replace(/^[^(]*\(/, '').split(',').map(Number).filter(Number.isFinite)
+    gsap.set(copy, { rotation: Math.atan2(b, a) * 180 / Math.PI })
     const rect = target.getBoundingClientRect()
     transferAnimation.current = gsap.timeline({ onComplete: finish })
-      .to(copy, { y: '-=40', duration: 0.2, ease: 'power2.out' })
-      .to(playerDisc.current!.closest('.cd-player'), { autoAlpha: 0, duration: 0.25 }, 0.1)
-      .to(caseRef.current, { autoAlpha: 1, duration: 0.3 }, 0.3)
-      .to(copy, { x: rect.x, y: rect.y, width: rect.width, height: rect.height, duration: 0.55, ease: 'power2.inOut' }, 0.2)
+      .to(copy, { y: '-=40', scale: 1.05, duration: 0.22, ease: 'power2.out' })
+      .to(playerDisc.current!.closest('.cd-player'), { autoAlpha: 0, y: 14, duration: 0.3, ease: 'power2.in' }, 0.1)
+      .to(caseRef.current, { autoAlpha: 1, duration: 0.35 }, 0.28)
+      .to(copy, { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1, rotation: 360, duration: 0.6, ease: 'power3.inOut' }, 0.2)
   }
   function selectAlbumDisc(index: number) {
     if (closing.current || isLoadingDisc || isTurning || index === discIndex) return

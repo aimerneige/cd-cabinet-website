@@ -1,3 +1,6 @@
+import { useLayoutEffect, useRef } from 'react'
+import gsap from 'gsap'
+import { Flip } from 'gsap/Flip'
 import {
   DndContext,
   KeyboardSensor,
@@ -15,10 +18,15 @@ import { ShelfCD } from './ShelfCD'
 import { useCollection } from '../../store/collectionStore'
 import type { Album } from '../../types/album'
 
+gsap.registerPlugin(Flip)
+
 interface Props {
   albums: Album[]
   onOpen: (album: Album, element: HTMLButtonElement) => void
 }
+
+const prefersReducedMotion = () =>
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export function Shelf({ albums, onOpen }: Props) {
   const { editMode, activeAlbumId, reorderAlbum } = useCollection()
@@ -28,9 +36,81 @@ export function Shelf({ albums, onOpen }: Props) {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   )
+  const cabinet = useRef<HTMLDivElement>(null)
+  const layoutKey = albums.map((album) => `${album.id}@${album.shelfId}`).join('|')
+  const lastLayout = useRef({ key: layoutKey, editMode })
+  const flipState = useRef<Flip.FlipState | null>(null)
+  // 筛选、搜索或排序改变前记录唱片位置，提交后让它们滑到新位置。
+  // 编辑模式下的拖拽排序由 dnd-kit 自己处理过渡，这里跳过。
+  if (layoutKey !== lastLayout.current.key) {
+    const reordering = editMode && lastLayout.current.editMode
+    if (cabinet.current && !reordering && !prefersReducedMotion()) {
+      flipState.current = Flip.getState(cabinet.current.querySelectorAll('.shelf-cd'))
+    }
+    lastLayout.current = { key: layoutKey, editMode }
+  }
+  lastLayout.current.editMode = editMode
+
+  useLayoutEffect(() => {
+    const root = cabinet.current
+    if (!root || prefersReducedMotion()) return
+    root.classList.add('is-reflowing')
+    const done = () => root.classList.remove('is-reflowing')
+    // 只做淡入，不移动位置，避免首屏滚动定位或点击时唱片还在动。
+    const intro = gsap.from(root.querySelectorAll('.shelf-cd'), {
+      opacity: 0,
+      duration: 0.6,
+      ease: 'power2.out',
+      stagger: { amount: 0.45 },
+      delay: 0.1,
+      clearProps: 'opacity',
+      onComplete: done,
+    })
+    return () => {
+      intro.kill()
+      done()
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    const state = flipState.current
+    const root = cabinet.current
+    if (!state || !root) return
+    flipState.current = null
+    root.classList.add('is-reflowing')
+    const done = () => root.classList.remove('is-reflowing')
+    const animation = Flip.from(state, {
+      targets: root.querySelectorAll('.shelf-cd'),
+      duration: 0.55,
+      ease: 'power3.inOut',
+      simple: true,
+      prune: true,
+      onEnter: (elements) =>
+        gsap.fromTo(
+          elements,
+          { opacity: 0, y: 12 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            delay: 0.12,
+            ease: 'power3.out',
+            stagger: { amount: 0.25 },
+            clearProps: 'transform,opacity',
+          },
+        ),
+      onComplete: done,
+    })
+    return () => {
+      animation.kill()
+      gsap.set(root.querySelectorAll('.shelf-cd'), { clearProps: 'transform,opacity' })
+      done()
+    }
+  }, [layoutKey])
+
   const ids = [...new Set(albums.map((a) => a.shelfId))].sort()
   return (
-    <div className={`cabinet ${editMode ? 'cabinet-edit' : ''}`}>
+    <div ref={cabinet} className={`cabinet ${editMode ? 'cabinet-edit' : ''}`}>
       <div className="cabinet-top" />
       {ids.map((id) => {
         const records = albums.filter((a) => a.shelfId === id)
