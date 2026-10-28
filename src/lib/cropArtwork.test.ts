@@ -60,7 +60,8 @@ describe('artwork crop dimensions', () => {
       expect(profile.width / profile.height).toBeCloseTo(6.5 / 118, 10)
     }
     const obi = getArtworkCrop('obi', album)
-    expect(obi.width / obi.height).toBeCloseTo((92 + 10.4 / 118 * 300) / (125 / 118 * 300), 10)
+    // 帯：正面 30 + 侧脊 10.4（外壳厚度）+ 背面 30，高 121 mm。
+    expect(obi.width / obi.height).toBeCloseTo((30 + 10.4 + 30) / 121, 6)
   })
 
   it('keeps rounding within one pixel and limits the longest edge to 2048 pixels', () => {

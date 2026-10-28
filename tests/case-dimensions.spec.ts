@@ -49,7 +49,7 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844
       expect(dimensions.ring.width / dimensions.ring.height).toBeCloseTo(1, 4)
       expect(dimensions.edge.width).toBeCloseTo(dimensions.box.width, 2)
       expect(dimensions.spine.height).toBeCloseTo(dimensions.box.height, 2)
-      expectLength(dimensions.obi.height, 125)
+      expectLength(dimensions.obi.height, 121)
       async function expectLidClearance() {
         const lid = (await page.locator('.lid-inside').boundingBox())!
         const hinge = (await page.locator('.case-hinge').boundingBox())!

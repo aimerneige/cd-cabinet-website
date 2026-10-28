@@ -753,14 +753,15 @@ footer i {
   mix-blend-mode: screen;
 }
 .disc-center {
-  width: 53px;
-  height: 53px;
+  /* 透明中心区约 25 mm（光盘 21%），中心孔 15 mm：均按光盘比例缩放。 */
+  width: 21%;
+  height: 21%;
   background: radial-gradient(
-    circle,
-    #333a2b 0 12px,
-    #bcc4b988 13px 19px,
-    #e6e9da 20px 23px,
-    #ccd1c0cc 24px
+    circle closest-side,
+    #333a2b 0 59.5%,
+    #bcc4b988 61% 75%,
+    #e6e9da 77% 88%,
+    #ccd1c0cc 90%
   );
   border-radius: 50%;
   z-index: 1;
@@ -768,8 +769,9 @@ footer i {
 }
 .tray-hub {
   position: absolute;
-  width: 32px;
-  height: 32px;
+  /* 托盘卡扣与 15 mm 中心孔同宽。 */
+  width: calc(var(--case-height) * 15 / 125);
+  height: calc(var(--case-height) * 15 / 125);
   border-radius: 50%;
   background:
     radial-gradient(circle at 35% 25%, #ffffff55, transparent 60%),
@@ -1058,7 +1060,8 @@ footer i {
   }
   .spine-slot {
     height: 175px;
-    flex-basis: calc(18px * var(--spine-units, 1));
+    /* 保持 125 : 10.4 的盒脊比例。 */
+    flex-basis: calc(14.5px * var(--spine-units, 1));
   }
   .bookend {
     display: none;

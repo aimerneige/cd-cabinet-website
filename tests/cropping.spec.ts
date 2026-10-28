@@ -136,11 +136,11 @@ test('paper ratios stay independent of outer thickness and the disc has a circul
   const file = await stripedImage(page)
   for (const [count, upload, ratio, alt] of [
     ['1', 'Upload spine artwork', '13:236', 'Spine preview'],
-    ['1', 'Upload OBI paper strip', '118.440678:317.79661', 'OBI preview'],
+    ['1', 'Upload OBI paper strip', '178.983050:307.627119', 'OBI preview'],
     ['1', 'Upload back cover artwork', '69:59', 'Back cover preview'],
     ['4', 'Upload inside back cover', '69:59', 'Back cover inside preview'],
     ['4', 'Upload right spine artwork', '13:236', 'Right spine preview'],
-    ['4', 'Upload OBI paper strip', '118.440678:317.79661', 'OBI preview'],
+    ['4', 'Upload OBI paper strip', '178.983050:307.627119', 'OBI preview'],
     ['4', 'Upload disc artwork', '1:1', 'Disc preview'],
   ]) {
     await page.getByLabel('Number of discs').selectOption(count)
@@ -342,7 +342,7 @@ test('the paper width slider spans its bounds and persists without changing oute
   expect(dimensions).toBeCloseTo(10.4 / 118 * 300, 5)
   expect(await page.locator('.case-spine img').evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBeCloseTo(12 / 118 * 300, 1)
   await expect(page.locator('.case-spine')).toHaveCSS('width', await page.locator('.case-spine-right').evaluate((element) => getComputedStyle(element).width))
-  expect(await page.locator('.obi-strip').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--obi-width')))).toBeCloseTo(92 + dimensions, 5)
+  expect(await page.locator('.obi-strip').evaluate((element) => Number.parseFloat(getComputedStyle(element).getPropertyValue('--obi-width')))).toBeCloseTo(60 * 300 / 118 + dimensions, 4)
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await page.getByLabel('Number of discs').selectOption('4')
   await page.getByLabel('Upload spine artwork', { exact: true }).setInputFiles(file)

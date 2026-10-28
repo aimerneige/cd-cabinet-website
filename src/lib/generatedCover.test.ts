@@ -200,8 +200,8 @@ describe('generated packaging', () => {
       const layout = getObiLayout({ discs })
       expect(svg).toContain(`viewBox="0 0 ${layout.width} ${layout.height}"`)
       expect(svg).toContain('data-obi-panel="back" transform="translate(0 0) scale(1 ')
-      expect(svg).toContain('data-obi-panel="spine" transform="translate(46 0) scale(1 ')
-      expect(svg).toContain(`data-obi-panel="front" transform="translate(${46 + layout.depth} 0) scale(1 `)
+      expect(svg).toContain(`data-obi-panel="spine" transform="translate(${layout.backWidth} 0) scale(1 `)
+      expect(svg).toContain(`data-obi-panel="front" transform="translate(${layout.backWidth + layout.depth} 0) scale(1 `)
     }
   })
 
@@ -226,6 +226,6 @@ describe('generated packaging', () => {
     const obi = decodeURIComponent(getObiArtwork(album))
     const layout = getObiLayout(album)
     expect(obi).toContain(`viewBox="0 0 ${layout.width} ${layout.height}"`)
-    expect(obi).toContain(`data-obi-panel="front" transform="translate(${46 + layout.depth} 0) scale(1 `)
+    expect(obi).toContain(`data-obi-panel="front" transform="translate(${layout.backWidth + layout.depth} 0) scale(1 `)
   })
 })

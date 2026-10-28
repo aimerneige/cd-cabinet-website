@@ -19,6 +19,7 @@ export interface BookletPage {
 }
 export type BookletFormat = 'booklet' | 'sheet'
 export interface ObiDimensions {
+  frontWidthMm?: number
   backWidthMm?: number
 }
 export type ArtworkTheme = 'dusk' | 'orbit' | 'arch' | 'waves' | 'tiles' | 'sunburst' | 'grid' | 'stripes' | 'bloom' | 'horizon' | 'monolith'

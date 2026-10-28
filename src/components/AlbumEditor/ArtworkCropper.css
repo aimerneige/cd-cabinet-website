@@ -10,7 +10,7 @@
 }
 .artwork-cropper[open] { display: flex; flex-direction: column; gap: 14px; }
 .artwork-cropper.has-obi-controls { gap: 10px; }
-.artwork-cropper .obi-size-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; padding-top: 8px; border-top: 1px solid #c5cab9; }
+.artwork-cropper .obi-size-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; padding-top: 8px; border-top: 1px solid #c5cab9; }
 .obi-size-controls p { grid-column: 1 / -1; margin: 0; font-size: 10px; color: #78836b; }
 .obi-size-controls legend { font-size: 12px; }
 .obi-size-controls label { display: block; min-width: 0; font-size: 10px; }

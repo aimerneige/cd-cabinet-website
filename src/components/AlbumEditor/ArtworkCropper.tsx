@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Cropper, { type Area, type Size } from 'react-easy-crop'
 import { cropArtwork, getArtworkCrop, getRotatedSize, getSpineCrop, type ArtworkCrop, type ArtworkCropResult } from '../../lib/cropArtwork'
 import { clampSpineWidthMm, getCaseThicknessMm, MAX_SPINE_WIDTH_MM, MIN_SPINE_WIDTH_MM, SPINE_HEIGHT_MM } from '../../lib/album'
-import { getObiLayout } from '../../lib/obi'
+import { getObiDimensions, getObiLayout } from '../../lib/obi'
 import type { Album, ObiDimensions } from '../../types/album'
 import { ObiSizeControls } from './ObiSizeControls'
 import { useTranslation } from '../../i18n'
@@ -52,7 +52,7 @@ export function ArtworkCropper({ source, profile, resizeWidth, obi, name, curren
   }, [])
   function apply() {
     if (!image.current || !area.current) return
-    try { onComplete({ source: cropArtwork(image.current, area.current, activeProfile, rotation), ...(resizeWidth ? { spineWidthMm: widthMm } : {}), ...(obiAlbum ? { obiDimensions } : {}) }) }
+    try { onComplete({ source: cropArtwork(image.current, area.current, activeProfile, rotation), ...(resizeWidth ? { spineWidthMm: widthMm } : {}), ...(obiAlbum ? { obiDimensions: getObiDimensions({ obiDimensions }) } : {}) }) }
     catch { setError(t('crop.failed')) }
   }
   function rotate(value: number) {
