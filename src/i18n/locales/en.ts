@@ -163,8 +163,6 @@ export const en = {
   'disc.format.bd': 'Blu-ray (BD)',
   'viewer.singleDvd': 'DVD',
   'viewer.singleBd': 'Blu-ray disc',
-  'viewer.nextDiscPage': 'Turn to the next discs',
-  'viewer.previousDiscPage': 'Turn back to the previous discs',
   'artwork.theme': 'Graphic theme',
   'artwork.theme.auto': 'Automatic',
   'artwork.theme.dusk': 'Dusk arcs',

@@ -185,7 +185,6 @@ function DiscTray({
       {/* 鼠标翻页用；键盘和读屏可用详情区的光盘按钮完成同样操作。 */}
       {onTurn && (['top', 'bottom'] as const).map((edge) => (
         <div key={edge} className={`tray-corner tray-corner-${edge}`} aria-hidden="true"
-          title={t(side === 'back' ? 'viewer.previousDiscPage' : 'viewer.nextDiscPage')}
           onClick={(event) => { event.stopPropagation(); onTurn() }} />
       ))}
     </div>

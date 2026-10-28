@@ -165,8 +165,6 @@ export const ja: Record<keyof typeof en, string> = {
   'disc.format.bd': 'ブルーレイ (BD)',
   'viewer.singleDvd': 'DVD',
   'viewer.singleBd': 'ブルーレイディスク',
-  'viewer.nextDiscPage': '次のディスクへめくる',
-  'viewer.previousDiscPage': '前のディスクへ戻る',
   'artwork.theme': '図形のテーマ',
   'artwork.theme.auto': '自動',
   'artwork.theme.dusk': '夕暮れの弧',

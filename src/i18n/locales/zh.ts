@@ -163,8 +163,6 @@ export const zh: Record<keyof typeof en, string> = {
   'disc.format.bd': '蓝光 (BD)',
   'viewer.singleDvd': '单碟 DVD',
   'viewer.singleBd': '单碟蓝光',
-  'viewer.nextDiscPage': '翻到后面的光盘',
-  'viewer.previousDiscPage': '翻回前面的光盘',
   'artwork.theme': '图形主题',
   'artwork.theme.auto': '自动匹配',
   'artwork.theme.dusk': '暮色弧线',
