@@ -291,7 +291,6 @@ export const ja: Record<keyof typeof en, string> = {
   'crop.title': '画像をトリミング',
   'crop.close': 'トリミングを閉じる',
   'crop.ratio': '固定比率 {ratio}',
-  'crop.spineWidth': '背幅 {width} mm',
   'crop.spineWidthLabel': '背幅（mm）',
   'crop.spineRange': '幅の範囲 {min}〜{max} mm',
   'crop.spineGuidance': '画像をドラッグして位置を調整し、内側の背紙幅を設定します。左右の背紙は細い方に揃え、広い画像の両端を均等にトリミングします。外ケースの厚さは変わりません。',
@@ -307,6 +306,9 @@ export const ja: Record<keyof typeof en, string> = {
   'crop.cancel': 'アップロードをキャンセル',
   'crop.apply': '切り抜きを使用',
   'crop.failed': '画像を切り抜けませんでした。もう一度試すか別の画像を選んでください。',
+  'precise.decrease': '{label} を {step} 減らす',
+  'precise.increase': '{label} を {step} 増やす',
+  'precise.value': '{label} の数値',
 
   // Artwork Errors
   'artworkErrors.title': '画像のアップロードに失敗しました',

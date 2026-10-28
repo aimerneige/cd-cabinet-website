@@ -6,6 +6,7 @@ import { getObiDimensions, getObiLayout } from '../../lib/obi'
 import { LABEL_INNER_RATIO, LABEL_OUTER_RATIO } from '../../lib/disc'
 import type { Album, ObiDimensions } from '../../types/album'
 import { ObiSizeControls } from './ObiSizeControls'
+import { PreciseRange } from './PreciseRange'
 import { useTranslation } from '../../i18n'
 import 'react-easy-crop/react-easy-crop.css'
 import './ArtworkCropper.css'
@@ -94,16 +95,16 @@ export function ArtworkCropper({ source, profile, resizeWidth, obi, name, curren
         </div>}
       </div>
       <p className="crop-guidance">{t(resizeWidth ? 'crop.spineGuidance' : obiLayout ? 'obi.cropGuidance' : 'crop.guidance')}</p>
-      {resizeWidth && <label className="crop-zoom">{t('crop.spineWidth', { width: widthMm.toFixed(1) })}
-        <input type="range" aria-label={t('crop.spineWidthLabel')} aria-valuetext={`${widthMm.toFixed(1)} mm`} min={MIN_SPINE_WIDTH_MM} max={MAX_SPINE_WIDTH_MM} step="0.1" value={widthMm}
-          onChange={(event) => setWidthMm(clampSpineWidthMm(Number(event.target.value)))} /></label>}
+      {resizeWidth && <div className="crop-control"><span>{t('crop.spineWidthLabel')}</span>
+        <PreciseRange label={t('crop.spineWidthLabel')} value={widthMm} min={MIN_SPINE_WIDTH_MM} max={MAX_SPINE_WIDTH_MM} step={0.1} decimals={1} unit=" mm"
+          onChange={(value) => setWidthMm(clampSpineWidthMm(value))} /></div>}
       {obiAlbum && <ObiSizeControls dimensions={obiDimensions} thicknessMm={getCaseThicknessMm(obiAlbum)} disabled={!ready} onChange={setObiDimensions} />}
-      <label className="crop-zoom">{t('crop.zoom')}<input type="range" min={minZoom} max={maxZoom} step="0.01" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} /></label>
-      <div className="crop-rotation">
-        <label>{t('crop.rotation')}<input type="range" min={-180} max={180} step="1" value={rotation} aria-valuetext={`${rotation}°`} onChange={(event) => setRotation(Number(event.target.value))} /></label>
-        <span className="crop-rotation-angle" aria-hidden="true">{rotation}°</span>
-        <button type="button" aria-label={t('crop.rotateLeft')} title={t('crop.rotateLeft')} onClick={() => rotate(rotation - 90)}>↶</button>
-        <button type="button" aria-label={t('crop.rotateRight')} title={t('crop.rotateRight')} onClick={() => rotate(rotation + 90)}>↷</button>
+      <div className="crop-control"><span>{t('crop.zoom')}</span>
+        <PreciseRange label={t('crop.zoom')} value={zoom} min={minZoom} max={maxZoom} step={0.01} decimals={2} unit="×" onChange={setZoom} /></div>
+      <div className="crop-control crop-rotation"><span>{t('crop.rotation')}</span>
+        <PreciseRange label={t('crop.rotation')} value={rotation} min={-180} max={180} step={1} decimals={0} unit="°" onChange={rotate} />
+        <button type="button" className="crop-rotate" aria-label={t('crop.rotateLeft')} title={t('crop.rotateLeft')} onClick={() => rotate(rotation - 90)}>↶</button>
+        <button type="button" className="crop-rotate" aria-label={t('crop.rotateRight')} title={t('crop.rotateRight')} onClick={() => rotate(rotation + 90)}>↷</button>
       </div>
       {error && <p className="editor-error" role="alert">{error}</p>}
       <div className="crop-actions">

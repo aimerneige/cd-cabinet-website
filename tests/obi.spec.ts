@@ -208,7 +208,7 @@ test('custom OBI dimensions drive generated artwork, crop guides, uploaded image
   const spineSource = (await spinePreview.getAttribute('src'))!
   await page.getByLabel('Upload OBI paper strip', { exact: true }).setInputFiles({ name: 'sized.png', mimeType: 'image/png', buffer: Buffer.from(source.split(',')[1], 'base64') })
   const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
-  await expect(dialog.locator('.obi-size-controls input')).toHaveCount(3)
+  await expect(dialog.locator(".obi-size-controls input[type='range']")).toHaveCount(3)
   await expect(dialog).toContainText('Height 121 mm')
   await expect(dialog.getByRole('slider', { name: 'Front flap width (mm)', exact: true })).toHaveValue('30')
   await expect(dialog.getByRole('slider', { name: 'Side / outer case thickness (mm)', exact: true })).toHaveValue('10.4')

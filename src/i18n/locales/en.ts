@@ -287,7 +287,6 @@ export const en = {
   'crop.title': 'Crop image',
   'crop.close': 'Close cropper',
   'crop.ratio': 'Fixed ratio {ratio}',
-  'crop.spineWidth': 'Spine width {width} mm',
   'crop.spineWidthLabel': 'Spine width (mm)',
   'crop.spineRange': 'Width range {min}–{max} mm',
   'crop.spineGuidance': 'Drag the image to position it and set the inner paper width below. Both spine papers use the narrower width; wider artwork is cropped equally from both edges. Outer case thickness stays unchanged.',
@@ -303,6 +302,9 @@ export const en = {
   'crop.cancel': 'Cancel upload',
   'crop.apply': 'Use crop',
   'crop.failed': 'The image could not be cropped. Try again or choose another image.',
+  'precise.decrease': 'Decrease {label} by {step}',
+  'precise.increase': 'Increase {label} by {step}',
+  'precise.value': '{label} value',
 
   // Artwork Errors
   'artworkErrors.title': 'Image upload failed',

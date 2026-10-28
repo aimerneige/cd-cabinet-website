@@ -1,0 +1,24 @@
+.precise-range { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.precise-range input[type='range'] { flex: 1; min-width: 0; margin: 0; accent-color: #66745c; }
+.precise-stepper { display: flex; align-items: center; flex-shrink: 0; border: 1px solid #aab49b; background: #f7f6f1; }
+.precise-stepper .precise-step { width: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: #4c5843; font-size: 15px; line-height: 1; cursor: pointer; user-select: none; touch-action: manipulation; }
+.precise-stepper .precise-step:hover:not(:disabled) { background: #e2e5d8; }
+.precise-stepper .precise-step:disabled { opacity: .35; cursor: default; }
+.precise-stepper input[type='number'] { width: 52px; height: 26px; margin: 0; padding: 0 2px; border: 0; border-inline: 1px solid #d3d7c8; background: transparent; color: inherit; font: inherit; font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; appearance: textfield; -moz-appearance: textfield; }
+.precise-stepper input[type='number']::-webkit-inner-spin-button, .precise-stepper input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.precise-stepper input[type='number']:focus { outline: 2px solid #66745c; outline-offset: -2px; }
+.precise-unit { min-width: 24px; padding: 0 3px; text-align: center; font-size: 11px; color: #78836b; }
+/* 窄栏（OBI 尺寸三列）里数字和按钮在上、滑块在下，与固定厚度一栏对齐。 */
+.obi-size-field .precise-range { flex: none; flex-direction: column; align-items: stretch; gap: 4px; }
+.obi-size-field .precise-range input[type='range'] { flex: none; width: 100%; margin-top: 2px; }
+.obi-size-field .precise-stepper { order: -1; width: 100%; }
+.obi-size-field .precise-unit { display: none; }
+.obi-size-field .precise-stepper input[type='number'] { flex: 1; width: auto; min-width: 0; }
+/* 小屏：收窄按钮和数字框、隐藏单位（标签里已写明），给滑块留出拖动空间。 */
+@media (max-width: 420px) {
+  .precise-range { gap: 6px; }
+  .precise-stepper .precise-step { width: 22px; }
+  .precise-stepper input[type='number'] { width: 38px; font-size: 11px; }
+  .precise-unit { display: none; }
+  .obi-size-field .precise-stepper input[type='number'] { padding: 0 1px; text-align: center; }
+}

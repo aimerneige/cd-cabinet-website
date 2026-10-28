@@ -287,7 +287,6 @@ export const zh: Record<keyof typeof en, string> = {
   'crop.title': '裁剪图片',
   'crop.close': '关闭裁剪窗口',
   'crop.ratio': '固定比例 {ratio}',
-  'crop.spineWidth': '侧封宽度 {width} mm',
   'crop.spineWidthLabel': '侧封宽度（mm）',
   'crop.spineRange': '宽度范围 {min}–{max} mm',
   'crop.spineGuidance': '拖动图片调整位置，用下方滑块设置内侧脊纸宽度。左右脊纸取较窄值，较宽图片会从两侧等量自动裁窄，外盒厚度不变。',
@@ -303,6 +302,9 @@ export const zh: Record<keyof typeof en, string> = {
   'crop.cancel': '取消上传',
   'crop.apply': '使用裁剪结果',
   'crop.failed': '无法裁剪此图片，请重试或选择其他图片。',
+  'precise.decrease': '{label} 减少 {step}',
+  'precise.increase': '{label} 增加 {step}',
+  'precise.value': '{label} 数值',
 
   // Artwork Errors
   'artworkErrors.title': '图片上传失败',
