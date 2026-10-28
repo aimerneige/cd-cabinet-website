@@ -66,7 +66,15 @@
   width: 100%;
   margin: 0 0 10px;
 }
+/* OBI 纸条很窄很高，固定为与封面/光盘预览相同的方形高度，图片按比例缩进框内。 */
+.cover-preview.obi-preview {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
 .cover-preview.obi-preview img {
+  position: absolute;
+  inset: 0;
   object-fit: contain;
 }
 .obi-upload-guidance {
