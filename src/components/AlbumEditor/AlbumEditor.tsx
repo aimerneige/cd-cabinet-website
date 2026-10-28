@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme, BookletFormat, BookletPage, ObiDimensions, Track } from '../../types/album'
-import { getAlbumDiscs, getCaseDepth, getCaseThicknessMm, getSpineDepth, hasObi, resizeDiscs, STANDARD_CASE_DEPTH, STANDARD_CASE_THICKNESS_MM } from '../../lib/album'
+import { getAlbumDiscs, getCaseDepth, getCaseThicknessMm, getSpineWidthMm, hasObi, resizeDiscs, SPINE_HEIGHT_MM, STANDARD_CASE_DEPTH, STANDARD_CASE_THICKNESS_MM } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
 import { readCoverPalette } from '../../lib/coverPalette'
 import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
@@ -442,7 +442,7 @@ export function AlbumEditor({
   return (
     <main
       className="album-editor"
-      style={{ '--spine-preview-width': `${getSpineDepth({ spineWidthMm }) / 2}px` } as CSSProperties}
+      style={{ '--spine-ratio': getSpineWidthMm({ spineWidthMm }) / SPINE_HEIGHT_MM } as CSSProperties}
       aria-labelledby="editor-title"
       onKeyDown={(event) => event.stopPropagation()}
     >

@@ -122,17 +122,25 @@
   height: 100%;
   object-fit: cover;
 }
+/* 侧封竖着太窄看不清：预览横放（顶部朝左，竖排文字从左往右读），占满整行；裁剪仍按竖向进行。 */
+.artwork-input:has(.spine-preview) { grid-column: 1 / -1; }
 .spine-preview {
-  height: 150px;
-  width: var(--spine-preview-width);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / var(--spine-ratio);
+  overflow: hidden;
   background: #77816c;
-  margin: 0 auto;
   color: #eee9d9;
 }
 .spine-preview img {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* 旋转前的宽高分别等于容器的高和宽。 */
+  width: calc(100% * var(--spine-ratio));
+  height: calc(100% / var(--spine-ratio));
   object-fit: contain;
+  transform: translate(-50%, -50%) rotate(-90deg);
 }
 .remove-spine {
   border: 0;

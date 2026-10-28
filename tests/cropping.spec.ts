@@ -441,7 +441,7 @@ for (const firstSide of ['left', 'right'] as const) {
     await page.getByRole('button', { name: 'Use generated spine', exact: true }).click()
     await page.getByRole('button', { name: 'Use generated right spine', exact: true }).click()
     const generated = (await firstPreview.locator('..').boundingBox())!
-    expect(generated.width).toBeCloseTo(6.5 / 118 * 150, 1)
+    expect(generated.height / generated.width).toBeCloseTo(6.5 / 118, 2)
     await page.getByRole('button', { name: 'Save changes', exact: true }).click()
     await expect(page.locator('.album-editor')).toHaveCount(0)
     await page.reload()
@@ -471,7 +471,7 @@ test('a failed automatic recrop preserves both images and the existing thickness
   await expect(preview).toHaveAttribute('src', source)
   await expect(page.getByRole('img', { name: 'Right spine preview', exact: true })).toHaveAttribute('src', /^data:image\/svg\+xml/)
   const dimensions = (await preview.locator('..').boundingBox())!
-  expect(dimensions.width).toBeCloseTo(20 / 118 * 150, 1)
+  expect(dimensions.height / dimensions.width).toBeCloseTo(20 / 118, 2)
   await expect(page.getByRole('button', { name: 'Add recording', exact: true })).toBeEnabled()
 })
 
@@ -510,4 +510,27 @@ test('crop controls accept typed values and single-step buttons', async ({ page 
   await dialog.getByRole('button', { name: 'Reset crop', exact: true }).click()
   await expect(rotationValue).toHaveValue('0')
   await expect(zoomValue).toHaveValue('1.00')
+})
+
+test('spine previews lie horizontally across the editor while crops stay vertical', async ({ page }) => {
+  await draft(page)
+  await page.getByLabel('Number of discs').selectOption('4')
+  await page.getByLabel('Upload spine artwork', { exact: true }).setInputFiles(await spineImage(page))
+  const dialog = page.getByRole('dialog', { name: 'Crop image', exact: true })
+  const frame = (await dialog.locator('.reactEasyCrop_CropArea').boundingBox())!
+  expect(frame.height).toBeGreaterThan(frame.width)
+  await setSpineWidth(page, 12)
+  await confirmCrop(page)
+  const image = page.getByRole('img', { name: 'Spine preview', exact: true })
+  const output = await pixels(image)
+  expect(output.height).toBeGreaterThan(output.width)
+  for (const name of ['Spine preview', 'Right spine preview']) {
+    const box = (await page.getByRole('img', { name, exact: true }).locator('..').boundingBox())!
+    expect(box.width / box.height).toBeCloseTo(118 / 12, 1)
+    // 旋转后的图片正好铺满横放的预览框。
+    const drawn = (await page.getByRole('img', { name, exact: true }).boundingBox())!
+    expect(drawn.width).toBeCloseTo(box.width, 0)
+    expect(drawn.height).toBeCloseTo(box.height, 0)
+  }
+  await page.locator('.editor-artwork').screenshot({ path: 'test-results/spine-preview-horizontal.png' })
 })
