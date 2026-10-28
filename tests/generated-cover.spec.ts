@@ -354,8 +354,8 @@ test('palette and theme choices preserve uploaded images, survive reload and can
   const originalDisc = (await disc.getAttribute('src'))!
   const back = page.getByRole('img', { name: 'Back cover preview', exact: true })
   const obi = page.getByRole('img', { name: 'OBI preview', exact: true })
-  await expect(page.getByRole('group', { name: 'Color palette', exact: true }).getByRole('radio')).toHaveCount(6)
-  await expect(page.getByRole('group', { name: 'Graphic theme', exact: true }).getByRole('radio')).toHaveCount(6)
+  await expect(page.getByRole('group', { name: 'Color palette', exact: true }).getByRole('radio')).toHaveCount(10)
+  await expect(page.getByRole('group', { name: 'Graphic theme', exact: true }).getByRole('radio')).toHaveCount(12)
   await page.getByRole('radio', { name: 'Cream paper', exact: true }).check()
   await page.getByRole('radio', { name: 'Flowing waves', exact: true }).check()
   expect(decodeURIComponent((await back.getAttribute('src'))!)).toContain('fill="#e8dfcc"')

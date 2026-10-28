@@ -10,8 +10,8 @@ const details = { title: '夜の音 (Live)', artist: '林 & Friends', year: 2026
 describe('generated covers', () => {
   it('never repeats the previous design at either end of the random range', () => {
     const random = vi.spyOn(Math, 'random')
-    for (let index = 0; index < 5; index++) {
-      random.mockReturnValue(index / 5)
+    for (let index = 0; index < artworkThemes.length; index++) {
+      random.mockReturnValue(index / artworkThemes.length)
       const previous = randomCoverStyle()
       random.mockReturnValue(0)
       expect(randomCoverStyle(previous).id).not.toBe(previous.id)
@@ -23,8 +23,8 @@ describe('generated covers', () => {
   it('recovers every saved design and keeps its appearance when details change', () => {
     const random = vi.spyOn(Math, 'random')
     const ids = new Set<string>()
-    for (let index = 0; index < 5; index++) {
-      random.mockReturnValue(index / 5)
+    for (let index = 0; index < artworkThemes.length; index++) {
+      random.mockReturnValue(index / artworkThemes.length)
       const style = randomCoverStyle()
       const cover = generateCover(details, style)
       const restored = getGeneratedCoverStyle(cover)!
@@ -34,7 +34,7 @@ describe('generated covers', () => {
       expect(updated).not.toBe(cover)
       expect(getGeneratedCoverStyle(updated)).toEqual(style)
     }
-    expect(ids.size).toBe(5)
+    expect(ids.size).toBe(artworkThemes.length)
     expect(getGeneratedCoverStyle('/assets/albums/album-01.svg')).toBeNull()
     expect(getGeneratedCoverStyle('data:image/png;base64,abcd')).toBeNull()
   })
@@ -71,8 +71,8 @@ describe('generated packaging', () => {
 
   it('generates matching disc labels, back covers and OBI strips for every saved style', () => {
     const random = vi.spyOn(Math, 'random')
-    for (let index = 0; index < 5; index++) {
-      random.mockReturnValue(index / 5)
+    for (let index = 0; index < artworkThemes.length; index++) {
+      random.mockReturnValue(index / artworkThemes.length)
       const style = randomCoverStyle()
       const album = {
         ...details, color: style.color, ink: style.ink,
@@ -125,6 +125,34 @@ describe('generated packaging', () => {
     expect(getInnerArtwork(album, 'booklet')).not.toBe(getInnerArtwork(album, 'back'))
     expect(getInnerArtwork(album, 'booklet')).not.toBe(album.coverUrl)
     expect(decodeURIComponent(getSpineArtwork({ ...album, spineUrl: '/left.png' }, 'right'))).toContain('data-cd-spine="right"')
+  })
+
+  it('sometimes pairs a random design with another palette', () => {
+    const random = vi.spyOn(Math, 'random')
+    random.mockReturnValueOnce(0).mockReturnValueOnce(0.9)
+    expect(randomCoverStyle()).toEqual({ id: 'dusk', color: '#536f78', ink: '#f3eee0', accent: '#e4b88c' })
+    random.mockReturnValueOnce(0).mockReturnValueOnce(0.1).mockReturnValueOnce(0.99)
+    const charcoal = artworkPalettes[artworkPalettes.length - 1]
+    expect(randomCoverStyle()).toEqual({ id: 'dusk', color: charcoal.color, ink: charcoal.ink, accent: charcoal.accent })
+  })
+
+  it('gives the inside back cover its own tray-inlay layout for every theme', () => {
+    const inside = new Set<string>()
+    for (const theme of artworkThemes) {
+      const album = {
+        ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/uploaded-cover.png', tracks: [],
+        artworkTheme: theme,
+      }
+      const back = getInnerArtwork(album, 'back')
+      const svg = decodeURIComponent(back)
+      expect(back).not.toBe(getInnerArtwork(album, 'booklet'))
+      expect(svg).toContain('data-cd-inside="back"')
+      expect(svg).toContain('℗ &amp; © 2026 林 &amp; Friends')
+      expect(svg).toContain('林 &amp; Friends · 夜の音 (Live)')
+      expect(svg).not.toContain('BOOKLET')
+      inside.add(back)
+    }
+    expect(inside.size).toBe(artworkThemes.length)
   })
 
   it('supports every palette with every theme independently of an uploaded cover', () => {

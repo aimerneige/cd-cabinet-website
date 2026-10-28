@@ -20,8 +20,8 @@ export interface BookletPage {
 export interface ObiDimensions {
   backWidthMm?: number
 }
-export type ArtworkTheme = 'dusk' | 'orbit' | 'arch' | 'waves' | 'tiles'
-export type ArtworkPalette = 'cream' | 'clay' | 'forest' | 'ocean' | 'midnight'
+export type ArtworkTheme = 'dusk' | 'orbit' | 'arch' | 'waves' | 'tiles' | 'sunburst' | 'grid' | 'stripes' | 'bloom' | 'horizon' | 'monolith'
+export type ArtworkPalette = 'cream' | 'clay' | 'forest' | 'ocean' | 'midnight' | 'mustard' | 'rose' | 'sage' | 'charcoal'
 export interface Album {
   id: string
   title: string
