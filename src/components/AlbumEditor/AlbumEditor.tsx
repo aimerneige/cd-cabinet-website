@@ -597,13 +597,7 @@ export function AlbumEditor({
                   <span className="editor-palette-swatch editor-palette-auto" aria-hidden="true" />
                   <span>{t('artwork.palette.auto')}</span>
                 </label>
-                {artworkPalettes.map((palette) => (
-                  <label className="editor-design-choice" key={palette.id}>
-                    <input type="radio" name="artwork-palette" value={palette.id} checked={artworkPalette === palette.id} onChange={() => void selectArtworkPalette(palette.id)} />
-                    <span className="editor-palette-swatch" aria-hidden="true" style={{ background: `linear-gradient(135deg, ${palette.color} 55%, ${palette.ink} 55% 75%, ${palette.accent} 75%)` }} />
-                    <span>{t(`artwork.palette.${palette.id}`)}</span>
-                  </label>
-                ))}
+                {/* 封面取色的三项（原色、浅色、深色）置顶。 */}
                 {coverPaletteIds.map((id) => {
                   const palette = coverPalettes.find((item) => item.id === id)
                   return (
@@ -615,6 +609,13 @@ export function AlbumEditor({
                     </label>
                   )
                 })}
+                {artworkPalettes.map((palette) => (
+                  <label className="editor-design-choice" key={palette.id}>
+                    <input type="radio" name="artwork-palette" value={palette.id} checked={artworkPalette === palette.id} onChange={() => void selectArtworkPalette(palette.id)} />
+                    <span className="editor-palette-swatch" aria-hidden="true" style={{ background: `linear-gradient(135deg, ${palette.color} 55%, ${palette.ink} 55% 75%, ${palette.accent} 75%)` }} />
+                    <span>{t(`artwork.palette.${palette.id}`)}</span>
+                  </label>
+                ))}
               </div>
             </fieldset>
             <fieldset className="editor-design-group">

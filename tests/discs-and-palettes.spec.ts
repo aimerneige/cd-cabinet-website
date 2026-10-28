@@ -142,6 +142,9 @@ test('two palettes picked from the uploaded cover bring the palette count up to 
   const palettes = page.locator('input[name="artwork-palette"]:not([value="auto"])')
   const themes = page.locator('input[name="artwork-theme"]:not([value="auto"])')
   await expect(palettes).toHaveCount(await themes.count())
+  // 三个封面取色选项置顶：原色、浅色、深色。
+  const order = await page.locator('input[name="artwork-palette"]').evaluateAll((inputs) => inputs.slice(0, 4).map((input) => (input as HTMLInputElement).value))
+  expect(order).toEqual(['auto', 'coverLight', 'coverDark', 'cream'])
   const light = page.getByRole('radio', { name: 'Cover · light', exact: true })
   const dark = page.getByRole('radio', { name: 'Cover · dark', exact: true })
   await expect(light).toBeDisabled()
