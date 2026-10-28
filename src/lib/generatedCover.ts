@@ -1,7 +1,7 @@
 import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme } from '../types/album'
 import { getSpineDepth } from './album'
 import { getObiLayout } from './obi'
-import { LABEL_INNER_RATIO, LABEL_OUTER_RATIO } from './disc'
+import { DISC_FORMAT_MARK, getDiscCountLabel, getDiscFormat, LABEL_INNER_RATIO, LABEL_OUTER_RATIO } from './disc'
 
 const styles = [
   { id: 'dusk', color: '#536f78', ink: '#f3eee0', accent: '#e4b88c' },
@@ -29,12 +29,42 @@ export const artworkPalettes = [
   { id: 'sage', color: '#a7b399', ink: '#2f3a2c', accent: '#f3efe2' },
   { id: 'charcoal', color: '#25272b', ink: '#ece6d8', accent: '#c9a86a' },
 ] as const
+/** 从上传封面取色的两套配色；与固定配色合计，与图形主题数量一致。 */
+export const coverPaletteIds = ['coverLight', 'coverDark'] as const
 
 export type CoverStyle = { id: ArtworkTheme; color: string; ink: string; accent: string }
-type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs' | 'spineWidthMm' | 'caseThicknessMm' | 'obiDimensions' | 'artworkTheme' | 'artworkPalette'>
+type ArtworkDetails = Pick<Album, 'title' | 'artist' | 'year' | 'genre' | 'color' | 'ink' | 'coverUrl' | 'discs' | 'spineWidthMm' | 'caseThicknessMm' | 'obiDimensions' | 'artworkTheme' | 'artworkPalette' | 'coverSwatches'>
+type Palette = { id: ArtworkPalette; color: string; ink: string; accent: string }
 
-export function getArtworkPalette(id?: ArtworkPalette) {
-  return artworkPalettes.find((palette) => palette.id === id)
+const hex = /^#[\da-f]{6}$/i
+function luminance(color: string) {
+  const [red, green, blue] = [1, 3, 5].map((index) => {
+    const channel = Number.parseInt(color.slice(index, index + 2), 16) / 255
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+  })
+  return red * 0.2126 + green * 0.7152 + blue * 0.0722
+}
+function contrast(first: string, second: string) {
+  const [light, dark] = [luminance(first), luminance(second)].sort((a, b) => b - a)
+  return (light + 0.05) / (dark + 0.05)
+}
+
+/** 由封面三个主色组成配色：浅色以最亮色为底、最暗色为字，深色反之，中间色作点缀。 */
+export function getCoverPalettes(swatches?: string[]): Palette[] {
+  const colors = (swatches ?? []).filter((color) => hex.test(color)).slice(0, 3)
+  if (!colors.length) return []
+  while (colors.length < 3) colors.push(colors[colors.length - 1])
+  const [lightest, middle, darkest] = [...colors].sort((a, b) => luminance(b) - luminance(a))
+  const readable = (background: string, preferred: string) => contrast(background, preferred) >= 3
+    ? preferred : contrast(background, '#000000') >= contrast(background, '#ffffff') ? '#000000' : '#ffffff'
+  return [
+    { id: 'coverLight', color: lightest, ink: readable(lightest, darkest), accent: middle },
+    { id: 'coverDark', color: darkest, ink: readable(darkest, lightest), accent: middle },
+  ]
+}
+
+export function getArtworkPalette(id?: ArtworkPalette, swatches?: string[]): Palette | undefined {
+  return [...artworkPalettes, ...getCoverPalettes(swatches)].find((palette) => palette.id === id)
 }
 
 const prefix = 'data:image/svg+xml;charset=utf-8,'
@@ -82,7 +112,7 @@ function svgUrl(svg: string): string {
 
 function getPackagingStyle(album: ArtworkDetails): { id: CoverStyle['id']; accent: string; custom: boolean } {
   const generated = getGeneratedCoverStyle(album.coverUrl)
-  const palette = getArtworkPalette(album.artworkPalette)
+  const palette = getArtworkPalette(album.artworkPalette, album.coverSwatches)
   const selectedTheme = artworkThemes.find((theme) => theme === album.artworkTheme)
   if (generated) return {
     id: selectedTheme ?? generated.id,
@@ -210,8 +240,6 @@ export function getDiscArtwork(
   const color = escapeXml(album.color)
   const ink = escapeXml(album.ink)
   const accent = style.accent
-  const discs = album.discs?.length ? album.discs : [disc]
-  const number = discs.findIndex((item) => item.id === disc.id) + 1
   // 只在实物的印刷范围内着色：内径 23 mm、外径 116 mm，其余保持透明。
   const inner = Math.round(LABEL_INNER_RATIO * 300 * 1000) / 1000
   const outer = Math.round(LABEL_OUTER_RATIO * 300 * 1000) / 1000
@@ -224,9 +252,8 @@ export function getDiscArtwork(
       <g fill="${ink}" text-anchor="middle" transform="translate(300 0)">
         ${centeredText(album.artist, 150, 17, 330)}
         ${centeredText(album.title, 195, 32, 360, 'serif')}
-        ${centeredText(disc.title ?? 'COMPACT DISC · DIGITAL AUDIO', 420, 13, 340)}
-        ${centeredText(`DISC ${number} / ${discs.length}`, 454, 19, 300)}
-        ${centeredText(`${album.year} · ${album.genre}`, 484, 12, 250)}
+        ${centeredText(disc.title ?? DISC_FORMAT_MARK[getDiscFormat(disc)], 432, 13, 340)}
+        ${centeredText(`${album.year} · ${album.genre}`, 470, 12, 250)}
       </g>
     </g>
   </svg>`)
@@ -237,7 +264,6 @@ export function getBackCoverArtwork(album: ArtworkDetails & Pick<Album, 'backCov
   const style = getPackagingStyle(album)
   const color = escapeXml(album.color)
   const ink = escapeXml(album.ink)
-  const count = album.discs?.length || 1
   return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-back="${style.custom ? 'custom' : style.id}" width="1380" height="1180" viewBox="0 0 690 590">
     <rect width="690" height="590" fill="${color}"/>
     <rect x="18" y="18" width="654" height="554" fill="none" stroke="${ink}" opacity=".3"/>
@@ -252,7 +278,7 @@ export function getBackCoverArtwork(album: ArtworkDetails & Pick<Album, 'backCov
         ${text(`${String(index + 1).padStart(2, '0')}  ${track.title}`, 190 + index * 28, 14, 'sans-serif', 40, 450)}
         <g text-anchor="end">${text(track.duration ?? '', 190 + index * 28, 12, 'sans-serif', 650, 55)}</g>
       `).join('')}
-      ${text(`${album.year} · ${count} ${count === 1 ? 'CD' : 'CDs'} · ${album.genre}`, 555, 11)}
+      ${text(`${album.year} · ${getDiscCountLabel(album.discs ?? [])} · ${album.genre}`, 555, 11)}
     </g>
   </svg>`)
 }
@@ -265,8 +291,7 @@ export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): st
   const layout = getObiLayout(album)
   const depth = layout.depth
   const width = layout.width
-  const count = album.discs?.length || 1
-  const discLabel = `${album.year} · ${count} ${count === 1 ? 'CD' : 'CDs'}`
+  const discLabel = `${album.year} · ${getDiscCountLabel(album.discs ?? [])}`
   const panel = (side: 'back' | 'spine' | 'front', x: number, panelWidth: number) => {
     const spine = side === 'spine'
     const fontScale = spine ? 1 : Math.min(1, panelWidth / 46)
@@ -276,7 +301,7 @@ export function getObiArtwork(album: ArtworkDetails & Pick<Album, 'obiUrl'>): st
       <rect width="${panelWidth}" height="304" fill="${paper}"/>
       <rect y="24" width="${panelWidth}" height="17" fill="${print}"/>
       <g transform="translate(${panelWidth / 2} 0)" text-anchor="middle">
-        <g fill="${print}">${centeredText('COMPACT DISC', 15, 4.5, panelWidth - 8)}</g>
+        <g fill="${print}">${centeredText(DISC_FORMAT_MARK[getDiscFormat(album.discs?.[0] ?? {})].split(' · ')[0], 15, 4.5, panelWidth - 8)}</g>
         <g fill="${style.custom ? color : ink}">${centeredText('STEREO', 35, 6, panelWidth - 8)}</g>
         <g fill="${print}">
           ${centeredText('ORIGINAL RECORDINGS', 274, 4.5, panelWidth - 8)}
@@ -354,7 +379,7 @@ function insideBackArtwork(
     </g>
     <g fill="${ink}" text-anchor="end">
       ${text(`${album.year} · ${album.genre}`, 52, 11, 'sans-serif', 650, 180)}
-      ${text('COMPACT DISC · DIGITAL AUDIO', 566, 8, 'sans-serif', 650, 180)}
+      ${text(DISC_FORMAT_MARK[getDiscFormat(album.discs?.[0] ?? {})], 566, 8, 'sans-serif', 650, 180)}
     </g>
   </svg>`)
 }

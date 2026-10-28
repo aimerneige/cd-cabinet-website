@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { artworkPalettes, artworkThemes, generateCover, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from './generatedCover'
+import { artworkPalettes, artworkThemes, generateCover, getBackCoverArtwork, getCoverPalettes, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from './generatedCover'
 import { getSpineDepth } from './album'
 import { getObiLayout } from './obi'
 
@@ -84,7 +84,7 @@ describe('generated packaging', () => {
       expect(back).not.toBe(album.coverUrl)
       expect(back).not.toBe(disc)
       expect(decodeURIComponent(disc)).toContain(`data-cd-disc="${style.id}"`)
-      expect(decodeURIComponent(disc)).toContain('DISC 2 / 2')
+      expect(decodeURIComponent(disc)).not.toContain('DISC 2 / 2')
       expect(decodeURIComponent(disc)).toContain('Live sessions')
       expect(decodeURIComponent(disc)).toContain(style.color)
       expect(getDiscArtwork(album, discs[0])).not.toBe(disc)
@@ -120,7 +120,7 @@ describe('generated packaging', () => {
       artworkTheme: 'tiles' as const, artworkPalette: 'ocean' as const,
     }
     expect(decodeURIComponent(getDiscArtwork(album, discs[0]))).toContain('data-cd-disc="custom"')
-    expect(decodeURIComponent(getDiscArtwork(album, discs[0]))).toContain('DISC 1 / 1')
+    expect(decodeURIComponent(getDiscArtwork(album, discs[0]))).not.toContain('DISC 1 / 1')
     expect(getDiscArtwork(album, { ...discs[0], labelUrl: '/disc.png' })).toBe('/disc.png')
     expect(getBackCoverArtwork({ ...album, backCoverUrl: '/back.png' })).toBe('/back.png')
     expect(getBackCoverArtwork(album)).not.toBe(album.coverUrl)
@@ -235,5 +235,24 @@ describe('generated packaging', () => {
     const layout = getObiLayout(album)
     expect(obi).toContain(`viewBox="0 0 ${layout.width} ${layout.height}"`)
     expect(obi).toContain(`data-obi-panel="front" transform="translate(${layout.backWidth + layout.depth} 0) scale(1 `)
+  })
+})
+
+describe('disc formats and cover palettes', () => {
+  it('prints the disc type and a mixed disc count on generated packaging', () => {
+    const discs = [{ id: 'a', tracks: [] }, { id: 'b', format: 'bd' as const, tracks: [] }, { id: 'c', format: 'bd' as const, tracks: [] }]
+    const album = { title: 'T', artist: 'A', year: 2020, genre: 'Pop', color: '#336699', ink: '#ffffff', coverUrl: '', discs, tracks: [] }
+    expect(decodeURIComponent(getDiscArtwork(album, discs[1]))).toContain('BLU-RAY DISC')
+    expect(decodeURIComponent(getDiscArtwork(album, discs[0]))).toContain('COMPACT DISC · DIGITAL AUDIO')
+    expect(decodeURIComponent(getBackCoverArtwork(album))).toContain('1 CD + 2 BDs')
+  })
+
+  it('builds light and dark palettes from three cover tones with readable ink', () => {
+    const [light, dark] = getCoverPalettes(['#808080', '#f4ecd8', '#1a1f33'])
+    expect(light).toEqual({ id: 'coverLight', color: '#f4ecd8', ink: '#1a1f33', accent: '#808080' })
+    expect(dark).toEqual({ id: 'coverDark', color: '#1a1f33', ink: '#f4ecd8', accent: '#808080' })
+    // 三个色调太接近时改用黑或白，保证文字可读。
+    expect(getCoverPalettes(['#777777', '#7a7a7a', '#747474'])[0].ink).toBe('#000000')
+    expect(getCoverPalettes(undefined)).toEqual([])
   })
 })

@@ -241,6 +241,15 @@ export function ActiveCD({
       returnDisc(() => selectDisc(index))
     } else selectDisc(index)
   }
+  // 点击翻开后露出的另一张光盘：先选中它，选中完成后由下方的 effect 开始播放。
+  function playDisc(index: number) {
+    if (closing.current || isLoadingDisc || isTurning) return
+    if (index === discIndex) playTrack(0)
+    else {
+      pendingDisc.current = index
+      selectDisc(index)
+    }
+  }
   useEffect(() => {
     if (pendingDisc.current === discIndex && !isTurning && !isLoadingDisc) {
       pendingDisc.current = null
@@ -345,7 +354,8 @@ export function ActiveCD({
           : undefined}
         paperRef={paperRef}
         obiMode={obiMode}
-        onPlayDisc={() => playTrack(0)}
+        onPlayDisc={playDisc}
+        onTurnPage={selectAlbumDisc}
         canPlayDisc={!isTurning && !isChangingView && !isMoving && !playerOpen && view === 'inside' && obiMode !== 'flat'}
         ejectedDiscId={playback.album?.id === album.id ? playback.disc?.id : undefined}
       />

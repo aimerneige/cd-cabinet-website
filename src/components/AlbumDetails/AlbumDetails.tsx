@@ -3,6 +3,7 @@ import { getAlbumDiscs, hasObi } from '../../lib/album'
 import type { CaseView } from '../../hooks/useAlbumAnimation'
 import type { ObiMode } from '../../hooks/useObiAnimation'
 import { useTranslation } from '../../i18n'
+import { getDiscFormat, getDiscFormatShort, getMixedFormatSummary } from '../../lib/disc'
 
 export function AlbumDetails({
   album,
@@ -46,8 +47,8 @@ export function AlbumDetails({
         <span className="album-meta">
           {album.year} <b>·</b> {album.genre} <b>·</b>{' '}
           {discs.length > 1
-            ? t('viewer.multipleDiscs', { count: discs.length })
-            : t('viewer.singleDisc')}
+            ? getMixedFormatSummary(discs) ?? t('viewer.multipleDiscs', { count: discs.length })
+            : t(getDiscFormat(disc) === 'bd' ? 'viewer.singleBd' : getDiscFormat(disc) === 'dvd' ? 'viewer.singleDvd' : 'viewer.singleDisc')}
         </span>
         {discs.length > 1 && (
           <div className="disc-selector" aria-label={t('viewer.chooseDiscAria')}>
@@ -59,6 +60,7 @@ export function AlbumDetails({
                 onClick={() => onSelectDisc(index)}
               >
                 {t('viewer.discButton', { number: index + 1 })}
+                {getDiscFormat(item) !== 'cd' && <small className="disc-format-tag"> {getDiscFormatShort(item)}</small>}
               </button>
             ))}
           </div>

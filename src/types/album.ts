@@ -5,9 +5,12 @@ export interface Track {
   audio?: Blob
   audioName?: string
 }
+export type DiscFormat = 'cd' | 'dvd' | 'bd'
 export interface AlbumDisc {
   id: string
   title?: string
+  /** 光盘类型，缺省为 CD。 */
+  format?: DiscFormat
   labelUrl?: string
   tracks: Track[]
 }
@@ -23,7 +26,7 @@ export interface ObiDimensions {
   backWidthMm?: number
 }
 export type ArtworkTheme = 'dusk' | 'orbit' | 'arch' | 'waves' | 'tiles' | 'sunburst' | 'grid' | 'stripes' | 'bloom' | 'horizon' | 'monolith'
-export type ArtworkPalette = 'cream' | 'clay' | 'forest' | 'ocean' | 'midnight' | 'mustard' | 'rose' | 'sage' | 'charcoal'
+export type ArtworkPalette = 'cream' | 'clay' | 'forest' | 'ocean' | 'midnight' | 'mustard' | 'rose' | 'sage' | 'charcoal' | 'coverLight' | 'coverDark'
 export interface Album {
   id: string
   title: string
@@ -49,6 +52,8 @@ export interface Album {
   ink: string
   artworkTheme?: ArtworkTheme
   artworkPalette?: ArtworkPalette
+  /** 从上传封面取出的三个主要色调，供“封面浅色/深色”配色使用。 */
+  coverSwatches?: string[]
   shelfId: string
   order: number
   tracks: Track[]

@@ -574,11 +574,15 @@ footer i {
   z-index: 20;
   perspective: 1800px;
   pointer-events: none;
-  overflow: hidden;
+  /* 窗口较矮时详情区会超出屏幕，允许上下滚动以便点到底部按钮。 */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
+/* 遮罩随滚动固定在视口内；用 sticky 而非 fixed，滚轮在遮罩上也能滚动这一层。 */
 .collection-overlay {
-  position: absolute;
-  inset: 0;
+  position: sticky;
+  top: 0;
+  height: 100%;
   background: #e8e5dfe8;
   backdrop-filter: blur(4px);
   pointer-events: auto;
@@ -879,6 +883,7 @@ footer i {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  padding-bottom: 40px;
   width: min(640px, calc(100vw - 48px));
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1135,9 +1140,6 @@ footer i {
   }
   .viewer-controls button {
     padding: 7px 12px;
-  }
-  .active-layer {
-    overflow-y: auto;
   }
   .album-details {
     padding-bottom: 24px;

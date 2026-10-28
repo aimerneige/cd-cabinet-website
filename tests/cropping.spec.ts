@@ -141,7 +141,7 @@ test('paper ratios stay independent of outer thickness and the disc has a circul
     ['4', 'Upload inside back cover', '69:59', 'Back cover inside preview'],
     ['4', 'Upload right spine artwork', '13:236', 'Right spine preview'],
     ['4', 'Upload OBI paper strip', '178.983050:307.627119', 'OBI preview'],
-    ['4', 'Upload disc artwork', '1:1', 'Disc preview'],
+    ['4', 'Upload disc 1 artwork', '1:1', 'Disc 1 preview'],
   ]) {
     await page.getByLabel('Number of discs').selectOption(count)
     if (upload === 'Upload OBI paper strip') await page.getByRole('checkbox', { name: 'Include OBI', exact: true }).check()
@@ -165,7 +165,7 @@ test('paper ratios stay independent of outer thickness and the disc has a circul
     expect(box.y).toBeGreaterThanOrEqual(0)
     expect(box.x + box.width).toBeLessThanOrEqual(390)
     expect(box.y + box.height).toBeLessThanOrEqual(844)
-    if (upload === 'Upload disc artwork') {
+    if (upload === 'Upload disc 1 artwork') {
       await expect(dialog.locator('.reactEasyCrop_CropAreaRound')).toBeVisible()
       const hole = (await dialog.locator('.crop-disc-hole').boundingBox())!
       const circle = (await dialog.locator('.reactEasyCrop_CropAreaRound').boundingBox())!

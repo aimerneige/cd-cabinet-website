@@ -57,8 +57,6 @@
 .player-transport .eject-key { margin-left: 12px; }
 .player-error { margin: 13px 0 0; font-size: 11px; line-height: 1.5; color: #8c412d; }
 .active-layer .disc-transfer { position: fixed; z-index: 3; pointer-events: none; margin: 0; transform-origin: center; }
-.active-layer.has-player { overflow-y: auto; }
-.active-layer.has-player .collection-overlay { position: fixed; }
 .active-layer.has-player .viewer-controls { position: fixed; z-index: 4; }
 .active-layer.has-player .album-details { top: calc(max(90px, 17vh) + var(--player-height, 385px) + 30px) !important; padding-bottom: 35px; }
 .track-title { flex: 1; min-width: 0; text-align: left; border: 0; padding: 0; background: transparent; color: inherit; font-size: inherit; }

@@ -6,6 +6,7 @@ import type { CaseView } from '../../hooks/useAlbumAnimation'
 import type { ObiMode } from '../../hooks/useObiAnimation'
 import { ObiStrip } from '../ObiStrip/ObiStrip'
 import { useTranslation } from '../../i18n'
+import { getDiscFormat, getDiscFormatShort } from '../../lib/disc'
 
 const bookletTabPositions = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
 
@@ -20,17 +21,27 @@ export const CDCase = forwardRef<
     onToggleLid?: () => void
     paperRef: RefObject<HTMLDivElement | null>
     obiMode: ObiMode
-    onPlayDisc: () => void
+    /** 播放指定序号的光盘（含翻开后露出的任意一张）。 */
+    onPlayDisc: (index: number) => void
+    /** 点击托盘角翻页：选中目标页的光盘但不播放。 */
+    onTurnPage: (index: number) => void
     canPlayDisc: boolean
     ejectedDiscId?: string
   }
 >(function CDCase(
-  { album, disc, trayRefs, view, isOpen, onToggleLid, paperRef, obiMode, onPlayDisc, canPlayDisc, ejectedDiscId },
+  { album, disc, trayRefs, view, isOpen, onToggleLid, paperRef, obiMode, onPlayDisc, onTurnPage, canPlayDisc, ejectedDiscId },
   ref,
 ) {
   const { t } = useTranslation()
   const discs = getAlbumDiscs(album)
   const selected = disc ?? discs[0]
+  const selectedIndex = Math.max(0, discs.findIndex((item) => item.id === selected.id))
+  // 当前翻到的页：左侧露出 2p-1 号，右侧露出 2p 号。
+  const page = Math.ceil(selectedIndex / 2)
+  const visible = (index: number) => canPlayDisc && (index === page * 2 - 1 || index === page * 2)
+  const play = (index: number) => visible(index) ? () => onPlayDisc(index) : undefined
+  const next = canPlayDisc && page * 2 + 1 < discs.length ? () => onTurnPage(page * 2 + 1) : undefined
+  const previous = canPlayDisc && page > 0 ? () => onTurnPage(page * 2 - 2) : undefined
   return (
     <div
       className={`cd-case${obiMode === 'flat' ? ' has-flat-obi' : ''}`}
@@ -67,24 +78,26 @@ export const CDCase = forwardRef<
           {album.rightSpineUrl ? <img className="spine-artwork" src={album.rightSpineUrl} alt="" /> : <span>{album.artist} · {album.title}</span>}
         </div>
         {discs.length > 1 && discs.length % 2 === 1 && (
-          <DiscTray album={album} disc={discs[discs.length - 1]} onPlay={discs[discs.length - 1].id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === discs[discs.length - 1].id} />
+          <DiscTray album={album} disc={discs[discs.length - 1]} onPlay={play(discs.length - 1)} ejected={ejectedDiscId === discs[discs.length - 1].id} />
         )}
         {Array.from({ length: Math.max(1, Math.floor(discs.length / 2)) }, (_, index) => {
           const frontDisc = discs[index * 2]
           const backDisc = discs[index * 2 + 1]
           return (
             <div className="tray-leaf" key={frontDisc.id} ref={(element) => { trayRefs.current[index] = element }}>
-              <DiscTray album={album} disc={frontDisc} side="front" onPlay={frontDisc.id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === frontDisc.id} />
+              <DiscTray album={album} disc={frontDisc} side="front" onPlay={play(index * 2)} ejected={ejectedDiscId === frontDisc.id}
+                onTurn={index === page ? next : undefined} />
               {backDisc && (
-                <DiscTray album={album} disc={backDisc} side="back" onPlay={backDisc.id === selected.id && canPlayDisc ? onPlayDisc : undefined} ejected={ejectedDiscId === backDisc.id} />
+                <DiscTray album={album} disc={backDisc} side="back" onPlay={play(index * 2 + 1)} ejected={ejectedDiscId === backDisc.id}
+                  onTurn={index === page - 1 ? previous : undefined} />
               )}
             </div>
           )
         })}
         <span className="selected-disc-label" aria-live="polite">
           {discs.length > 1
-            ? `DISC ${discs.findIndex((item) => item.id === selected.id) + 1} / ${discs.length}`
-            : ''}
+            ? `DISC ${selectedIndex + 1} / ${discs.length}${getDiscFormat(selected) === 'cd' ? '' : ` · ${getDiscFormatShort(selected)}`}`
+            : getDiscFormat(selected) === 'cd' ? '' : getDiscFormatShort(selected)}
         </span>
         <div className="case-recesses" aria-hidden="true">
           {bookletTabPositions.map((position) => <span key={position} className={`booklet-recess booklet-${position}`} />)}
@@ -132,12 +145,15 @@ function DiscTray({
   disc,
   side = 'base',
   onPlay,
+  onTurn,
   ejected,
 }: {
   album: Album
   disc: AlbumDisc
   side?: string
   onPlay?: () => void
+  /** 正面托盘的右上/右下角向后翻页，背面托盘的左上/左下角向前翻回。 */
+  onTurn?: () => void
   ejected?: boolean
 }) {
   const { t } = useTranslation()
@@ -148,6 +164,7 @@ function DiscTray({
       <div
         className={`disc${ejected ? ' is-ejected' : ''}`}
         data-disc-id={disc.id}
+        data-format={getDiscFormat(disc)}
         role={onPlay ? 'button' : undefined}
         tabIndex={onPlay ? 0 : undefined}
         aria-label={onPlay ? t('player.playDisc', { number: discs.findIndex((item) => item.id === disc.id) + 1 }) : undefined}
@@ -165,12 +182,12 @@ function DiscTray({
         <div className="disc-center" />
       </div>
       <div className="tray-hub" />
-      {discs.length > 1 && (
-        <span className="tray-disc-label">
-          DISC {discs.findIndex((item) => item.id === disc.id) + 1} /{' '}
-          {discs.length}
-        </span>
-      )}
+      {/* 鼠标翻页用；键盘和读屏可用详情区的光盘按钮完成同样操作。 */}
+      {onTurn && (['top', 'bottom'] as const).map((edge) => (
+        <div key={edge} className={`tray-corner tray-corner-${edge}`} aria-hidden="true"
+          title={t(side === 'back' ? 'viewer.previousDiscPage' : 'viewer.nextDiscPage')}
+          onClick={(event) => { event.stopPropagation(); onTurn() }} />
+      ))}
     </div>
   )
 }

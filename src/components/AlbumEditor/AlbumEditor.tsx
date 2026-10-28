@@ -3,10 +3,11 @@ import type { CSSProperties, FormEvent } from 'react'
 import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme, BookletFormat, BookletPage, ObiDimensions, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, getCaseThicknessMm, getSpineWidthMm, hasObi, resizeDiscs, SPINE_HEIGHT_MM, STANDARD_CASE_DEPTH, STANDARD_CASE_THICKNESS_MM } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
-import { readCoverPalette } from '../../lib/coverPalette'
+import { readCoverPalette, type CoverPalette } from '../../lib/coverPalette'
+import { DISC_FORMATS, getDiscFormat } from '../../lib/disc'
 import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
 import { alignSpineArtwork } from '../../lib/spineArtwork'
-import { artworkPalettes, artworkThemes, generateCover, getArtworkPalette, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from '../../lib/generatedCover'
+import { artworkPalettes, artworkThemes, coverPaletteIds, generateCover, getCoverPalettes, getArtworkPalette, getBackCoverArtwork, getDiscArtwork, getGeneratedCoverStyle, getInnerArtwork, getObiArtwork, getSpineArtwork, randomCoverStyle } from '../../lib/generatedCover'
 import { AUDIO_ACCEPT, readAudio } from '../../lib/audio'
 import { useCollection } from '../../store/collectionStore'
 import { useTranslation } from '../../i18n'
@@ -68,7 +69,7 @@ export function AlbumEditor({
     () => album ? getGeneratedCoverStyle(album.coverUrl) : randomCoverStyle(),
   )
   const [cover, setCover] = useState(coverStyle ? '' : album?.coverUrl ?? '')
-  const [coverPalette, setCoverPalette] = useState<Pick<Album, 'color' | 'ink'> | null>(null)
+  const [coverPalette, setCoverPalette] = useState<CoverPalette | null>(null)
   const [artworkPalette, setArtworkPalette] = useState<ArtworkPalette | undefined>(album?.artworkPalette)
   const [artworkTheme, setArtworkTheme] = useState<ArtworkTheme | undefined>(album?.artworkTheme)
   const [spine, setSpine] = useState(album?.spineUrl ?? '')
@@ -95,7 +96,10 @@ export function AlbumEditor({
   const alive = useRef(true)
   const saveAlbum = useCollection((state) => state.saveAlbum)
   const deleteAlbum = useCollection((state) => state.deleteAlbum)
-  const selectedPalette = getArtworkPalette(artworkPalette)
+  // 封面取色只对上传的封面有效；旧专辑没有记录时，选择封面配色会重新取色。
+  const coverSwatches = cover ? coverPalette?.swatches ?? (cover === album?.coverUrl ? album?.coverSwatches : undefined) : undefined
+  const coverPalettes = getCoverPalettes(coverSwatches)
+  const selectedPalette = getArtworkPalette(artworkPalette, coverSwatches)
   const artworkDetails = {
     title: title.trim() || t('editor.albumTitle'),
     artist: artist.trim() || t('editor.artist'),
@@ -110,6 +114,7 @@ export function AlbumEditor({
     obiDimensions,
     artworkPalette,
     artworkTheme,
+    coverSwatches,
   }
   const generatedStyle = coverStyle ? {
     id: artworkTheme ?? coverStyle.id,
@@ -210,9 +215,8 @@ export function AlbumEditor({
     }
   }
 
-  function upload(file: File | undefined, kind: Exclude<ArtworkKind, 'page'>) {
+  function upload(file: File | undefined, kind: Exclude<ArtworkKind, 'page'>, discId = discs[editingDisc].id) {
     if (!file) return
-    const discId = discs[editingDisc].id
     void readImages([file], kind, async ([result]) => {
       if (kind === 'spine' || kind === 'rightSpine') {
         const aligned = await alignSpineArtwork({ spineUrl: spine, rightSpineUrl: rightSpine, spineWidthMm }, kind === 'spine' ? 'left' : 'right', result)
@@ -244,7 +248,8 @@ export function AlbumEditor({
 
   async function selectArtworkPalette(palette?: ArtworkPalette) {
     if (loading || saving) return
-    if (!palette && cover && !coverPalette) {
+    const fromCover = !palette || (coverPaletteIds as readonly string[]).includes(palette)
+    if (fromCover && cover && !coverPalette && (!palette || !coverSwatches)) {
       const returnFocus = document.activeElement as HTMLElement | null
       const previousPalette = artworkPalette
       setArtworkPalette(undefined)
@@ -253,7 +258,7 @@ export function AlbumEditor({
         const colors = await readCoverPalette(cover)
         if (!alive.current) return
         setCoverPalette(colors)
-        setArtworkPalette(undefined)
+        setArtworkPalette(palette)
       } catch (cause) {
         if (alive.current) {
           setArtworkPalette(previousPalette)
@@ -420,8 +425,9 @@ export function AlbumEditor({
         rightSpineUrl: rightSpine || undefined,
         color: artworkDetails.color,
         ink: artworkDetails.ink,
-        artworkPalette,
+        artworkPalette: (coverPaletteIds as readonly (string | undefined)[]).includes(artworkPalette) && !coverSwatches ? undefined : artworkPalette,
         artworkTheme,
+        coverSwatches,
         backCoverUrl: backCover || undefined,
         obiUrl: obiEnabled ? obi || undefined : undefined,
         obiEnabled,
@@ -598,6 +604,17 @@ export function AlbumEditor({
                     <span>{t(`artwork.palette.${palette.id}`)}</span>
                   </label>
                 ))}
+                {coverPaletteIds.map((id) => {
+                  const palette = coverPalettes.find((item) => item.id === id)
+                  return (
+                    <label className="editor-design-choice" key={id} title={cover ? undefined : t('artwork.palette.needsCover')}>
+                      <input type="radio" name="artwork-palette" value={id} checked={artworkPalette === id} disabled={!cover} onChange={() => void selectArtworkPalette(id)} />
+                      <span className={`editor-palette-swatch${palette ? '' : ' editor-palette-cover'}`} aria-hidden="true"
+                        style={palette ? { background: `linear-gradient(135deg, ${palette.color} 55%, ${palette.ink} 55% 75%, ${palette.accent} 75%)` } : undefined} />
+                      <span>{t(`artwork.palette.${id}`)}</span>
+                    </label>
+                  )
+                })}
               </div>
             </fieldset>
             <fieldset className="editor-design-group">
@@ -621,7 +638,11 @@ export function AlbumEditor({
           <div className="artwork-input">
             <ArtworkInput label={t('editor.coverArtwork')} src={coverUrl} alt={t('editor.coverPreviewAlt')} uploadLabel={t('editor.uploadCoverAria')}
               resetLabel={t('editor.useGeneratedCover')} custom={!!cover} disabled={loading || saving} onUpload={(file) => upload(file, 'cover')} onUploadMany={importBooklet}
-              onReset={() => { setCover(''); if (!coverStyle) setCoverStyle(randomCoverStyle()) }} />
+              onReset={() => {
+                setCover('')
+                if (!coverStyle) setCoverStyle(randomCoverStyle())
+                if ((coverPaletteIds as readonly (string | undefined)[]).includes(artworkPalette)) setArtworkPalette(undefined)
+              }} />
             <p className="booklet-cover-guidance">{t('booklet.coverUploadGuidance')}</p>
           </div>
           <ArtworkInput label={t('editor.bookletBackArtwork')} src={getInnerArtwork(previewAlbum, 'booklet')} alt={t('editor.bookletBackPreview')}
@@ -639,13 +660,31 @@ export function AlbumEditor({
           <ArtworkInput label={t('editor.backInsideArtwork')} src={getInnerArtwork(previewAlbum, 'back')} alt={t('editor.backInsidePreview')}
             uploadLabel={t('editor.uploadBackInside')} resetLabel={t('editor.useGeneratedBackInside')} custom={!!backInside} disabled={loading || saving} variant="back"
             onUpload={(file) => upload(file, 'backInside')} onReset={() => setBackInside('')} />
-          <div className="disc-artwork">
-            {discCount > 1 && <select aria-label={t('viewer.chooseDiscAria')} value={editingDisc} disabled={loading || saving} onChange={(event) => setEditingDisc(Number(event.target.value))}>
-              {discs.map((disc, index) => <option key={disc.id} value={index}>{t('viewer.discButton', { number: index + 1 })}</option>)}
-            </select>}
-            <ArtworkInput label={t('editor.discArtwork')} src={getDiscArtwork(previewAlbum, discs[editingDisc])} alt={t('editor.discPreviewAlt')}
-              uploadLabel={t('editor.uploadDisc')} resetLabel={t('editor.useGeneratedDisc')} custom={!!discs[editingDisc].labelUrl} disabled={loading || saving} variant="disc"
-              onUpload={(file) => upload(file, 'disc')} onReset={() => setDiscs((previous) => previous.map((disc, index) => index === editingDisc ? { ...disc, labelUrl: undefined } : disc))} />
+          <div className="disc-artworks">
+            {/* 每张光盘平铺显示，可分别设置类型和盘面。 */}
+            {discs.map((disc, index) => {
+              const multiple = discCount > 1
+              const number = index + 1
+              return (
+                <div className="disc-artwork" key={disc.id}>
+                  <label className="disc-format">
+                    <span>{multiple ? t('editor.discNumberFormat', { number }) : t('editor.discFormat')}</span>
+                    <select value={getDiscFormat(disc)} disabled={loading || saving}
+                      onChange={(event) => setDiscs((previous) => previous.map((item) => item.id === disc.id
+                        ? { ...item, format: event.target.value === 'cd' ? undefined : event.target.value as AlbumDisc['format'] } : item))}>
+                      {DISC_FORMATS.map((format) => <option key={format} value={format}>{t(`disc.format.${format}`)}</option>)}
+                    </select>
+                  </label>
+                  <ArtworkInput label={multiple ? t('editor.discNumberArtwork', { number }) : t('editor.discArtwork')} src={getDiscArtwork(previewAlbum, disc)}
+                    alt={multiple ? t('editor.discNumberPreviewAlt', { number }) : t('editor.discPreviewAlt')}
+                    uploadLabel={multiple ? t('editor.uploadDiscNumber', { number }) : t('editor.uploadDisc')}
+                    resetLabel={multiple ? t('editor.useGeneratedDiscNumber', { number }) : t('editor.useGeneratedDisc')}
+                    custom={!!disc.labelUrl} disabled={loading || saving} variant="disc"
+                    onUpload={(file) => upload(file, 'disc', disc.id)}
+                    onReset={() => setDiscs((previous) => previous.map((item) => item.id === disc.id ? { ...item, labelUrl: undefined } : item))} />
+                </div>
+              )
+            })}
             <p className="obi-upload-guidance">{t('editor.discGuidance')}</p>
           </div>
           <div className="artwork-input">

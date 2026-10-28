@@ -105,10 +105,11 @@ test('disc text stays inside its printable ring with long multilingual details a
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
   await page.getByRole('button', { name: 'Add recording' }).click()
   await page.getByLabel('Number of discs').selectOption('6')
-  await page.getByRole('combobox', { name: 'Choose a disc' }).selectOption('5')
-  const preview = page.getByRole('img', { name: 'Disc preview', exact: true })
+  const preview = page.getByRole('img', { name: 'Disc 6 preview', exact: true })
   const source = (await preview.getAttribute('src'))!
-  expect(decodeURIComponent(source)).toContain('DISC 6 / 6')
+  // 光盘编号只显示在展示页右下角，不印在生成的盘面上。
+  expect(decodeURIComponent(source)).not.toContain('DISC 6 / 6')
+  expect(decodeURIComponent(source)).toContain('COMPACT DISC · DIGITAL AUDIO')
   expect(decodeURIComponent((await page.getByRole('img', { name: 'Back cover preview', exact: true }).getAttribute('src'))!)).toContain('6 CDs')
   for (const [title, artist] of [
     ['夜の音 <Live> & 回声'.repeat(5), '林 & Friends (现场演奏)'.repeat(5)],
@@ -135,10 +136,10 @@ test('disc text stays inside its printable ring with long multilingual details a
       expect(bound.above || bound.below, bound.text ?? '').toBe(true)
     }
   }
-  await page.getByRole('button', { name: 'Disc 2', exact: true }).click()
-  expect(decodeURIComponent((await preview.getAttribute('src'))!)).toContain('DISC 2 / 6')
+  await expect(page.locator('.disc-artworks .disc-artwork')).toHaveCount(6)
   await page.getByLabel('Number of discs').selectOption('1')
-  expect(decodeURIComponent((await preview.getAttribute('src'))!)).toContain('DISC 1 / 1')
+  await expect(page.locator('.disc-artworks .disc-artwork')).toHaveCount(1)
+  expect(decodeURIComponent((await page.getByRole('img', { name: 'Disc preview', exact: true }).getAttribute('src'))!)).not.toContain('DISC 1 / 1')
   expect(decodeURIComponent((await page.getByRole('img', { name: 'Back cover preview', exact: true }).getAttribute('src'))!)).toContain('1 CD')
 })
 
@@ -354,7 +355,7 @@ test('palette and theme choices preserve uploaded images, survive reload and can
   const originalDisc = (await disc.getAttribute('src'))!
   const back = page.getByRole('img', { name: 'Back cover preview', exact: true })
   const obi = page.getByRole('img', { name: 'OBI preview', exact: true })
-  await expect(page.getByRole('group', { name: 'Color palette', exact: true }).getByRole('radio')).toHaveCount(10)
+  await expect(page.getByRole('group', { name: 'Color palette', exact: true }).getByRole('radio')).toHaveCount(12)
   await expect(page.getByRole('group', { name: 'Graphic theme', exact: true }).getByRole('radio')).toHaveCount(12)
   await page.getByRole('radio', { name: 'Cream paper', exact: true }).check()
   await page.getByRole('radio', { name: 'Flowing waves', exact: true }).check()

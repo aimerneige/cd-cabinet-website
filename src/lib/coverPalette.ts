@@ -1,7 +1,10 @@
 import type { Album } from '../types/album'
 import { t } from '../i18n'
 
-export function getCoverPalette(pixels: Uint8ClampedArray): Pick<Album, 'color' | 'ink'> {
+export type CoverPalette = Pick<Album, 'color' | 'ink'> & { swatches: string[] }
+const toHex = (channels: number[]) => '#' + channels.map((value) => value.toString(16).padStart(2, '0')).join('')
+
+export function getCoverPalette(pixels: Uint8ClampedArray): CoverPalette {
   const buckets = new Map<number, { weight: number; red: number; green: number; blue: number }>()
   for (let index = 0; index < pixels.length; index += 4) {
     const [red, green, blue, alpha] = pixels.subarray(index, index + 4)
@@ -15,21 +18,29 @@ export function getCoverPalette(pixels: Uint8ClampedArray): Pick<Album, 'color' 
     bucket.blue += blue * weight
     buckets.set(key, bucket)
   }
-  const dominant = [...buckets.values()].sort((a, b) => b.weight - a.weight)[0]
-  const channels = dominant
-    ? [dominant.red, dominant.green, dominant.blue].map((value) => Math.round(value / dominant.weight))
-    : [122, 130, 115]
-  const color = '#' + channels.map((value) => value.toString(16).padStart(2, '0')).join('')
+  const ranked = [...buckets.values()].sort((a, b) => b.weight - a.weight)
+    .map((bucket) => [bucket.red, bucket.green, bucket.blue].map((value) => Math.round(value / bucket.weight)))
+  const channels = ranked[0] ?? [122, 130, 115]
+  const color = toHex(channels)
+  // 依权重挑出彼此有明显差别的三个主色；颜色不够时重复最后一个。
+  const picked: number[][] = []
+  for (const candidate of ranked) {
+    if (picked.every((item) => Math.hypot(...item.map((value, index) => value - candidate[index])) >= 60)) picked.push(candidate)
+    if (picked.length === 3) break
+  }
+  if (!picked.length) picked.push(channels)
+  while (picked.length < 3) picked.push(picked[picked.length - 1])
+  const swatches = picked.map(toHex)
   const linear = channels.map((value) => {
     const channel = value / 255
     return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
   })
   const luminance = linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722
   const ink = (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) ? '#000000' : '#ffffff'
-  return { color, ink }
+  return { color, ink, swatches }
 }
 
-export async function readCoverPalette(source: string): Promise<Pick<Album, 'color' | 'ink'>> {
+export async function readCoverPalette(source: string): Promise<CoverPalette> {
   const image = new Image()
   image.src = source
   try { await image.decode() }

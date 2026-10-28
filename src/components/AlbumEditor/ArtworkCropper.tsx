@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Cropper, { type Area, type Size } from 'react-easy-crop'
 import { cropArtwork, getArtworkCrop, getRotatedSize, getSpineCrop, type ArtworkCrop, type ArtworkCropResult } from '../../lib/cropArtwork'
 import { clampSpineWidthMm, getCaseThicknessMm, MAX_SPINE_WIDTH_MM, MIN_SPINE_WIDTH_MM, SPINE_HEIGHT_MM } from '../../lib/album'
@@ -25,6 +25,10 @@ export function ArtworkCropper({ source, profile, resizeWidth, obi, name, curren
   const dialog = useRef<HTMLDialogElement>(null)
   const image = useRef<HTMLImageElement | null>(null)
   const area = useRef<Area | null>(null)
+  const areaPercent = useRef<Area | null>(null)
+  // 调侧封宽度时，若裁剪框贴着图片左/右边缘，就保持贴边，只往另一侧伸缩。
+  // 'center' 表示按中心伸缩，但仍把框限制在图片内；null 表示当前没有在调宽度。
+  const anchor = useRef<'left' | 'right' | 'center' | null>(null)
   const [open, setOpen] = useState(false)
   const [ready, setReady] = useState(false)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
@@ -46,6 +50,24 @@ export function ArtworkCropper({ source, profile, resizeWidth, obi, name, curren
     ? Math.max(1, Math.round(Math.max(size.width / rotatedMediaSize.width, size.height / rotatedMediaSize.height) * 100000) / 100000) : 1
   const maxZoom = Math.max(3, minZoom * 3)
   useEffect(() => { setZoom((value) => Math.min(maxZoom, Math.max(value, minZoom))) }, [minZoom, maxZoom])
+  useLayoutEffect(() => {
+    if (!anchor.current || !size || !rotatedMediaSize) return
+    // react-easy-crop 的 crop.x 是图片中心相对裁剪框中心的偏移。
+    const slack = Math.max(0, (rotatedMediaSize.width * zoom - size.width) / 2)
+    const side = anchor.current
+    setCrop((previous) => {
+      const x = side === 'left' ? slack : side === 'right' ? -slack : Math.min(slack, Math.max(-slack, previous.x))
+      return Math.abs(previous.x - x) < 0.01 ? previous : { ...previous, x }
+    })
+  }, [size?.width, zoom, rotatedMediaSize?.width])
+  function changeSpineWidth(value: number) {
+    const percent = areaPercent.current
+    const left = !!percent && percent.x <= 0.05
+    const right = !!percent && percent.x + percent.width >= 99.95
+    // 两边都贴（图片比框窄）或都不贴时，仍按中心伸缩。
+    anchor.current = left === right ? 'center' : left ? 'left' : 'right'
+    setWidthMm(clampSpineWidthMm(value))
+  }
   useEffect(() => {
     const element = dialog.current!
     element.showModal()
@@ -77,9 +99,9 @@ export function ArtworkCropper({ source, profile, resizeWidth, obi, name, curren
       <div className="crop-stage">
         {open && <Cropper image={source} crop={crop} zoom={zoom} rotation={rotation} aspect={activeProfile.width / activeProfile.height} cropSize={cropSize} minZoom={minZoom} maxZoom={maxZoom}
           cropShape={profile.round ? 'round' : 'rect'} showGrid={!profile.round} disableAutomaticStylesInjection keyboardStep={10}
-          onCropChange={setCrop} onZoomChange={setZoom} onRotationChange={rotate} setMediaSize={setMediaSize}
+          onCropChange={setCrop} onZoomChange={setZoom} onInteractionStart={() => { anchor.current = null }} onRotationChange={rotate} setMediaSize={setMediaSize}
           onCropSizeChange={(next) => { setSize(next); if (resizeWidth && !baseSize) setBaseSize(next) }}
-          onCropAreaChange={(_, pixels) => { area.current = pixels; setReady(pixels.width > 0 && pixels.height > 0) }}
+          onCropAreaChange={(percent, pixels) => { areaPercent.current = percent; area.current = pixels; setReady(pixels.width > 0 && pixels.height > 0) }}
           setImageRef={(ref) => { image.current = ref.current }}
           mediaProps={{ alt: t('crop.source'), onError: () => { setReady(false); setError(t('crop.failed')) } }}
           cropperProps={{ 'aria-label': t('crop.position') }} />}
@@ -97,7 +119,7 @@ export function ArtworkCropper({ source, profile, resizeWidth, obi, name, curren
       <p className="crop-guidance">{t(resizeWidth ? 'crop.spineGuidance' : obiLayout ? 'obi.cropGuidance' : 'crop.guidance')}</p>
       {resizeWidth && <div className="crop-control"><span>{t('crop.spineWidthLabel')}</span>
         <PreciseRange label={t('crop.spineWidthLabel')} value={widthMm} min={MIN_SPINE_WIDTH_MM} max={MAX_SPINE_WIDTH_MM} step={0.1} decimals={1} unit=" mm"
-          onChange={(value) => setWidthMm(clampSpineWidthMm(value))} /></div>}
+          onChange={changeSpineWidth} /></div>}
       {obiAlbum && <ObiSizeControls dimensions={obiDimensions} thicknessMm={getCaseThicknessMm(obiAlbum)} disabled={!ready} onChange={setObiDimensions} />}
       <div className="crop-control"><span>{t('crop.zoom')}</span>
         <PreciseRange label={t('crop.zoom')} value={zoom} min={minZoom} max={maxZoom} step={0.01} decimals={2} unit="×" onChange={setZoom} /></div>
@@ -108,7 +130,7 @@ export function ArtworkCropper({ source, profile, resizeWidth, obi, name, curren
       </div>
       {error && <p className="editor-error" role="alert">{error}</p>}
       <div className="crop-actions">
-        <button type="button" onClick={() => { setWidthMm(defaultWidthMm); setObiDimensions(obi?.obiDimensions); setCrop({ x: 0, y: 0 }); setZoom(1); setRotation(0); setError('') }}>{t('crop.reset')}</button>
+        <button type="button" onClick={() => { anchor.current = null; setWidthMm(defaultWidthMm); setObiDimensions(obi?.obiDimensions); setCrop({ x: 0, y: 0 }); setZoom(1); setRotation(0); setError('') }}>{t('crop.reset')}</button>
         <div><button type="button" onClick={() => onComplete(null)}>{t('crop.cancel')}</button>
           <button type="button" className="crop-apply" disabled={!ready} onClick={apply}>{t('crop.apply')}</button></div>
       </div>

@@ -2,7 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { CSSProperties } from 'react'
 import type { Album } from '../../types/album'
-import { getAlbumDiscs, getCaseDepth, getSpineDepth, STANDARD_CASE_DEPTH } from '../../lib/album'
+import { getCaseDepth, getSpineDepth, STANDARD_CASE_DEPTH } from '../../lib/album'
 import { useTranslation } from '../../i18n'
 
 interface Props {
@@ -14,7 +14,6 @@ interface Props {
 
 export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
   const { t } = useTranslation()
-  const discCount = getAlbumDiscs(album).length
   const {
     attributes,
     listeners,
@@ -81,11 +80,6 @@ export function ShelfCD({ album, edit, hidden, onOpen }: Props) {
             </span>
             <span className="spine-label">{album.year}</span>
           </>
-        )}
-        {discCount > 1 && (
-          <span className="spine-disc-count" aria-hidden="true">
-            {discCount}CD
-          </span>
         )}
       </button>
     </div>
