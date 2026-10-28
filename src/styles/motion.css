@@ -218,7 +218,7 @@ dialog:not(.artwork-cropper)[open] {
 dialog[open]::backdrop {
   animation: fade-in 0.3s ease-out;
 }
-.reader-paper {
+.reader-flat .reader-paper {
   animation: fade-in 0.3s var(--ease-out);
 }
 .reader-thumbnails button {
@@ -255,7 +255,7 @@ dialog[open]::backdrop {
   .compact-player,
   dialog[open],
   dialog[open]::backdrop,
-  .reader-paper {
+  .reader-flat .reader-paper {
     animation: none !important;
   }
   .edit-button,

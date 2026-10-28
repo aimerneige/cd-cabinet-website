@@ -14,7 +14,10 @@
 .artwork-reader h2 { font: 32px/1.1 'Libre Caslon Display', serif; margin: 8px 0 0; }
 .artwork-reader button { border: 1px solid #a9af9d; padding: 8px 12px; background: transparent; color: inherit; font-size: 12px; }
 .artwork-reader header button { border: 0; font-size: 26px; }
-.reader-paper { flex: 1; min-height: 0; overflow: auto; background: #fffdf4; box-shadow: 0 3px 12px #3d44351a; }
+.reader-stage { flex: 1; min-height: 0; position: relative; display: grid; place-items: center; container-type: size; }
+.reader-flat { position: absolute; inset: 0; display: flex; }
+.reader-flat .reader-paper { flex: 1; }
+.reader-paper { min-height: 0; overflow: auto; background: #fffdf4; box-shadow: 0 3px 12px #3d44351a; }
 .reader-paper.has-image:not(.has-text) { display: grid; place-items: center; background: #dedfd4; }
 .reader-paper img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; margin: auto; }
 .reader-paper.has-image:not(.has-text) img { width: 100%; height: 100%; min-height: 0; }
@@ -32,4 +35,96 @@
 .artwork-reader nav small { display: block; color: #78836b; margin-top: 5px; }
 .artwork-reader nav select { max-width: 100%; width: 100%; border: 1px solid #a9af9d; background: #f5f3ec; color: inherit; padding: 6px; font-size: 11px; }
 .artwork-reader nav button { flex-shrink: 0; }
+/* ---------- 小册子：骑马钉跨页 ---------- */
+.artwork-reader.is-spread { width: min(1180px, calc(100vw - 28px)); }
+.booklet-book {
+  position: relative;
+  /* 两页并排的正方形纸张，按舞台大小等比缩放。 */
+  width: min(100cqw, 200cqh);
+  aspect-ratio: 2;
+  perspective: 2400px;
+}
+.booklet-leaf {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+}
+.booklet-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+  background: #fffdf4;
+  box-shadow: 0 6px 18px #2e332a2e, 0 1px 2px #2e332a33;
+}
+.booklet-face-back { transform: rotateY(180deg); }
+.booklet-face .reader-paper { position: absolute; inset: 0; box-shadow: none; }
+/* 中缝阴影：右页在左侧、左页在右侧。 */
+.booklet-face::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 9%;
+  pointer-events: none;
+}
+.booklet-face-front::after { left: 0; background: linear-gradient(90deg, #00000026, #0000000a 45%, transparent); }
+.booklet-face-back::after { right: 0; background: linear-gradient(270deg, #00000026, #0000000a 45%, transparent); }
+.booklet-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #1d1f1a, transparent 75%);
+  opacity: 0;
+  pointer-events: none;
+}
+.booklet-face-back .booklet-shade { background: linear-gradient(270deg, #1d1f1a, transparent 75%); }
+/* 打开时在中缝露出两枚订书钉。 */
+.booklet-book.is-open::before,
+.booklet-book.is-open::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  z-index: 5000;
+  width: 2px;
+  height: 8%;
+  border-radius: 1px;
+  background: linear-gradient(90deg, #8d9189, #e7e9e2 50%, #9a9e95);
+  box-shadow: 0 1px 1px #0004;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.booklet-book.is-open::before { top: 22%; }
+.booklet-book.is-open::after { bottom: 22%; }
+.reader-blank { display: grid; place-items: center; background: #fbf9ef; }
+.reader-blank span { font-size: 10px; letter-spacing: 1px; color: #b6b8aa; text-transform: uppercase; }
+.booklet-face .reader-paper article { padding: clamp(14px, 4cqmin, 34px); }
+.booklet-face .reader-paper h3 { font-size: clamp(16px, 4.2cqmin, 26px); margin-bottom: 12px; }
+.booklet-face .reader-paper p { font-size: clamp(11px, 2.4cqmin, 14px); line-height: 1.8; }
+
+/* ---------- 小册子：窄屏单页 ---------- */
+.booklet-single {
+  position: relative;
+  width: min(100cqw, 100cqh);
+  aspect-ratio: 1;
+  perspective: 1600px;
+}
+.booklet-single-page { transform-origin: left center; }
+.booklet-single-page.is-above { z-index: 2; }
+.booklet-single-page::after { left: 0; background: linear-gradient(90deg, #00000021, transparent); }
+
+/* ---------- 单张插页 ---------- */
+.booklet-sheet {
+  position: relative;
+  width: min(100cqw, 100cqh);
+  aspect-ratio: 1;
+  transform-style: preserve-3d;
+}
+.reader-stage:has(.booklet-sheet) { perspective: 1800px; }
+.booklet-sheet-back { transform: rotateY(180deg); }
+.booklet-sheet .booklet-face::after { display: none; }
+
 @media (max-width: 700px) { .artwork-reader { padding: 14px; } .artwork-reader nav button { padding: 8px; font-size: 11px; } }

@@ -17,6 +17,7 @@ export interface BookletPage {
   text: string
   imageUrl?: string
 }
+export type BookletFormat = 'booklet' | 'sheet'
 export interface ObiDimensions {
   backWidthMm?: number
 }
@@ -32,6 +33,8 @@ export interface Album {
   coverUrl: string
   bookletBackUrl?: string
   bookletPages?: BookletPage[]
+  /** 'booklet' 为骑马钉小册子（默认），'sheet' 为只有正反两面的单张插页。 */
+  bookletFormat?: BookletFormat
   backCoverUrl?: string
   backInsideUrl?: string
   spineUrl?: string

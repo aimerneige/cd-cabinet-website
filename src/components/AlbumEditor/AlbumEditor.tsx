@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
-import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme, BookletPage, ObiDimensions, Track } from '../../types/album'
+import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme, BookletFormat, BookletPage, ObiDimensions, Track } from '../../types/album'
 import { getAlbumDiscs, getCaseDepth, getSpineDepth, hasObi, resizeDiscs, STANDARD_CASE_DEPTH, STANDARD_CASE_THICKNESS_MM } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
 import { readCoverPalette } from '../../lib/coverPalette'
@@ -76,6 +76,7 @@ export function AlbumEditor({
   const [backInside, setBackInside] = useState(album?.backInsideUrl ?? '')
   const [rightSpine, setRightSpine] = useState(album?.rightSpineUrl ?? '')
   const [bookletPages, setBookletPages] = useState<BookletPage[]>(album?.bookletPages ?? [])
+  const [bookletFormat, setBookletFormat] = useState<BookletFormat>(album?.bookletFormat ?? 'booklet')
   const [obi, setObi] = useState(album?.obiUrl ?? '')
   const [obiEnabled, setObiEnabled] = useState(album ? hasObi(album) : false)
   const [obiDimensions, setObiDimensions] = useState<ObiDimensions | undefined>(album?.obiDimensions)
@@ -117,7 +118,7 @@ export function AlbumEditor({
   } : null
   const coverUrl = cover || (generatedStyle ? generateCover(artworkDetails, generatedStyle) : '')
   const previewAlbum = { ...artworkDetails, coverUrl, bookletBackUrl: bookletBack, backInsideUrl: backInside, spineUrl: spine, rightSpineUrl: rightSpine, backCoverUrl: backCover, obiUrl: obi }
-  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, coverStyle, cover, coverPalette, artworkPalette, artworkTheme, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, obi, obiEnabled, obiDimensions]
+  const draftValues = [title, artists, year, genre, customGenre, discs, spineWidthMm, coverStyle, cover, coverPalette, artworkPalette, artworkTheme, spine, backCover, bookletBack, backInside, rightSpine, bookletPages, bookletFormat, obi, obiEnabled, obiDimensions]
   const initialDraft = useRef(draftValues)
   // 比较不可变状态的引用，避免每次输入都重新序列化高清图片和音频。
   const dirty = draftValues.some((value, index) => !Object.is(value, initialDraft.current[index]))
@@ -413,6 +414,7 @@ export function AlbumEditor({
         coverUrl,
         bookletBackUrl: bookletBack || undefined,
         bookletPages: bookletPages.map((page) => ({ ...page, title: page.title.trim() })),
+        bookletFormat: bookletFormat === 'sheet' ? 'sheet' : undefined,
         backInsideUrl: backInside || undefined,
         rightSpineUrl: rightSpine || undefined,
         color: artworkDetails.color,
@@ -717,7 +719,7 @@ export function AlbumEditor({
             ))}
           </ol>
         </fieldset>
-        <BookletPagesEditor pages={bookletPages} onChange={setBookletPages} onUpload={uploadPages} onImport={importBooklet} disabled={loading || saving} />
+        <BookletPagesEditor pages={bookletPages} format={bookletFormat} onFormatChange={setBookletFormat} onChange={setBookletPages} onUpload={uploadPages} onImport={importBooklet} disabled={loading || saving} />
         {error && (
           <p className="editor-error" role="alert">
             {error}

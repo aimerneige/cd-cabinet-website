@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import type { BookletPage } from '../../types/album'
+import type { BookletFormat, BookletPage } from '../../types/album'
 import { useTranslation } from '../../i18n'
 
-export function BookletPagesEditor({ pages, onChange, onUpload, onImport, disabled }: {
+export function BookletPagesEditor({ pages, format, onFormatChange, onChange, onUpload, onImport, disabled }: {
   pages: BookletPage[]
+  format: BookletFormat
+  onFormatChange: (format: BookletFormat) => void
   onChange: (pages: BookletPage[]) => void
   onUpload: (files: File[]) => void
   onImport: (files: File[]) => void
@@ -28,9 +30,25 @@ export function BookletPagesEditor({ pages, onChange, onUpload, onImport, disabl
   return (
     <fieldset className="booklet-pages-editor" disabled={disabled}>
       <legend>{t('booklet.pages')}</legend>
+      <div className="booklet-format" role="radiogroup" aria-label={t('booklet.format')}>
+        {(['booklet', 'sheet'] as const).map((item) => (
+          <label key={item} className={`booklet-format-choice${format === item ? ' is-selected' : ''}`}>
+            <input type="radio" name="booklet-format" value={item} checked={format === item} onChange={() => onFormatChange(item)} />
+            <i className={`booklet-format-icon is-${item}`} aria-hidden="true" />
+            <span><strong>{t(item === 'booklet' ? 'booklet.formatBooklet' : 'booklet.formatSheet')}</strong>
+              <small>{t(item === 'booklet' ? 'booklet.formatBookletHint' : 'booklet.formatSheetHint')}</small></span>
+          </label>
+        ))}
+      </div>
+      {format === 'sheet' ? <>
+        <p>{t('booklet.rotateGuidance')}</p>
+        {pages.length > 0 && <p className="booklet-page-count" role="status">{t('booklet.sheetPagesKept')}</p>}
+      </> : <>
       <p className="booklet-page-count" aria-live="polite">{t('booklet.pageCount', { count: pages.length + 2 })}</p>
+      {pages.length % 2 === 1 && <p>{t('booklet.blankPageNote')}</p>}
       <p>{t('booklet.guidance')}</p>
       <p>{t('booklet.importGuidance')}</p>
+      <p>{t('booklet.rotateGuidance')}</p>
       <div className="booklet-editor-actions">
         <label className="audio-upload">
           <span>{t('booklet.importAll')}</span>
@@ -74,6 +92,7 @@ export function BookletPagesEditor({ pages, onChange, onUpload, onImport, disabl
           </li>
         </ol>
       </> : <p>{t('booklet.emptyPages')}</p>}
+      </>}
     </fieldset>
   )
 }
