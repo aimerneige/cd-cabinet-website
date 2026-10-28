@@ -3,6 +3,7 @@ import Cropper, { type Area, type Size } from 'react-easy-crop'
 import { cropArtwork, getArtworkCrop, getRotatedSize, getSpineCrop, type ArtworkCrop, type ArtworkCropResult } from '../../lib/cropArtwork'
 import { clampSpineWidthMm, getCaseThicknessMm, MAX_SPINE_WIDTH_MM, MIN_SPINE_WIDTH_MM, SPINE_HEIGHT_MM } from '../../lib/album'
 import { getObiDimensions, getObiLayout } from '../../lib/obi'
+import { LABEL_INNER_RATIO, LABEL_OUTER_RATIO } from '../../lib/disc'
 import type { Album, ObiDimensions } from '../../types/album'
 import { ObiSizeControls } from './ObiSizeControls'
 import { useTranslation } from '../../i18n'
@@ -81,7 +82,9 @@ export function ArtworkCropper({ source, profile, resizeWidth, obi, name, curren
           setImageRef={(ref) => { image.current = ref.current }}
           mediaProps={{ alt: t('crop.source'), onError: () => { setReady(false); setError(t('crop.failed')) } }}
           cropperProps={{ 'aria-label': t('crop.position') }} />}
-        {profile.round && size && <div className="crop-disc-hole" aria-hidden="true" style={{ width: size.width * 0.21, height: size.height * 0.21 }} />}
+        {/* 实物盘面只在 23–116 mm 之间印刷：中心和外缘一圈保持透明。 */}
+        {profile.round && size && <div className="crop-disc-hole" aria-hidden="true" style={{ width: size.width * LABEL_INNER_RATIO, height: size.height * LABEL_INNER_RATIO }} />}
+        {profile.round && size && <div className="crop-disc-rim" aria-hidden="true" style={{ width: size.width * LABEL_OUTER_RATIO, height: size.height * LABEL_OUTER_RATIO }} />}
         {obiLayout && size && <div className="crop-obi-folds" aria-hidden="true" style={{ width: size.width, height: size.height }}>
           <span style={{ left: `${obiLayout.backWidth / obiLayout.width * 100}%` }} />
           <span style={{ left: `${(obiLayout.backWidth + obiLayout.depth) / obiLayout.width * 100}%` }} />

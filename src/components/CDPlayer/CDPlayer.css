@@ -25,7 +25,6 @@
 .player-well { position: relative; aspect-ratio: 1; border-radius: 50%; border: 7px solid #939b89; background: radial-gradient(circle, #444e3e 0 63%, #273123 64%); box-shadow: inset 0 5px 13px #0009, 0 1px 1px #f4f3e9; }
 .cd-player .player-disc { position: absolute; width: 88%; height: 88%; top: 6%; left: 6%; animation: cd-spin 4s linear infinite; animation-play-state: paused; }
 .player-disc.is-spinning { animation-play-state: running; }
-.player-disc .disc-center { width: 21%; height: 21%; }
 .is-loading .player-disc { visibility: hidden; }
 .player-glass { position: absolute; inset: 0; border-radius: 50%; border: 1px solid #cddbc544; background: linear-gradient(125deg, #f3f9e21c, transparent 35% 60%, #f3f9e20c 61%, transparent 75%); pointer-events: none; }
 .player-well-label { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 5px; letter-spacing: 1px; color: #d2d9c5a3; }
@@ -58,7 +57,6 @@
 .player-transport .eject-key { margin-left: 12px; }
 .player-error { margin: 13px 0 0; font-size: 11px; line-height: 1.5; color: #8c412d; }
 .active-layer .disc-transfer { position: fixed; z-index: 3; pointer-events: none; margin: 0; transform-origin: center; }
-.disc-transfer .disc-center { width: 21%; height: 21%; }
 .active-layer.has-player { overflow-y: auto; }
 .active-layer.has-player .collection-overlay { position: fixed; }
 .active-layer.has-player .viewer-controls { position: fixed; z-index: 4; }
@@ -73,7 +71,6 @@
 .compact-player { position: fixed; z-index: 21; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; width: min(420px, calc(100vw - 32px)); padding: 12px 16px; border: 1px solid #929d87; border-radius: 12px; background: linear-gradient(145deg, #e6e5dc, #c9cfbe); box-shadow: 0 8px 25px #303a3330; color: #4b5746; pointer-events: auto; }
 .compact-player .compact-disc { position: relative; flex: 0 0 42px; width: 42px; height: 42px; animation: cd-spin 4s linear infinite; animation-play-state: paused; }
 .compact-player .compact-disc.is-spinning { animation-play-state: running; }
-.compact-disc .disc-center { width: 21%; height: 21%; }
 .compact-track { flex: 1; min-width: 0; }
 .compact-track strong, .compact-track span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .compact-track strong { font-size: 12px; font-weight: 500; }

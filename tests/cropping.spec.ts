@@ -169,7 +169,10 @@ test('paper ratios stay independent of outer thickness and the disc has a circul
       await expect(dialog.locator('.reactEasyCrop_CropAreaRound')).toBeVisible()
       const hole = (await dialog.locator('.crop-disc-hole').boundingBox())!
       const circle = (await dialog.locator('.reactEasyCrop_CropAreaRound').boundingBox())!
-      expect(hole.width / circle.width).toBeCloseTo(0.21, 2)
+      // 实物盘面印刷范围：内径 23 mm、外径 116 mm（整张光盘 120 mm）。
+      expect(hole.width / circle.width).toBeCloseTo(23 / 120, 2)
+      const rim = (await dialog.locator('.crop-disc-rim').boundingBox())!
+      expect(rim.width / circle.width).toBeCloseTo(116 / 120, 2)
       await page.screenshot({ path: 'test-results/disc-crop-mobile.png' })
     }
     await confirmCrop(page)

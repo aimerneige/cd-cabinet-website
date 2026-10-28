@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FormEvent } from 'react'
 import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme, BookletFormat, BookletPage, ObiDimensions, Track } from '../../types/album'
-import { getAlbumDiscs, getCaseDepth, getSpineDepth, hasObi, resizeDiscs, STANDARD_CASE_DEPTH, STANDARD_CASE_THICKNESS_MM } from '../../lib/album'
+import { getAlbumDiscs, getCaseDepth, getCaseThicknessMm, getSpineDepth, hasObi, resizeDiscs, STANDARD_CASE_DEPTH, STANDARD_CASE_THICKNESS_MM } from '../../lib/album'
 import { readArtwork } from '../../lib/readArtwork'
 import { readCoverPalette } from '../../lib/coverPalette'
 import { getArtworkCrop, type ArtworkCrop, type ArtworkCropResult, type ArtworkKind } from '../../lib/cropArtwork'
@@ -13,6 +13,7 @@ import { useTranslation } from '../../i18n'
 import { getGenreOptions } from '../../data/genres'
 import { ArtworkInput } from './ArtworkInput'
 import { BookletPagesEditor } from './BookletPagesEditor'
+import { ObiSizeControls } from './ObiSizeControls'
 import { ArtworkCropper } from './ArtworkCropper'
 import { ArtworkAlert } from './ArtworkAlert'
 import { DeleteAlbumDialog } from './DeleteAlbumDialog'
@@ -656,6 +657,10 @@ export function AlbumEditor({
               uploadLabel={t('editor.uploadObiAria')} resetLabel={t('editor.useGeneratedObi')} custom={!!obi} disabled={loading || saving} variant="obi"
               onUpload={(file) => upload(file, 'obi')} onReset={() => setObi('')} />
             {obi && <button type="button" className="remove-spine" disabled={loading || saving} onClick={() => void recropObi()}>{t('obi.recrop')}</button>}
+            {/* 生成的 OBI 直接在这里调尺寸；上传的扫描图尺寸跟随裁剪，需重新裁剪才能修改。 */}
+            {obi
+              ? <p className="obi-upload-guidance">{t('obi.scanSizeNote')}</p>
+              : <ObiSizeControls dimensions={obiDimensions} thicknessMm={getCaseThicknessMm({ discs, caseThicknessMm })} disabled={loading || saving} onChange={setObiDimensions} />}
             <p className="obi-upload-guidance">{t('editor.obiUploadGuidance')}</p></>}
           </div>
         </div>

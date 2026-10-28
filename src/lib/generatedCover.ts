@@ -1,6 +1,7 @@
 import type { Album, AlbumDisc, ArtworkPalette, ArtworkTheme } from '../types/album'
 import { getSpineDepth } from './album'
 import { getObiLayout } from './obi'
+import { LABEL_INNER_RATIO, LABEL_OUTER_RATIO } from './disc'
 
 const styles = [
   { id: 'dusk', color: '#536f78', ink: '#f3eee0', accent: '#e4b88c' },
@@ -211,11 +212,13 @@ export function getDiscArtwork(
   const accent = style.accent
   const discs = album.discs?.length ? album.discs : [disc]
   const number = discs.findIndex((item) => item.id === disc.id) + 1
-  // 文字放在圆形安全区内，避开中央直径约 21% 的盘毂及外缘。
+  // 只在实物的印刷范围内着色：内径 23 mm、外径 116 mm，其余保持透明。
+  const inner = Math.round(LABEL_INNER_RATIO * 300 * 1000) / 1000
+  const outer = Math.round(LABEL_OUTER_RATIO * 300 * 1000) / 1000
   return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" data-cd-disc="${style.custom ? 'custom' : style.id}" width="1000" height="1000" viewBox="0 0 600 600">
-    <defs><mask id="disc-print"><circle cx="300" cy="300" r="300" fill="white"/><circle cx="300" cy="300" r="66" fill="black"/></mask></defs>
+    <defs><mask id="disc-print"><circle cx="300" cy="300" r="${outer}" fill="white"/><circle cx="300" cy="300" r="${inner}" fill="black"/></mask></defs>
     <g mask="url(#disc-print)">
-      <circle cx="300" cy="300" r="300" fill="${color}"/>
+      <circle cx="300" cy="300" r="${outer}" fill="${color}"/>
       <g fill="none" stroke="${accent}" stroke-width="3" opacity=".35">${packagingPattern(style.id)}</g>
       <g fill="none" stroke="${ink}" opacity=".4"><circle cx="300" cy="300" r="265"/><circle cx="300" cy="300" r="82"/></g>
       <g fill="${ink}" text-anchor="middle" transform="translate(300 0)">

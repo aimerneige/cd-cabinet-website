@@ -105,6 +105,14 @@ describe('generated packaging', () => {
     }
   })
 
+  it('prints generated disc labels only inside the real 23-116 mm label area', () => {
+    const album = { ...details, color: '#536f78', ink: '#f3eee0', coverUrl: '/cover.png', tracks: [] }
+    const svg = decodeURIComponent(getDiscArtwork(album, discs[0]))
+    // 600 单位对应 120 mm：外径 116 mm → 半径 290，内径 23 mm → 半径 57.5。
+    expect(svg).toContain('<circle cx="300" cy="300" r="290" fill="white"/><circle cx="300" cy="300" r="57.5" fill="black"/>')
+    expect(svg).not.toContain('r="300"')
+  })
+
   it('keeps custom artwork and generates independent labels for uploaded covers', () => {
     const album = {
       ...details, color: '#536f78', ink: '#f3eee0',

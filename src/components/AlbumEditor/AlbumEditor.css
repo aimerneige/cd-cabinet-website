@@ -394,3 +394,7 @@ fieldset:disabled .audio-upload { opacity: .5; cursor: default; }
 .booklet-format-icon.is-sheet::before { left: 6px; width: 22px; box-shadow: 2px 2px 0 #c5cab9; }
 .booklet-format-icon.is-sheet::after { display: none; }
 @media (max-width: 700px) { .booklet-format { grid-template-columns: 1fr; } }
+/* 编辑页里调整生成 OBI 的尺寸，布局与裁剪窗口一致。 */
+.editor-artwork .obi-size-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 10px; margin: 14px 0 0; padding: 10px 0 0; border: 0; border-top: 1px solid #c5cab9; }
+.editor-artwork .obi-size-controls legend { padding: 0; }
+.editor-artwork .obi-size-controls button { grid-column: 1 / -1; justify-self: start; border: 1px solid #aab49b; background: transparent; color: #58664a; padding: 6px 9px; font-size: 10px; }

@@ -711,10 +711,7 @@ footer i {
   box-shadow:
     0 1px 0 #f5faf1,
     0 2px 0 #83968caa,
-    1px 4px 5px #20382c5c,
-    inset 0 0 0 3px #e5ece2,
-    inset 0 0 0 7px #9baca5,
-    inset 0 0 0 14px #e2e6d399;
+    1px 4px 5px #20382c5c;
 }
 .disc {
   width: var(--booklet-size, 252px);
@@ -724,14 +721,26 @@ footer i {
   background-size: cover;
   background-position: center;
   position: relative;
-  box-shadow:
-    0 3px 7px #0009,
-    inset 0 0 0 3px #dfe4db,
-    inset 0 0 0 7px #9baca5,
-    inset 0 0 0 14px #e2e6d399;
+  box-shadow: 0 3px 7px #0009;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+/* 外缘 116–120 mm 为不印刷的透明塑料（上传的盘面图也会被这一圈盖住）。 */
+.disc::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    transparent calc(96.667% - 0.5px),
+    #c3cec7 96.667%,
+    #e9efe9e6 97.4% 99.2%,
+    #a9b8b0 100%
+  );
+  pointer-events: none;
 }
 .disc:after {
   content: '';
@@ -753,15 +762,18 @@ footer i {
   mix-blend-mode: screen;
 }
 .disc-center {
-  /* 透明中心区约 25 mm（光盘 21%），中心孔 15 mm：均按光盘比例缩放。 */
-  width: 21%;
-  height: 21%;
+  /* 不印刷的中心 23 mm（光盘直径的 19.17%）：15 mm 中心孔 + 透明塑料，
+     20 mm 处为第一过渡区边缘。均按光盘比例缩放。 */
+  width: 19.1667%;
+  height: 19.1667%;
   background: radial-gradient(
     circle closest-side,
-    #333a2b 0 59.5%,
-    #bcc4b988 61% 75%,
-    #e6e9da 77% 88%,
-    #ccd1c0cc 90%
+    #333a2b 0 calc(65.2% - 0.5px),
+    #9fb0a7 65.2%,
+    #e3eae4e0 67% 85%,
+    #b8c6bd 86.5% 88%,
+    #edf2ece6 89.5% 98%,
+    #b3c1b8 100%
   );
   border-radius: 50%;
   z-index: 1;
