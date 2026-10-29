@@ -102,7 +102,9 @@ test('six-disc page jumps load the right audio and a disc change waits until the
   await expect(page.locator('.cd-player')).toHaveCount(0)
   await page.getByRole('button', { name: 'Disc 3', exact: true }).click()
   await expect(page.locator('.selected-disc-label')).toHaveText('DISC 3 / 6')
-  await page.getByRole('button', { name: 'Play disc 3 from the beginning', exact: true }).click()
+  // 翻过页的 3D 托盘会让 Playwright 的点击前遮挡检查误判；真实鼠标点击盘心可以命中，这里按用户方式直接点。
+  const disc3 = (await page.getByRole('button', { name: 'Play disc 3 from the beginning', exact: true }).boundingBox())!
+  await page.mouse.click(disc3.x + disc3.width / 2, disc3.y + disc3.height / 2)
   await expect(page.locator('.display-track')).toHaveText('Disc 3 song')
   await expect(page.locator('.cd-player')).not.toHaveClass(/is-loading/)
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
@@ -137,6 +139,9 @@ test('multi-disc audio, titles and replacements persist without rewriting unchan
   await expect(page.locator('.display-track')).toHaveText('Second Song')
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.duration)).toBe(13)
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
+  // 播放中不能去编辑，先把 CD 放回盒中。
+  await page.getByRole('button', { name: 'Return CD to case', exact: true }).click()
+  await expect(page.locator('.cd-player')).toHaveCount(0)
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await expect(page.locator('.album-editor')).toBeVisible()
   await page.evaluate(() => {
@@ -258,6 +263,8 @@ test('mobile reduced motion opens the case before loading a track from the back 
   expect(discBox.x).toBeGreaterThan(wellBox.x)
   expect((await page.locator('.album-details').boundingBox())!.y).toBeGreaterThan(box.y + box.height)
   await page.screenshot({ path: 'test-results/cd-player-mobile.png', fullPage: true })
+  await page.getByRole('button', { name: 'Return CD to case', exact: true }).click()
+  await expect(page.locator('.cd-player')).toHaveCount(0)
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
