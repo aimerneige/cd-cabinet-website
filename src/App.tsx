@@ -8,7 +8,6 @@ import { AlbumEditor } from './components/AlbumEditor/AlbumEditor'
 import { useTranslation } from './i18n'
 import { LanguageSwitcher } from './components/LanguageSwitcher/LanguageSwitcher'
 import { useAudioPlayback } from './hooks/useAudioPlayback'
-import { CompactPlayer } from './components/CDPlayer/CDPlayer'
 import { getGenreOptions } from './data/genres'
 import { albums as sampleAlbums } from './data/albums'
 import { isSampleAlbum } from './lib/sampleAlbums'
@@ -277,7 +276,6 @@ export default function App() {
           }}
         />
       )}
-      {!active && !editor && playback.disc && <CompactPlayer playback={playback} />}
       {editor && (
         <AlbumEditor
           key={editor}

@@ -111,7 +111,7 @@ test('sample clearing requires confirmation and clearing and restoring persist w
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
 })
 
-test('clearing samples removes their files while personal random covers, audio and playback survive', async ({ page }) => {
+test('clearing samples removes their files while personal random covers and audio survive', async ({ page }) => {
   const personalId = await addPersonalRecording(page)
   await edit(page, 'album-1')
   await uploadSampleCover(page)
@@ -124,13 +124,12 @@ test('clearing samples removes their files while personal random covers, audio a
   await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
   await page.getByRole('button', { name: 'Play Sample song', exact: true }).click()
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
-  const source = await page.locator('audio').getAttribute('src')
+  // 不能后台播放：先把 CD 放回盒中再关闭。
+  await page.getByRole('button', { name: 'Return CD to case', exact: true }).click()
+  await expect(page.locator('.cd-player')).toHaveCount(0)
   await page.getByRole('button', { name: 'Close album', exact: true }).click()
   await clearSamples(page)
   await expect(page.locator('.shelf-cd')).toHaveCount(1)
-  await expect(page.locator('.compact-player')).toBeVisible()
-  await expect(page.locator('audio')).toHaveAttribute('src', source!)
-  expect(await page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
   const cleared = await snapshot(page)
   expect(cleared.ids).toEqual([personalId])
   expect(cleared.artwork).toEqual(before.artwork.filter((key) => key.startsWith(`${personalId}:`)))
@@ -197,18 +196,3 @@ test('storage failures roll back sample clearing and restoring without losing pe
   await expect(page.locator('.shelf-cd')).toHaveCount(25)
 })
 
-test('clearing a playing sample ejects it and removes the compact player', async ({ page }) => {
-  await edit(page, 'album-1')
-  await page.getByLabel('Add audio files', { exact: true }).setInputFiles(audioFile())
-  await expect(page.locator('.editor-track-list li')).toHaveCount(7)
-  await save(page)
-  await page.locator('[data-album-id="album-1"]').click()
-  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
-  await page.getByRole('button', { name: 'Play Sample song', exact: true }).click()
-  await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
-  await page.getByRole('button', { name: 'Close album', exact: true }).click()
-  await clearSamples(page)
-  await expect(page.locator('.shelf-cd')).toHaveCount(0)
-  await expect(page.locator('.compact-player')).toHaveCount(0)
-  expect(await page.locator('audio').evaluate((audio) => audio.paused && !audio.hasAttribute('src'))).toBe(true)
-})

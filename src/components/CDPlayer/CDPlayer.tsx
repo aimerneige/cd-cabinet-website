@@ -3,7 +3,6 @@ import type { Album, AlbumDisc } from '../../types/album'
 import { useTranslation } from '../../i18n'
 import { formatTime } from '../../lib/audio'
 import { getDiscArtwork } from '../../lib/generatedCover'
-import type { AudioPlayback } from '../../hooks/useAudioPlayback'
 import './CDPlayer.css'
 
 const segments = ['abcdef', 'bc', 'abdeg', 'abcdg', 'bcfg', 'acdfg', 'acdefg', 'abc', 'abcdefg', 'abcdfg']
@@ -111,30 +110,6 @@ export function CDPlayer({
         <button className="eject-key" disabled={loading} onClick={onEject} aria-label={t('player.eject')}><TransportIcon kind="eject" /><span>{t('player.eject')}</span></button>
       </div>
       {error && <p className="player-error" role="alert">{error}</p>}
-    </section>
-  )
-}
-
-export function CompactPlayer({ playback }: { playback: AudioPlayback }) {
-  const { t } = useTranslation()
-  if (!playback.album || !playback.disc) return null
-  const track = playback.disc.tracks[playback.trackIndex]
-  return (
-    <section className="compact-player" aria-label={t('player.label')}>
-      <div
-        className={`disc compact-disc${playback.playing ? ' is-spinning' : ''}`}
-        style={{ backgroundImage: `url(${getDiscArtwork(playback.album, playback.disc)})` }}
-        aria-hidden="true"
-      ><div className="disc-center" /></div>
-      <div className="compact-track">
-        <strong>{track?.title ?? playback.album.title}</strong>
-        <span>{playback.album.artist} · {formatTime(playback.currentTime)}</span>
-        {playback.error && <span role="alert">{playback.error}</span>}
-      </div>
-      <button onClick={playback.playPause} aria-label={playback.playing ? t('player.pause') : t('player.play')}>
-        <TransportIcon kind={playback.playing ? 'pause' : 'play'} />
-      </button>
-      <button onClick={playback.stop} aria-label={t('player.stop')}><TransportIcon kind="stop" /></button>
     </section>
   )
 }

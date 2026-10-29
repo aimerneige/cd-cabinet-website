@@ -346,7 +346,7 @@ export const en = {
   'player.playFailed': 'Audio could not play. Try Play again or upload a supported file.',
   'player.playDisc': 'Play disc {number} from the beginning',
   'player.playTrack': 'Play {title}',
-  'player.collapse': 'Put away',
+  'player.returnFirst': 'Return the CD to the case first',
   'editor.audioHeading': 'Music & tracks',
   'editor.audioFile': 'Audio',
   'editor.removeTrackAction': 'Remove track',

@@ -346,7 +346,7 @@ export const zh: Record<keyof typeof en, string> = {
   'player.playFailed': '无法播放音频，请再次点击播放，或上传浏览器支持的文件。',
   'player.playDisc': '从头播放光盘 {number}',
   'player.playTrack': '播放《{title}》',
-  'player.collapse': '收起',
+  'player.returnFirst': '请先弹出光盘放回盒中',
   'editor.audioHeading': '音乐与曲目',
   'editor.audioFile': '音频',
   'editor.removeTrackAction': '移除曲目',

@@ -101,7 +101,7 @@ test('deletion requires a native confirmation, preserves cancelled drafts and re
   await expect(page.locator('[data-album-id="album-1"]')).toHaveCount(0)
 })
 
-test('confirmed deletion removes every saved image and audio file and unloads its playing disc', async ({ page }) => {
+test('confirmed deletion removes every saved image and audio file after its disc is returned', async ({ page }) => {
   await addRecording(page, 'Keep Files')
   const keeper = await saveRecording(page, 'Keep Files')
   await addRecording(page, 'Remove Files')
@@ -119,12 +119,15 @@ test('confirmed deletion removes every saved image and audio file and unloads it
   await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
   await page.getByRole('button', { name: 'Play Saved song', exact: true }).click()
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
+  // 播放中不能离开查看去编辑，先把 CD 放回盒中。
+  await expect(page.getByRole('button', { name: 'Edit recording', exact: true })).toBeDisabled()
+  await page.getByRole('button', { name: 'Return CD to case', exact: true }).click()
+  await expect(page.locator('.cd-player')).toHaveCount(0)
   await page.getByRole('button', { name: 'Edit recording', exact: true }).click()
   await page.getByRole('button', { name: 'Delete recording', exact: true }).click()
   await page.getByRole('alertdialog').getByRole('button', { name: 'Delete permanently', exact: true }).click()
   await expect(page.locator('.album-editor')).toHaveCount(0)
   await expect(page.locator('.shelf-cd')).toHaveCount(25)
-  await expect(page.locator('.compact-player')).toHaveCount(0)
   expect(await page.locator('audio').evaluate((audio) => audio.paused && !audio.hasAttribute('src'))).toBe(true)
   const after = await storedFiles(page)
   expect(after.ids).not.toContain(id)
@@ -168,20 +171,3 @@ test('failed deletion rolls back all files, keeps the confirmation open and can 
   await expect(page.locator('.shelf-cd')).toHaveCount(24)
 })
 
-test('deleting a different recording leaves the playing album loaded', async ({ page }) => {
-  await addRecording(page, 'Still Playing')
-  const keeper = await saveRecording(page, 'Still Playing')
-  await page.locator(`[data-album-id="${keeper}"]`).click()
-  await expect(page.locator('.viewer-controls')).toHaveCSS('opacity', '1')
-  await page.getByRole('button', { name: 'Play Saved song', exact: true }).click()
-  await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
-  const source = await page.locator('audio').getAttribute('src')
-  await page.getByRole('button', { name: 'Close album', exact: true }).click()
-  await editRecording(page, 'album-1')
-  await page.getByRole('button', { name: 'Delete recording', exact: true }).click()
-  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete permanently', exact: true }).click()
-  await expect(page.locator('.album-editor')).toHaveCount(0)
-  await expect(page.locator('.compact-player')).toBeVisible()
-  await expect(page.locator('audio')).toHaveAttribute('src', source!)
-  expect(await page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
-})

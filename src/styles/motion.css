@@ -27,7 +27,6 @@
 .disc-selector button,
 .artwork-reader button,
 .delete-album-dialog button,
-.compact-player button,
 .player-transport button,
 .language-select {
   transition:
@@ -45,8 +44,7 @@
     .viewer-controls button,
     .disc-selector button:not([aria-pressed='true']),
     .artwork-reader button:not([aria-current='page']),
-    .delete-album-dialog button:not(.confirm-delete-album),
-    .compact-player button
+    .delete-album-dialog button:not(.confirm-delete-album)
   ):not(:disabled):hover {
   background-color: #66745c14;
   border-color: #858f77;
@@ -67,8 +65,7 @@
     .viewer-controls button,
     .disc-selector button,
     .artwork-reader button,
-    .delete-album-dialog button,
-    .compact-player button
+    .delete-album-dialog button
   ):not(:disabled):active {
   transform: translateY(1px) scale(0.98);
   transition-duration: 0.06s;
@@ -207,9 +204,6 @@
 .display-heading > span:last-child {
   transition: color 0.3s, text-shadow 0.3s;
 }
-.compact-player {
-  animation: compact-in 0.5s var(--ease-out) both;
-}
 
 /* ---------- 弹窗与阅读器 ---------- */
 dialog:not(.artwork-cropper)[open] {
@@ -241,9 +235,6 @@ dialog[open]::backdrop {
 @keyframes dialog-in {
   from { opacity: 0; transform: translateY(10px); }
 }
-@keyframes compact-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(24px); }
-}
 
 @media (prefers-reduced-motion: reduce) {
   /* 只停用本文件加的入场动画和过渡；不要对 * 设置 transition，
@@ -252,7 +243,6 @@ dialog[open]::backdrop {
   .collection-heading > div > *,
   .collection-count,
   .album-editor,
-  .compact-player,
   dialog[open],
   dialog[open]::backdrop,
   .reader-flat .reader-paper {
@@ -265,7 +255,6 @@ dialog[open]::backdrop {
   .disc-selector button,
   .artwork-reader button,
   .delete-album-dialog button,
-  .compact-player button,
   .player-transport button,
   .language-select,
   .genre-tabs button,
@@ -285,8 +274,7 @@ dialog[open]::backdrop {
   .reader-thumbnails button:hover {
     transform: none !important;
   }
-  .cd-player .player-disc,
-  .compact-player .compact-disc {
+  .cd-player .player-disc {
     animation: none !important;
   }
   .shelf-cd:hover,

@@ -12,7 +12,7 @@ import { getDiscArtwork } from '../../lib/generatedCover'
 import { useObiAnimation } from '../../hooks/useObiAnimation'
 import { useTranslation } from '../../i18n'
 import type { AudioPlayback } from '../../hooks/useAudioPlayback'
-import { CDPlayer, CompactPlayer } from '../CDPlayer/CDPlayer'
+import { CDPlayer } from '../CDPlayer/CDPlayer'
 import { ArtworkReader } from '../ArtworkReader/ArtworkReader'
 
 export function ActiveCD({
@@ -234,12 +234,10 @@ export function ActiveCD({
       .to(caseRef.current, { autoAlpha: 1, duration: 0.35 }, 0.28)
       .to(copy, { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1, rotation: 360, duration: 0.6, ease: 'power3.inOut' }, 0.2)
   }
+  // 光盘在播放器里时不能换碟，必须先弹出放回盒中。
   function selectAlbumDisc(index: number) {
-    if (closing.current || isLoadingDisc || isTurning || index === discIndex) return
-    if (playerOpen) {
-      pendingDisc.current = index
-      returnDisc(() => selectDisc(index))
-    } else selectDisc(index)
+    if (closing.current || playerOpen || isLoadingDisc || isTurning || index === discIndex) return
+    selectDisc(index)
   }
   // 点击翻开后露出的另一张光盘：先选中它，选中完成后由下方的 effect 开始播放。
   function playDisc(index: number) {
@@ -257,8 +255,9 @@ export function ActiveCD({
     }
   }, [discIndex, isTurning, isLoadingDisc])
 
+  // 光盘还在播放器里时不能关闭查看（不允许后台播放），需先弹出放回盒中。
   const close = () => {
-    if (closing.current) return
+    if (closing.current || playerOpen) return
     closing.current = true
     const cancelled = pendingPlay.current || isLoadingDisc || startingPlayback
     pendingPlay.current = false
@@ -326,6 +325,8 @@ export function ActiveCD({
         <span>{t('viewer.closerLook')}</span>
         <div className="viewer-actions">
           <button
+            disabled={playerOpen}
+            title={playerOpen ? t('player.returnFirst') : undefined}
             onClick={() => {
               onEdit(album.id)
               close()
@@ -335,10 +336,12 @@ export function ActiveCD({
           </button>
           <button
             ref={button}
+            disabled={playerOpen}
+            title={playerOpen ? t('player.returnFirst') : undefined}
             onClick={close}
             aria-label={t('viewer.closeAlbumAria')}
           >
-            {playerOpen ? t('player.collapse') : t('viewer.close')} <span>×</span>
+            {t('viewer.close')} <span>×</span>
           </button>
         </div>
       </div>
@@ -385,7 +388,6 @@ export function ActiveCD({
           onVolume={playback.setVolume}
         />
       )}
-      {!playerOpen && !pendingPlay.current && playback.disc && <CompactPlayer playback={playback} />}
       <AlbumDetails
         album={album}
         disc={disc}
