@@ -31,9 +31,22 @@ test('opens the case, reverses it, restores focus and the original slot', async 
     page.getByRole('heading', { name: 'Blue Hours', exact: true }),
   ).toBeVisible()
   await page.screenshot({ path: 'test-results/album-open.png' })
+  // 记录盒子消失前最后一帧的位置：应落在书脊静止的槽位，而不是悬停抬起的位置。
+  await page.evaluate(() => {
+    const track = () => {
+      const jewel = document.querySelector('.active-layer .cd-case')
+      if (!jewel) return
+      const rect = jewel.getBoundingClientRect()
+      ;(window as unknown as { lastCase: number }).lastCase = rect.y + rect.height / 2
+      requestAnimationFrame(track)
+    }
+    track()
+  })
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(spine).toBeVisible()
+  const landed = await page.evaluate(() => (window as unknown as { lastCase: number }).lastCase)
+  expect(Math.abs(landed - (before!.y + before!.height / 2))).toBeLessThan(3)
   await expect(spine).toBeFocused()
   await page.mouse.move(0, 0)
   await expect

@@ -278,10 +278,20 @@ test('real audio drives playback, rotation, track selection, seeking and transpo
   await expect(page.locator('.display-heading')).toContainText('02')
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.currentTime)).toBeGreaterThan(0)
-  await expect(page.locator('.player-disc')).toHaveCSS('animation-play-state', 'running')
+  await expect(page.locator('.player-disc')).toHaveClass(/is-spinning/)
   await page.getByRole('button', { name: 'Pause', exact: true }).click()
   await expect(page.locator('.player-disc')).not.toHaveClass(/is-spinning/)
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(true)
+  // 转盘带惯性：暂停后仍会转一小段再停下。
+  const angle = () => page.locator('.player-disc').evaluate((disc) => getComputedStyle(disc).transform)
+  const pausedAt = await angle()
+  await page.waitForTimeout(200)
+  expect(await angle()).not.toBe(pausedAt)
+  await expect.poll(async () => {
+    const before = await angle()
+    await page.waitForTimeout(150)
+    return (await angle()) === before
+  }, { timeout: 4000 }).toBe(true)
   await page.getByRole('slider', { name: 'Playback position', exact: true }).focus()
   await page.keyboard.press('Home')
   await page.keyboard.press('ArrowRight')
@@ -333,7 +343,7 @@ test('music starts after insertion and rotation, and the viewer stays open until
         sessionStorage.setItem('playOrder', JSON.stringify({
           transfers: document.querySelectorAll('.disc-transfer').length,
           loading: document.querySelector('.cd-player')!.classList.contains('is-loading'),
-          rotation: getComputedStyle(disc).animationPlayState,
+          rotation: disc.classList.contains('is-spinning') ? 'running' : 'paused',
         }))
       }
       return play()
@@ -397,7 +407,7 @@ test('changing discs requires returning the current CD to the case first', async
   await expect(page.locator('.cd-player')).not.toHaveClass(/is-loading/)
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(false)
   expect(await page.locator('audio').getAttribute('src')).not.toBe(firstSource)
-  await expect(page.locator('.player-disc')).toHaveCSS('animation-play-state', 'running')
+  await expect(page.locator('.player-disc')).toHaveClass(/is-spinning/)
   await page.getByRole('button', { name: 'Return CD to case', exact: true }).click()
   await expect(page.locator('.cd-player')).toHaveCount(0)
   await page.keyboard.press('Escape')
@@ -415,5 +425,5 @@ test('audio end advances to the next track and stops at the end of the disc', as
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.paused)).toBe(true)
   await expect(page.locator('.player-disc')).not.toHaveClass(/is-spinning/)
   await expect.poll(() => page.locator('audio').evaluate((audio) => audio.currentTime)).toBe(0)
-  await expect(page.locator('.player-disc')).toHaveCSS('animation-name', 'none')
+  await expect(page.locator('.player-disc')).toHaveCSS('transform', 'none')
 })

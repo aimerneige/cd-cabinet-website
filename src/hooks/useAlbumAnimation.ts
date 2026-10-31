@@ -240,7 +240,11 @@ export function useAlbumAnimation(
     }
   }
 
-  const close = (foldTray: (onFolded: () => void) => void) => {
+  // home：盒子在架上静止时的位置。打开时记录的是悬停抬起后的位置，放回时以静止位置为准。
+  const close = (
+    foldTray: (onFolded: () => void) => void,
+    home?: () => Origin | null,
+  ) => {
     if (closeRequested.current) return
     closeRequested.current = true
     const changedView = !!viewTimeline.current || view !== 'inside'
@@ -259,7 +263,58 @@ export function useAlbumAnimation(
       ) as gsap.core.Tween[]) {
         if (tween.targets().includes(lid)) tween.kill()
       }
-      const putBack = () => timeline.current?.timeScale(1.3).reverse()
+      // 不直接倒放开盒时间线：倒放会让盒子以最快速度撞进架子。
+      // 这里单独飞回架前，再减速推入槽位。
+      const putBack = () => {
+        timeline.current?.pause()
+        const root = layer.current!
+        const fades = [root.querySelector('.album-details'), root.querySelector('.viewer-controls')]
+        const overlay = root.querySelector('.collection-overlay')
+        const paper = jewel.querySelector('.obi-strip')
+        const done = () => returnCallback.current()
+        if (reduced) {
+          viewTimeline.current = gsap
+            .timeline({ onComplete: done })
+            .to([...fades, overlay, jewel], { opacity: 0, duration: 0.15 })
+          return
+        }
+        const target = home?.() ?? origin
+        const scale = target.height / CASE_HEIGHT
+        const x = target.x + target.width / 2 - CASE_WIDTH / 2
+        const y = target.y + target.height / 2 - CASE_HEIGHT / 2
+        const tl = gsap.timeline({ onComplete: done })
+        viewTimeline.current = tl
+        tl.to(fades, { opacity: 0, duration: 0.2, ease: 'power1.in' }, 0)
+          .to(overlay, { opacity: 0, duration: 0.55, ease: 'power1.inOut' }, 0.15)
+          .to(
+            jewel,
+            {
+              x,
+              y: y - 14,
+              z: 110,
+              rotationY: 90,
+              scale,
+              '--case-depth': `${target.width / scale}px`,
+              duration: 0.62,
+              ease: 'power3.inOut',
+            },
+            0.05,
+          )
+          .to(
+            jewel,
+            {
+              keyframes: {
+                '45%': { rotationZ: -3.5, rotationX: 6 },
+                '100%': { rotationZ: 0, rotationX: 0 },
+                easeEach: 'sine.inOut',
+              },
+              duration: 0.62,
+            },
+            0.05,
+          )
+          .to(jewel, { y, z: 0, duration: 0.26, ease: 'power2.out' }, 0.64)
+        if (paper) tl.to(paper, { autoAlpha: 1, duration: 0.18 }, 0.3)
+      }
       if (changedView) {
         viewTimeline.current = gsap
           .timeline({ onComplete: putBack })

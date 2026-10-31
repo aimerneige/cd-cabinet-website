@@ -75,7 +75,15 @@ export function ActiveCD({
     else selectView(next)
   }
   const closeViewer = () => {
-    closeCase((onFolded) => resetObi(() => resetTray(onFolded)))
+    closeCase(
+      (onFolded) => resetObi(() => resetTray(onFolded)),
+      () => {
+        const rect = document
+          .querySelector(`[data-album-id="${CSS.escape(album.id)}"]`)
+          ?.getBoundingClientRect()
+        return rect?.width ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null
+      },
+    )
   }
   function clearTransfer() {
     if (startFrame.current !== null) cancelAnimationFrame(startFrame.current)

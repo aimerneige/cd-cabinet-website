@@ -274,9 +274,6 @@ dialog[open]::backdrop {
   .reader-thumbnails button:hover {
     transform: none !important;
   }
-  .cd-player .player-disc {
-    animation: none !important;
-  }
   .shelf-cd:hover,
   .shelf-cd:focus-visible,
   .shelf-cd:active,

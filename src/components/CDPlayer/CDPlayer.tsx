@@ -1,4 +1,5 @@
-import type { RefObject } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
+import gsap from 'gsap'
 import type { Album, AlbumDisc } from '../../types/album'
 import { useTranslation } from '../../i18n'
 import { formatTime } from '../../lib/audio'
@@ -71,6 +72,26 @@ export function CDPlayer({
 }) {
   const { t } = useTranslation()
   const track = disc.tracks[trackIndex]
+  const spin = useRef<gsap.core.Tween | null>(null)
+  // 转盘有惯性：开始播放时逐渐加速，停止后慢慢停下，而不是瞬间启停。
+  useEffect(() => {
+    const element = discRef.current
+    if (!element || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    spin.current ??= gsap.to(element, { rotation: '+=360', duration: 4, ease: 'none', repeat: -1, paused: true })
+    const tween = spin.current
+    gsap.killTweensOf(tween)
+    if (spinning) {
+      if (tween.paused()) tween.timeScale(0).play()
+      gsap.to(tween, { timeScale: 1, duration: 0.9, ease: 'sine.in' })
+    } else if (!tween.paused()) {
+      gsap.to(tween, { timeScale: 0, duration: 1.4, ease: 'sine.out', onComplete: () => { tween.pause() } })
+    }
+  }, [spinning, discRef])
+  useEffect(() => () => {
+    if (!spin.current) return
+    gsap.killTweensOf(spin.current)
+    spin.current.kill()
+  }, [])
   return (
     <section className={`cd-player${loading ? ' is-loading' : ''}`} aria-label={t('player.label')}>
       <i className="player-screw screw-tl" aria-hidden="true" />
